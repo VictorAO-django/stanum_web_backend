@@ -1,0 +1,7 @@
+.env
+.venv
+.virtualenv/
+*.venv
+*virtualenv/
+.pyc
+*.pyc

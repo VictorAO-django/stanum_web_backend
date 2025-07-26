@@ -1,0 +1,504 @@
+import json
+from django.utils.decorators import method_decorator
+from django.http import Http404
+from django.views.decorators.cache import cache_page
+from django.utils.dateparse import parse_datetime
+from metaapi_cloud_sdk import MetaApi
+from django_filters.rest_framework import DjangoFilterBackend
+from django.urls import reverse
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from datetime import datetime, timedelta
+from django.utils.timezone import make_aware
+from dateutil.relativedelta import relativedelta
+from django.contrib.auth import get_user_model
+from rest_framework import viewsets
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework import generics
+from rest_framework.response import Response
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from django.contrib.auth import user_logged_in
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.db import transaction
+from asgiref.sync import async_to_sync
+from django.contrib.auth.tokens import default_token_generator
+
+from .models import *
+from .serializers import *
+from utils.helper import *
+from utils.otp import *
+from utils.filters import *
+from utils.pagination import *
+
+
+User = get_user_model()
+
+class TokenRefreshView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    @swagger_auto_schema(
+        operation_summary="Centralized Referesh Token EP",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['refresh_token',],
+            properties={
+                'refresh_token': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Refresh token"
+                )
+            }
+        ),
+        responses={
+            200: openapi.Response(
+                description="SUCCESS.",
+            ),
+            400: openapi.Response(
+                description="Bad Request.",
+                examples={
+                    "application/json": {
+                        'message': 'Provide the description and message.',
+                    }
+                }
+            ),
+        }
+    )
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        try:
+            token = CustomAuthToken.objects.get(refresh_token=refresh_token)
+
+            if token.has_refresh_expired():
+                return Response({'detail': 'Refresh token expired'}, status=status.HTTP_401_UNAUTHORIZED)
+            token.refresh()
+            
+            return Response({
+                "token": token.access_token,
+                "refresh": token.refresh_token
+            }, status=200)
+        
+        except Exception as e:
+            return Response({"message": str(e)}, status=400)
+        except AssertionError as e:
+            return Response({"message": str(e)}, status=400)
+        except CustomAuthToken.DoesNotExist:
+            return Response({'message': 'Invalid refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class SignupView(APIView): 
+    authentication_classes = []
+    permission_classes=[AllowAny]
+
+    @swagger_auto_schema(
+        operation_summary="Sign Up Endpoint",
+        operation_description="This is to create an account",
+        operation_id="account-creation",
+        request_body=RegistrationSerializer,
+        responses={
+            201: openapi.Response(
+                description="Created",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='success'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='otp is sent to your email address.'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example="{}"),
+                    }
+                )
+            ),
+            403: openapi.Response(
+                description="Forbidden",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='error'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='An error occured.'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example="{}"),
+                    }
+                )
+            )
+        }
+    )
+    @transaction.atomic
+    def post(self, request):
+        payload = request.data
+        payload['email'] = payload['email'].lower()
+        serializer = RegistrationSerializer(data=payload)
+
+        if payload['email']:
+            user = User.objects.filter(email=payload['email'])
+            if user.exists():
+                user=user.first()
+                if user.email_verified == False:
+                    serializer = RegistrationSerializer(user, data=payload)
+
+        if serializer.is_valid():
+            user = serializer.save()
+            #send email verification message
+            otp = UserOtp(user.email, 'registration')
+            otp.generate_otp()
+            otp.send_otp(user)
+
+            return custom_response(
+                status="success",
+                message=f"otp is sent to your email address.",
+                data={'id': user.id, 'email': user.email},
+                http_status=status.HTTP_201_CREATED
+            )
+        else:
+            return custom_response(
+                status="error",
+                message = str(next(iter(serializer.errors.values()))[0]),
+                data=serializer.errors,
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+
+class LoginView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    @swagger_auto_schema(
+        operation_summary="Login Endpoint",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD),
+            },
+            required=['email', 'password'],
+        ),
+        responses={
+            200: "Login successful, User Authenticated!",
+            400: "Wrong Password",
+            401: "Email not  verified",
+            403: "Your account  is connected to Google - use the Google button to log in.",
+            404: "No user found with this email",
+        }
+    )
+    def post(self, request):
+        password = request.data["password"]
+        try:
+            user = User.objects.get(email=request.data['email'].lower(), email_verified=True, is_deleted=False)
+            
+            if user.is_locked():
+                return custom_response(
+                    status="Error",
+                    message="Too many attempts, try again in 5 minutes.",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            trial_count, trial_valid = update_lock_count(user, 'increase')            
+            if user.check_password(password):
+                if user.email_verified:
+                    # refresh = CustomRefreshToken(user=user, user_id=user.id, email=user.email, user_type='buyer')
+                    
+                    token, created = CustomAuthToken.objects.get_or_create(
+                        user_type=ContentType.objects.get_for_model(user),
+                        user_id=user.id,
+                    )
+                    if not created:
+                        token.refresh()
+                    
+                    trial_count, trial_valid = update_lock_count(user, 'fallback')
+
+                    user_logged_in.send(sender=user.__class__, request=request, user=user)
+
+                    mt5_accounts = MT5Account.objects.filter(user=user)
+                    linked_account = False
+                    current_account = {}
+                    other_accounts = []
+
+                    if mt5_accounts.exists():
+                        linked_account = True
+                        _account = mt5_accounts.filter(current=True).first()
+                        current_account = {
+                            'id': _account.id,
+                            'name': f'Stanum account ({user.id})',
+                            'company_name': 'Stanum Trading Ltd',
+                            'server': _account.server,
+                            'account_number': _account.account_number
+                        }
+
+                        for i in mt5_accounts:
+                            other_accounts.append({
+                                'id': i.id,
+                                'name': f'Stanum account ({user.id})',
+                                'company_name': 'Stanum Trading Ltd',
+                                'server': i.server,
+                                'account_number': i.account_number
+                            })
+
+                    return custom_response(
+                        status="Success",
+                        message="Login successful, User Authenticated!",
+                        data={
+                            'access': token.access_token,
+                            'refresh': token.refresh_token,
+                            'servers': json.loads(settings.MT5_SERVERS),
+                            'user': {
+                                'email': user.email,
+                                'full_name': user.full_name,
+                            },
+                            'linked_account': linked_account,
+                            'account': current_account,
+                            'accounts': other_accounts
+                        }
+                    )
+    
+                else:
+                    return custom_response(
+                        status="Error",
+                        message=f"Please Verify your email!, you have {5-trial_count} attempt(s) left.",
+                        data={},
+                        http_status=status.HTTP_403_FORBIDDEN
+                    )
+            else: 
+                return custom_response(
+                    status="Error",
+                    message=f"Incorrect credentials, you have {5-trial_count} attempt(s) left.",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+            
+        except User.DoesNotExist:
+            return custom_response(
+                status="Error",
+                message="Incorrect credentials",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class AccountVerificationView(APIView):
+    authentication_classes = []
+    permission_classes=[AllowAny]
+    
+    @swagger_auto_schema(
+        operation_summary="Account Email Verification Endpoint",
+        operation_description="This is to verify user email with otp",
+        operation_id="email-otp-verification",
+        responses={
+            200: openapi.Response(
+                description="Success",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='success'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='Account email verified'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example="{}"),
+                    }
+                )
+            ),
+            403: openapi.Response(
+                description="Forbidden",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='error'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='Invalid OTP'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example="{}"),
+                    }
+                )
+            )
+        }
+    )
+    def get(self, request, id, otp):
+        user = get_object_or_404(User, id=id)
+        if not verify_otp(user, 'registration', otp):
+            return custom_response(
+                status="error",
+                message=f"Invalid OTP.",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+        
+        user.email_verified = True #This toogles to True
+        user.save()
+
+        # refresh = CustomRefreshToken(user_id=user.id, email=user.email, user_type='buyer')
+        token, created = CustomAuthToken.objects.get_or_create(
+            user_type=ContentType.objects.get_for_model(user),
+            user_id=user.id,
+        )
+        if not created:
+            token.refresh() 
+
+        return custom_response(
+            status="success",
+            message=f"Email verified.",
+            data={
+                'token': str(token.access_token),
+                'refresh': str(token.refresh_token),
+                'user': {
+                    'email': user.email,
+                    'full_name': user.full_name,
+                },
+            },
+        )
+    
+
+class ForgetPasswordView(APIView):
+    authentication_classes = []
+    permission_classes=[AllowAny]
+    
+    @swagger_auto_schema(
+        operation_summary="Forget Password Endpoint",
+        operation_description="Authentication token is required",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+            },
+            required=['email'],
+        ),
+        operation_id="forget-password",
+        responses={
+            200: "Successful, Reset link has been sent to email!",
+            404: "No user found with this email",
+        }
+    )
+    def post(self, request):
+        email = request.data["email"].lower()
+        data = {}
+        try:
+            user = User.objects.get(email=email, email_verified=True)
+            #send email verification message
+            otp = UserOtp(user.email, 'password reset')
+            otp.generate_otp()
+            otp.send_otp(user)
+
+            return custom_response(
+                status="success",
+                message=f"An OTP has been sent to your email",
+                data = {'id': user.id}
+            )
+        
+        except User.DoesNotExist:
+            return custom_response(
+                status="success",
+                message=f"User not found.",
+                data = {},
+                http_status=status.HTTP_404_NOT_FOUND
+            )
+        
+class PasswordResetOTPValidationView(APIView):
+    authentication_classes = []
+    permission_classes=[AllowAny]
+    
+    @swagger_auto_schema(
+        operation_summary="Reset Password Token Validation Endpoint",
+        operation_id="reset-password-otp-verification",
+        responses={
+            200: openapi.Response(
+                description="Success",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='success'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='Account email verified'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example="{}"),
+                    }
+                )
+            ),
+            403: openapi.Response(
+                description="Forbidden",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='error'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='Invalid OTP'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example="{}"),
+                    }
+                )
+            )
+        }
+    )
+    def get(self, request, id, otp):
+        user = get_object_or_404(User, id=id, email_verified=True)
+        if not verify_otp(user, 'password reset', otp):
+            return custom_response(
+                status="error",
+                message=f"Invalid OTP.",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+        
+        #Generate a unique token for password reset if user exist in database
+        token = default_token_generator.make_token(user)
+        return custom_response(
+            status="success",
+            message=f"OTP validated.",
+            data={'id': user.id,  'token': token},
+        )
+    
+class PasswordResetView(APIView):
+    authentication_classes = []
+    permission_classes=[AllowAny]
+    
+    @swagger_auto_schema(
+        operation_summary="Reset Password Token Validation Endpoint",
+        operation_id="reset-password-otp-verification",
+        request_body=PasswordResetSerializer,
+        responses={
+            200: openapi.Response(
+                description="Success",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='success'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='Account email verified'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example="{}"),
+                    }
+                )
+            ),
+            403: openapi.Response(
+                description="Forbidden",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='error'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='Invalid OTP'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example="{}"),
+                    }
+                )
+            )
+        }
+    )
+    def post(self, request, id, token):
+        serializer = PasswordResetSerializer(data=request.data)
+        user = get_object_or_404(User, id=id, email_verified=True)
+        if serializer.is_valid():
+            if default_token_generator.check_token(user,token):
+                new_password = serializer.validated_data['new_password']
+                user.set_password(new_password)
+                user.save()
+
+                # refresh = CustomRefreshToken(user_id=user.id, email=user.email, user_type='buyer')
+                token, created = CustomAuthToken.objects.get_or_create(
+                    user_type=ContentType.objects.get_for_model(user),
+                    user_id=user.id,
+                )
+                if not created:
+                    token.refresh() 
+
+                return custom_response(
+                    status="success",
+                    message=f"Password reset successfull.",
+                    data={},
+                )
+            return custom_response(
+                status="error occured",
+                message=f"Invalid Token.",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+        return custom_response(
+            status="Error occured",
+            message=f"Invalid Data.",
+            data=serializer.errors,
+            http_status=status.HTTP_403_FORBIDDEN
+        )
