@@ -157,6 +157,89 @@ class SignupView(APIView):
                 http_status=status.HTTP_403_FORBIDDEN
             )
 
+
+class ResendOtpView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_summary="Resend OTP",
+        operation_description="Resend OTP to a user who hasn't verified their email.",
+        operation_id="resend-otp",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@example.com'),
+            },
+        ),
+        responses={
+            200: openapi.Response(
+                description="OTP Resent",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='success'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='OTP resent to email'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example={}),
+                    },
+                )
+            ),
+            404: openapi.Response(
+                description="User Not Found or Already Verified",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, example='error'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='User not found or already verified.'),
+                        'data': openapi.Schema(type=openapi.TYPE_OBJECT, example={}),
+                    },
+                )
+            )
+        }
+    )
+    @transaction.atomic
+    def post(self, request):
+        email = request.data.get('email', '').lower().strip()
+        if not email:
+            return custom_response(
+                status='error',
+                message='Email is required.',
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(email=email)
+            if user.email_verified:
+                return custom_response(
+                    status='error',
+                    message='User is already verified.',
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+            otp = UserOtp(user.email, 'registration')
+            otp.generate_otp()
+            otp.send_otp(user)
+
+            return custom_response(
+                status='success',
+                message='OTP has been resent to your email address.',
+                data={'id': user.id, 'email': user.email},
+                http_status=status.HTTP_200_OK
+            )
+
+        except User.DoesNotExist:
+            return custom_response(
+                status='error',
+                message='User with this email does not exist.',
+                data={},
+                http_status=status.HTTP_404_NOT_FOUND
+            )
+
+
+
 class LoginView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]

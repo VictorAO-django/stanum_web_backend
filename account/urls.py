@@ -20,6 +20,7 @@ from django.urls import path
 urlpatterns = [
     path('auth/login', LoginView.as_view()),
     path('auth/signup', SignupView.as_view()),
+    path('auth/otp/resend', ResendOtpView.as_view()),
     path('auth/token/refresh', TokenRefreshView.as_view()),
     path('auth/verify/<int:id>/<str:otp>', AccountVerificationView.as_view()),
 
