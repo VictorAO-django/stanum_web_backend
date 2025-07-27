@@ -1,10 +1,11 @@
 # models.py
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
 import json
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class TradingAccount(models.Model):
     ACCOUNT_TYPES = (

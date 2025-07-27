@@ -207,45 +207,16 @@ class LoginView(APIView):
 
                     user_logged_in.send(sender=user.__class__, request=request, user=user)
 
-                    mt5_accounts = MT5Account.objects.filter(user=user)
-                    linked_account = False
-                    current_account = {}
-                    other_accounts = []
-
-                    if mt5_accounts.exists():
-                        linked_account = True
-                        _account = mt5_accounts.filter(current=True).first()
-                        current_account = {
-                            'id': _account.id,
-                            'name': f'Stanum account ({user.id})',
-                            'company_name': 'Stanum Trading Ltd',
-                            'server': _account.server,
-                            'account_number': _account.account_number
-                        }
-
-                        for i in mt5_accounts:
-                            other_accounts.append({
-                                'id': i.id,
-                                'name': f'Stanum account ({user.id})',
-                                'company_name': 'Stanum Trading Ltd',
-                                'server': i.server,
-                                'account_number': i.account_number
-                            })
-
                     return custom_response(
                         status="Success",
                         message="Login successful, User Authenticated!",
                         data={
                             'access': token.access_token,
                             'refresh': token.refresh_token,
-                            'servers': json.loads(settings.MT5_SERVERS),
                             'user': {
                                 'email': user.email,
                                 'full_name': user.full_name,
                             },
-                            'linked_account': linked_account,
-                            'account': current_account,
-                            'accounts': other_accounts
                         }
                     )
     

@@ -7,8 +7,6 @@ from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
 
-from account.models import MT5Account, Candlestick
-
 User = get_user_model()
 
 def update_lock_count(user, action: str):
@@ -113,50 +111,3 @@ def format_date(date):
         suffix = 'th'
         
     return f"{day}{suffix} of {month} {year}"
-
-
-def is_mt5_connected(user) -> MT5Account:
-    account = MT5Account.objects.filter(user=user)
-    if account.exists():
-        current_account = account.filter(current=True)
-        return current_account.first()
-    
-    return custom_response(
-        status="Error occured",
-        message=f"You haven't linked a broker account.",
-        data={},
-        http_status=status.HTTP_403_FORBIDDEN
-    )
-    
-
-
-def get_candle_at_broker_time(symbol: str, close_time, timeframe: str = "1m") -> Candlestick | None:
-    """
-    Retrieves the 1-minute candlestick that includes the given broker close time.
-
-    Args:
-        symbol (str): Trading symbol, e.g. 'EURUSD'.
-        close_time (datetime): The broker's close time (usually from order.done_broker_time).
-        timeframe (str): The candlestick timeframe (defaults to '1m').
-
-    Returns:
-        Candlestick object if found, else None.
-    """
-    try:
-        # Round down to the nearest minute
-        start_time = close_time.replace(second=0, microsecond=0)
-        end_time = start_time + timedelta(minutes=1)
-
-        return (
-            Candlestick.objects
-            .filter(
-                symbol=symbol,
-                timeframe=timeframe,
-                broker_time__gte=start_time,
-                broker_time__lt=end_time
-            )
-            .order_by('broker_time')
-            .first()
-        )
-    except Exception as err:
-        return None

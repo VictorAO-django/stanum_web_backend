@@ -53,6 +53,9 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Define ASGI application
+ASGI_APPLICATION = "stanum_web.asgi.application"
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -75,6 +78,7 @@ INSTALLED_APPS = [
     #Created apps
     'account',
     'stanum_socket',
+    'trading',
 ]
 
 MIDDLEWARE = [
@@ -170,8 +174,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')

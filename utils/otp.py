@@ -15,7 +15,7 @@ class UserOtp:
         
     def generate_otp(self):
         """Generate a 4-digit OTP."""
-        self.otp = str(random.randint(1000, 9999))
+        self.otp = str(random.randint(100000, 999999))
         return self.otp
 
     def send_otp(self, user):

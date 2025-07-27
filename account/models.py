@@ -2,12 +2,18 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.utils import timezone
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from uuid import uuid4
 from django.contrib.postgres.fields import ArrayField, JSONField 
 import datetime, secrets
 from datetime import timedelta
+
+phone_validator = RegexValidator(
+    regex=r'^\+\d{6,15}$',
+    message="Phone number must be entered in the format: +234xxxxxxxxxx. Up to 15 digits allowed."
+)
 
 def generate_token():
     return secrets.token_hex(32)  # 64-char string
@@ -81,7 +87,22 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     email = models.EmailField(blank=False, unique=True)
+    full_name = models.CharField(blank=False, max_length=255)
     username = models.CharField(blank=True, null=True, max_length=255)
+    date_of_birth = models.CharField(max_length=255, blank=False)
+    phone_number = models.CharField(
+        max_length=16,
+        unique=True,
+        null=True,
+        validators=[phone_validator],
+        help_text="Enter your Number in international format, e.g. +234XXXXXXXXXX",
+        error_messages={
+            'unique': 'This phone number is already registered',
+            'required': 'We need your phone to onboard you.'
+        }
+    )
+    country = models.CharField(max_length=255, blank=False)
+
     email_verified = models.BooleanField(default=False)
     has_accepted_terms = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
@@ -107,38 +128,7 @@ class User(AbstractUser):
                 return False
             return True
         return False    
-
-class MT5Account(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    account_number = models.CharField(max_length=50)  # MT5 login/account number
-    password = models.CharField(max_length=100)       # Use encryption in production
-    server = models.CharField(max_length=100)         # e.g., ICMarketsSC-Live03
-    account_id = models.CharField(max_length=100, blank=True, null=True)  # MetaApi ID
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    current = models.BooleanField(default=True, blank=True, null=True)
-
-    name = models.CharField(max_length=255, blank=True, null=True)
-    broker = models.CharField(max_length=255, blank=True, null=True)
-    platform = models.CharField(max_length=10, blank=True, null=True)  # e.g. 'mt5'
-    type = models.CharField(max_length=50, blank=True, null=True)  # e.g. 'ACCOUNT_TRADE_MODE_DEMO'
-    currency = models.CharField(max_length=10, blank=True, null=True)
-    balance = models.FloatField(default=0)
-    equity = models.FloatField(default=0)
-    margin = models.FloatField(default=0)
-    free_margin = models.FloatField(default=0)
-    leverage = models.IntegerField(default=0)
-    margin_level = models.FloatField(null=True, blank=True)
-    credit = models.FloatField(default=0)
-    trade_allowed = models.BooleanField(default=False)
-    investor_mode = models.BooleanField(default=False)
-    margin_mode = models.CharField(max_length=100, blank=True, null=True)
-    account_currency_exchange_rate = models.FloatField(null=True, blank=True)
-    last_updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.account_number} - {self.account_id}"
-    
+  
 
 class OTP(models.Model):
     EVENT_CHOICES = (
@@ -151,7 +141,7 @@ class OTP(models.Model):
     object_id = models.PositiveIntegerField()
     user = GenericForeignKey('content_type', 'object_id')
 
-    otp_code = models.CharField(max_length=4)
+    otp_code = models.CharField(max_length=6)
     event = models.CharField(choices=EVENT_CHOICES, max_length=50)  # Type of event that triggered OTP
     generated_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)  # OTP expiry time
