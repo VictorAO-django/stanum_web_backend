@@ -44,6 +44,9 @@ GLOBAL_SERVICE_NAME = os.getenv("GLOBAL_SERVICE_NAME",'Stanum')
 
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
