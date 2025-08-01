@@ -85,40 +85,9 @@ class DailyAccountStatsSerializer(serializers.ModelSerializer):
 
 
 class TradingAccountSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    is_active = serializers.ReadOnlyField()
-    daily_loss_limit_amount = serializers.ReadOnlyField()
-    max_drawdown_amount = serializers.ReadOnlyField()
-    recent_trades = TradeSerializer(many=True, read_only=True, source='trades')
-    recent_activities = AccountActivitySerializer(many=True, read_only=True, source='activities')
-    
     class Meta:
         model = TradingAccount
-        fields = [
-            'id', 'user', 'metaapi_account_id', 'login', 'account_type', 'status',
-            'server', 'leverage', 'balance', 'equity', 'margin', 'free_margin',
-            'margin_level', 'risk_daily_loss_limit', 'risk_max_drawdown',
-            'risk_profit_target', 'max_daily_trades', 'disable_reason',
-            'disabled_at', 'completed_at', 'is_active', 'daily_loss_limit_amount',
-            'max_drawdown_amount', 'recent_trades', 'recent_activities',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = [
-            'id', 'metaapi_account_id', 'login', 'balance', 'equity', 'margin',
-            'free_margin', 'margin_level', 'disable_reason', 'disabled_at',
-            'completed_at', 'is_active', 'daily_loss_limit_amount',
-            'max_drawdown_amount', 'recent_trades', 'recent_activities',
-            'created_at', 'updated_at'
-        ]
-    
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        # Limit recent trades and activities to latest 10
-        if 'recent_trades' in data:
-            data['recent_trades'] = data['recent_trades'][:10]
-        if 'recent_activities' in data:
-            data['recent_activities'] = data['recent_activities'][:10]
-        return data
+        fields = '__all__'
 
 
 class AccountCreateRequestSerializer(serializers.Serializer):

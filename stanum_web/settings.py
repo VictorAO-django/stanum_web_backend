@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'account',
     'stanum_socket',
     'trading',
+    'challenge',
 ]
 
 MIDDLEWARE = [
@@ -225,7 +226,7 @@ REST_FRAMEWORK = {
 }
 
 CUSTOM_AUTH = {
-    'ACCESS_TOKEN_LIFESPAN_MINUTES': 15,
+    'ACCESS_TOKEN_LIFESPAN_MINUTES': 60,
     'REFRESH_TOKEN_LIFESPAN_DAYS': 30,
 }
 
