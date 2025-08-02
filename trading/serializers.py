@@ -85,9 +85,15 @@ class DailyAccountStatsSerializer(serializers.ModelSerializer):
 
 
 class TradingAccountSerializer(serializers.ModelSerializer):
+    challenge_name = serializers.SerializerMethodField()
     class Meta:
         model = TradingAccount
         fields = '__all__'
+
+    def get_challenge_name(self, obj):
+        if obj.challenge:
+            return obj.challenge.name
+        return ""
 
 
 class AccountCreateRequestSerializer(serializers.Serializer):

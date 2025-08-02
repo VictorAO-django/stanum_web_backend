@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'stanum_socket',
     'trading',
     'challenge',
+    'payment',
 ]
 
 MIDDLEWARE = [
@@ -313,3 +314,9 @@ PROP_FIRM_SETTINGS = {
         'XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL',
     ],
 }
+
+
+# NOWPayments configuration
+NOWPAYMENTS_API_KEY = os.getenv('NOWPAYMENTS_API_KEY')
+NOWPAYMENTS_IPN_SECRET = os.getenv('NOWPAYMENTS_IPN_SECRET')
+NOWPAYMENTS_BASE_URL = os.getenv('NOWPAYMENTS_BASE_URL')

@@ -4,7 +4,7 @@ from django.utils import timezone
 from decimal import Decimal
 import json
 from django.contrib.auth import get_user_model
-
+from challenge.models import PropFirmChallenge
 User = get_user_model()
 
 class TradingAccount(models.Model):
@@ -24,10 +24,13 @@ class TradingAccount(models.Model):
     
     # Basic account info
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trading_accounts')
+    challenge = models.ForeignKey(PropFirmChallenge, null=True, on_delete=models.CASCADE)
+
     metaapi_account_id = models.CharField(max_length=100, unique=True, db_index=True)
     login = models.CharField(max_length=50)
     password = models.CharField(max_length=100)  # Consider encrypting this
     account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES)
+    size = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     
     # Account settings
@@ -52,6 +55,8 @@ class TradingAccount(models.Model):
     disabled_at = models.DateTimeField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
     
+    selected = models.BooleanField(default=True)
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

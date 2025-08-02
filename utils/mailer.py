@@ -9,6 +9,8 @@ from utils.helper import format_date
 
 from utils.exception import *
 
+from challenge.models import *
+from payment.models import *
 class Mailer:
     def __init__(self, email=None, service=None):
         self.sender_email = 'noreply@stanum.com' #default sender email
@@ -84,3 +86,21 @@ class Mailer:
             
         self.html_content = render_to_string('emails/otp.html', context)
         self.send_with_template()
+
+    def payment_successful(self, payment: Payment, challenge: PropFirmChallenge):
+        self.subject = "Payment Received Successfully"
+        self.message = f"Your payment of {payment.price_amount} for {challenge.name} was received."
+
+        self.send()
+
+    def payment_failed(self, payment: Payment, challenge: PropFirmChallenge):
+        self.subject = "Payment Failed"
+        self.message = f"Your payment of {payment.price_amount} for {challenge.name} failed."
+
+        self.send()
+
+    def payment_expired(self, payment: Payment, challenge: PropFirmChallenge):
+        self.subject = "Payment SessionExpired"
+        self.message = f"Your payment session of {payment.price_amount} for {challenge.name} has expired."
+
+        self.send()
