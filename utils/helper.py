@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
+from trading.models import TradingAccount
 
 User = get_user_model()
 
@@ -111,3 +112,10 @@ def format_date(date):
         suffix = 'th'
         
     return f"{day}{suffix} of {month} {year}"
+
+
+def get_selected_account(user) -> TradingAccount:
+    q = TradingAccount.objects.filter(user=user).order_by('-selected_date')
+    if q.exists():
+        return q.first()
+    return None

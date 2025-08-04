@@ -149,13 +149,13 @@ class SignupView(APIView):
                 data={'id': user.id, 'email': user.email},
                 http_status=status.HTTP_201_CREATED
             )
-        else:
-            return custom_response(
-                status="error",
-                message = str(next(iter(serializer.errors.values()))[0]),
-                data=serializer.errors,
-                http_status=status.HTTP_403_FORBIDDEN
-            )
+
+        return custom_response(
+            status="error",
+            message = str(next(iter(serializer.errors.values()))[0]),
+            data=serializer.errors,
+            http_status=status.HTTP_403_FORBIDDEN
+        )
 
 
 class ResendOtpView(APIView):

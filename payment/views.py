@@ -1,22 +1,25 @@
+import json, uuid, random
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.http import HttpResponse
+from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from .models import Payment
-from .serializers import PaymentCreateSerializer, PaymentSerializer, EstimateSerializer
+from .models import *
+from .serializers import *
 from service.now_payment import NOWPaymentsService
 from utils.mailer import Mailer
-import json
-import uuid
 
 from challenge.models import *
 from trading.models import *
+
+from service.paystack import PaystackService
+from utils.helper import custom_response
 
 User = get_user_model()
 
@@ -77,6 +80,7 @@ class PaymentCreateAPIView(APIView):
 
         serializer = PaymentCreateSerializer(data=payload)
         if serializer.is_valid():
+
             # Create payment record
             order_id = f"STMCLG-{challenge.id}-{request.user.id}"
             payment = Payment.objects.create(
@@ -118,7 +122,12 @@ class PaymentCreateAPIView(APIView):
             response_serializer = PaymentSerializer(payment)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return custom_response(
+            status="error",
+            message = str(next(iter(serializer.errors.values()))[0]),
+            data=serializer.errors,
+            http_status=status.HTTP_403_FORBIDDEN
+        )
 
 class PaymentListAPIView(ListAPIView):
     """List user's payments"""
@@ -260,15 +269,201 @@ class PaymentIPNAPIView(APIView):
             server="MetaQuotes-Demo",
             leverage=100,
         )
-        Mailer(user.email).payment_successful(payment, challenge)
+        Mailer(user.email).payment_successful(challenge.challenge_fee, challenge)
         print(f"Payment {payment.order_id} completed successfully")
     
     def handle_payment_failure(self, payment: Payment, challenge: PropFirmChallenge, user):
         """Handle failed payment - override this method for custom logic"""
-        Mailer(user.email).payment_failed(payment, challenge)
+        Mailer(user.email).payment_failed(challenge.challenge_fee, challenge)
         print(f"Payment {payment.order_id} failed")
     
     def handle_payment_expired(self, payment: Payment, challenge: PropFirmChallenge, user):
         """Handle expired payment - override this method for custom logic"""
-        Mailer(user.email).payment_expired(payment, challenge)
+        Mailer(user.email).payment_expired(challenge.challenge_fee, challenge)
         print(f"Payment {payment.order_id} expired")
+
+
+
+class PaystackPaymentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        payload = request.data.copy()
+        challenge_id = payload.pop('challenge_id', 0)
+        challenge =  get_object_or_404(PropFirmChallenge, id=challenge_id)
+
+        payload['amount'] = challenge.challenge_fee
+        serializer = TransactionCreateSerializer(data=payload)
+        
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'errors': str(next(iter(serializer.errors.values()))[0])
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Generate unique reference
+            reference = f"txn_{uuid.uuid4().hex[:12]}"
+            
+            # Create transaction record
+            transaction = Transaction.objects.create(
+                user=request.user,
+                reference=reference,
+                amount=serializer.validated_data['amount'],
+                payment_method=serializer.validated_data['payment_method']
+            )
+            
+            # Initialize with Paystack
+            paystack = PaystackService()
+            frontend_url = request.META.get('HTTP_ORIGIN', 'http://localhost:5173')
+            callback_url = f"{frontend_url}/dashboard?reference={reference}"
+            
+            metadata = {
+                'user_id': request.user.id,
+                'transaction_id': str(transaction.id),
+                'payment_method': serializer.validated_data['payment_method'],
+                'challenge_id': challenge.id,
+            }
+            
+            result = paystack.initialize_transaction(
+                email=request.user.email,
+                amount=serializer.validated_data['amount'],
+                reference=reference,
+                payment_method=serializer.validated_data['payment_method'],
+                callback_url=callback_url,
+                metadata=metadata
+            )
+            
+            if result.get('status'):
+                data = result.get('data', {})
+                transaction.paystack_reference = data.get('reference')
+                transaction.authorization_url = data.get('authorization_url')
+                transaction.access_code = data.get('access_code')
+                transaction.save()
+                
+                return Response({
+                    'success': True,
+                    'authorization_url': data.get('authorization_url')
+                })
+            else:
+                transaction.status = 'failed'
+                transaction.save()
+                return Response({
+                    'success': False,
+                    'message': result.get('message', 'Payment initialization failed')
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class PaystackVerificationView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, reference):
+        try:
+            transaction = get_object_or_404(Transaction, reference=reference, user=request.user)
+            
+            # Verify with Paystack
+            paystack = PaystackService()
+            result = paystack.verify_transaction(reference)
+            
+            if result.get('status') and result.get('data'):
+                data = result['data']
+                
+                if data.get('status') == 'success':
+                    transaction.status = 'success'
+                else:
+                    transaction.status = 'failed'
+            else:
+                transaction.status = 'failed'
+            
+            transaction.save()
+            
+            serializer = TransactionSerializer(transaction)
+            return Response({
+                'success': True,
+                'data': serializer.data
+            })
+
+        except Transaction.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Transaction not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class PaystackWebhookView(APIView):
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    @transaction.atomic
+    def post(self, request):      
+        signature_header = request.headers.get('x-paystack-signature') 
+
+        try:
+            payload = request.data
+            event = payload.get('event')
+            data = payload.get('data', {})
+            
+            with open("logs/paystack_webhook_log.json", "w") as f:
+                f.write(json.dumps(payload, indent=2))
+                f.write("\n\n")  # For spacing between logs
+
+            # Handle event
+            reference = data.get('reference')
+            meta = data.get('metadata', {})
+
+            if isinstance(meta, str):
+                try:
+                    meta = json.loads(meta)
+                except json.JSONDecodeError:
+                    meta = {}  # Default to empty dict if error
+            
+            challenge_id = meta.get('challenge_id', 0)
+            challenge = get_object_or_404(PropFirmChallenge, id=challenge_id)
+            if reference:
+                try:
+                    transaction = Transaction.objects.get(reference=reference)
+                    if transaction.status != 'pending':
+                        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+                    
+                    user = transaction.user
+
+                    if event == 'charge.success':
+                        idx = str(random.randint(100000, 999999))
+                        transaction.status = 'success'
+                        
+                        account = TradingAccount.objects.create(
+                            user=user,
+                            challenge=challenge,
+                            metaapi_account_id=f"metaapi_{idx}",
+                            login=idx,
+                            password="securepassword123",
+                            account_type="challenge",
+                            size=Decimal(challenge.account_size),
+                            server="MetaQuotes-Demo",
+                            leverage=100,
+                        )
+                        Mailer(user.email).payment_successful(challenge.challenge_fee, challenge)
+
+                    elif event in ['charge.failed', 'charge.cancelled']:
+                        transaction.status = 'failed'
+                    transaction.save()
+                except Transaction.DoesNotExist:
+                    pass  # Optionally log this too
+            
+            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(str(e))
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)

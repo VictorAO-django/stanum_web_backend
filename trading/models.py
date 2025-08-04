@@ -55,7 +55,7 @@ class TradingAccount(models.Model):
     disabled_at = models.DateTimeField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
     
-    selected = models.BooleanField(default=True)
+    selected_date = models.DateTimeField(default=timezone.now, null=True, blank=True)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -63,7 +63,7 @@ class TradingAccount(models.Model):
     
     class Meta:
         db_table = 'trading_accounts'
-        ordering = ['-created_at']
+        ordering = ['-created_at', '-selected_date']
         indexes = [
             models.Index(fields=['user', 'account_type']),
             models.Index(fields=['status']),

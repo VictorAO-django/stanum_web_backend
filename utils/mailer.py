@@ -87,20 +87,20 @@ class Mailer:
         self.html_content = render_to_string('emails/otp.html', context)
         self.send_with_template()
 
-    def payment_successful(self, payment: Payment, challenge: PropFirmChallenge):
+    def payment_successful(self, amount, challenge: PropFirmChallenge):
         self.subject = "Payment Received Successfully"
-        self.message = f"Your payment of {payment.price_amount} for {challenge.name} was received."
+        self.message = f"Your payment of ${amount} for {challenge.name} was received."
 
         self.send()
 
-    def payment_failed(self, payment: Payment, challenge: PropFirmChallenge):
+    def payment_failed(self, amount, challenge: PropFirmChallenge):
         self.subject = "Payment Failed"
-        self.message = f"Your payment of {payment.price_amount} for {challenge.name} failed."
+        self.message = f"Your payment of ${amount} for {challenge.name} failed."
 
         self.send()
 
-    def payment_expired(self, payment: Payment, challenge: PropFirmChallenge):
+    def payment_expired(self, amount, challenge: PropFirmChallenge):
         self.subject = "Payment SessionExpired"
-        self.message = f"Your payment session of {payment.price_amount} for {challenge.name} has expired."
+        self.message = f"Your payment session of ${amount} for {challenge.name} has expired."
 
         self.send()

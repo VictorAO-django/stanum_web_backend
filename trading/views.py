@@ -31,45 +31,47 @@ from .serializers import (
     AccountStatusSerializer, MetaAPIResponseSerializer
 )
 
+from utils.helper import *
+
 logger = logging.getLogger(__name__)
 
 # MetaAPI Service Configuration
 METAAPI_SERVICE_URL = getattr(settings, 'METAAPI_SERVICE_URL', 'http://localhost:8001')
 
-# class MetaAPIServiceMixin:
-#     """Mixin for making requests to the MetaAPI FastAPI service"""
+class MetaAPIServiceMixin:
+    """Mixin for making requests to the MetaAPI FastAPI service"""
     
-#     async def make_metaapi_request(self, method: str, endpoint: str, data: dict = None):
-#         """Make async request to MetaAPI service"""
-#         url = f"{METAAPI_SERVICE_URL}{endpoint}"
+    async def make_metaapi_request(self, method: str, endpoint: str, data: dict = None):
+        """Make async request to MetaAPI service"""
+        url = f"{METAAPI_SERVICE_URL}{endpoint}"
         
-#         try:
-#             async with aiohttp.ClientSession() as session:
-#                 if method.upper() == 'GET':
-#                     async with session.get(url) as response:
-#                         result = await response.json()
-#                         return result, response.status
-#                 elif method.upper() == 'POST':
-#                     async with session.post(url, json=data) as response:
-#                         result = await response.json()
-#                         return result, response.status
-#                 else:
-#                     raise ValueError(f"Unsupported method: {method}")
-#         except Exception as e:
-#             logger.error(f"MetaAPI service request failed: {str(e)}")
-#             return {'success': False, 'error': str(e)}, 500
+        try:
+            async with aiohttp.ClientSession() as session:
+                if method.upper() == 'GET':
+                    async with session.get(url) as response:
+                        result = await response.json()
+                        return result, response.status
+                elif method.upper() == 'POST':
+                    async with session.post(url, json=data) as response:
+                        result = await response.json()
+                        return result, response.status
+                else:
+                    raise ValueError(f"Unsupported method: {method}")
+        except Exception as e:
+            logger.error(f"MetaAPI service request failed: {str(e)}")
+            return {'success': False, 'error': str(e)}, 500
     
-#     def sync_metaapi_request(self, method: str, endpoint: str, data: dict = None):
-#         """Synchronous wrapper for async MetaAPI requests"""
-#         try:
-#             loop = asyncio.get_event_loop()
-#         except RuntimeError:
-#             loop = asyncio.new_event_loop()
-#             asyncio.set_event_loop(loop)
+    def sync_metaapi_request(self, method: str, endpoint: str, data: dict = None):
+        """Synchronous wrapper for async MetaAPI requests"""
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
         
-#         return loop.run_until_complete(
-#             self.make_metaapi_request(method, endpoint, data)
-#         )
+        return loop.run_until_complete(
+            self.make_metaapi_request(method, endpoint, data)
+        )
 
 
 # class StandardResultsSetPagination(PageNumberPagination):
@@ -454,22 +456,16 @@ METAAPI_SERVICE_URL = getattr(settings, 'METAAPI_SERVICE_URL', 'http://localhost
 #     def get(self, request):
 #         """Get dashboard data for current user"""
 #         user = request.user
-        
-#         # Get user's accounts
-#         accounts = TradingAccount.objects.filter(user=user).select_related('user')
-        
+#         account =  get_selected_account(user)
 #         # Get real-time data for all accounts
-#         real_time_data = {}
-#         for account in accounts:
-#             if account.is_active:
-#                 try:
-#                     response_data, response_status = self.sync_metaapi_request(
-#                         'GET', f'/accounts/{account.metaapi_account_id}/equity'
-#                     )
-#                     if response_status == 200 and response_data.get('success'):
-#                         real_time_data[account.id] = response_data
-#                 except Exception as e:
-#                     logger.error(f"Error fetching real-time data for account {account.id}: {e}")
+#         try:
+#             response_data, response_status = self.sync_metaapi_request(
+#                 'GET', f'/accounts/{account.metaapi_account_id}/equity'
+#             )
+#             if response_status == 200 and response_data.get('success'):
+#                 real_time_data[account.id] = response_data
+#         except Exception as e:
+#             logger.error(f"Error fetching real-time data for account {account.id}: {e}")
         
 #         # Calculate aggregated stats
 #         total_balance = sum(account.balance for account in accounts)
@@ -576,5 +572,18 @@ class TradingAccountView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        q = TradingAccount.objects.filter(user=user)
+        q = TradingAccount.objects.filter(user=user).order_by('-selected_date')
         return q
+    
+class SelectAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        user = self.request.user
+        acc = get_object_or_404(TradingAccount, id=id, user=user)
+        acc.selected_date = timezone.now()
+        acc.save()
+
+        q = TradingAccount.objects.filter(user=user).order_by('-selected_date')
+        data = TradingAccountSerializer(q, many=True).data
+        return Response(data, status=status.HTTP_200_OK)
