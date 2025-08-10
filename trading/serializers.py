@@ -84,6 +84,11 @@ class DailyAccountStatsSerializer(serializers.ModelSerializer):
         ]
 
 
+class DailySummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailyAccountStats
+        fields = ['created_at', 'starting_balance', 'starting_equity']
+
 class TradingAccountSerializer(serializers.ModelSerializer):
     challenge_name = serializers.SerializerMethodField()
     class Meta:

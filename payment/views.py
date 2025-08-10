@@ -15,10 +15,13 @@ from .serializers import *
 from service.now_payment import NOWPaymentsService
 from utils.mailer import Mailer
 
+from asgiref.sync import async_to_sync
+
 from challenge.models import *
 from trading.models import *
 
 from service.paystack import PaystackService
+from service.metaapi_request import *
 from utils.helper import custom_response
 
 User = get_user_model()
@@ -290,6 +293,7 @@ class PaystackPaymentView(APIView):
     def post(self, request):
         payload = request.data.copy()
         challenge_id = payload.pop('challenge_id', 0)
+        platform = payload.pop('platform', 'mt5')
         challenge =  get_object_or_404(PropFirmChallenge, id=challenge_id)
 
         payload['amount'] = challenge.challenge_fee
@@ -323,6 +327,7 @@ class PaystackPaymentView(APIView):
                 'transaction_id': str(transaction.id),
                 'payment_method': serializer.validated_data['payment_method'],
                 'challenge_id': challenge.id,
+                'platform': platform,
             }
             
             result = paystack.initialize_transaction(
@@ -430,6 +435,7 @@ class PaystackWebhookView(APIView):
                     meta = {}  # Default to empty dict if error
             
             challenge_id = meta.get('challenge_id', 0)
+            platform = meta.get('platform', 'mt5')
             challenge = get_object_or_404(PropFirmChallenge, id=challenge_id)
             if reference:
                 try:
@@ -443,10 +449,19 @@ class PaystackWebhookView(APIView):
                         idx = str(random.randint(100000, 999999))
                         transaction.status = 'success'
                         
+                        index = TradingAccount.objects.all().count() + 1
+                        mt5_account = async_to_sync(create_account)(
+                            type='challenge',
+                            index=index,
+                            login='1234567',
+                            password='abc123',
+                            platform=platform
+                        )
+
                         account = TradingAccount.objects.create(
                             user=user,
                             challenge=challenge,
-                            metaapi_account_id=f"metaapi_{idx}",
+                            metaapi_account_id=mt5_account.id,
                             login=idx,
                             password="securepassword123",
                             account_type="challenge",

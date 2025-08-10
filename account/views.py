@@ -385,7 +385,7 @@ class AccountVerificationView(APIView):
             status="success",
             message=f"Email verified.",
             data={
-                'token': str(token.access_token),
+                'access': str(token.access_token),
                 'refresh': str(token.refresh_token),
                 'user': {
                     'email': user.email,

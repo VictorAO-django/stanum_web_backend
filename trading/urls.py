@@ -13,5 +13,7 @@ urlpatterns = [
     # path('api/v1/metaapi/status/', views.MetaAPIServiceStatusView.as_view(), name='metaapi-status'),
 
     path('accounts', TradingAccountView.as_view()),
-    path('account/select/<int:id>', SelectAccountView.as_view())
+    path('account/select/<int:id>', SelectAccountView.as_view()),
+
+    path('accounts/<int:account_id>/stats', AccountStatsView.as_view(), name='account-stats'),
 ]

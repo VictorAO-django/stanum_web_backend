@@ -7,6 +7,8 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.db.models import Avg, Sum, Max, Min, Q, Count
+from django.db.models.functions import TruncDay, TruncMonth
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils import timezone
@@ -24,12 +26,7 @@ from .models import (
     TradingAccount, Trade, AccountActivity, 
     DailyAccountStats, UserProfile
 )
-from .serializers import (
-    TradingAccountSerializer, TradeSerializer, AccountActivitySerializer,
-    DailyAccountStatsSerializer, UserProfileSerializer,
-    AccountCreateRequestSerializer, TradeRequestSerializer,
-    AccountStatusSerializer, MetaAPIResponseSerializer
-)
+from .serializers import *
 
 from utils.helper import *
 
@@ -587,3 +584,94 @@ class SelectAccountView(APIView):
         q = TradingAccount.objects.filter(user=user).order_by('-selected_date')
         data = TradingAccountSerializer(q, many=True).data
         return Response(data, status=status.HTTP_200_OK)
+    
+
+class AccountStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, account_id):
+        user = request.user
+        try:
+            account = TradingAccount.objects.get(id=account_id, user=user)
+        except TradingAccount.DoesNotExist:
+            return Response({"error": "Account not found."}, status=404)
+
+        # Closed trades
+        trades = Trade.objects.filter(account=account, status='closed')
+        winning_trades = trades.filter(profit__gt=0)
+        losing_trades = trades.filter(profit__lt=0)
+
+        # Open trades
+        open_trades = Trade.objects.filter(account=account, status='open')
+        open_trade_data = list(open_trades.values(
+            'symbol', 'type', 'position_id', 'volume', 'open_price', 'current_price', 'profit', 'open_time'
+        ))
+
+        # Daily stats
+        daily_stats = DailyAccountStats.objects.filter(account=account)
+        days_with_trades = daily_stats.filter(trades_count__gt=0).count()
+        total_days = daily_stats.count()
+        min_required_days = 10
+
+        # Risk violations
+        risk_violations = AccountActivity.objects.filter(
+            account=account, activity_type='risk_violation'
+        ).count()
+
+        # Totals
+        total_profit = trades.aggregate(total=Sum('profit'))['total'] or 0
+        gross_profit = winning_trades.aggregate(total=Sum('profit'))['total'] or 0
+        gross_loss = losing_trades.aggregate(total=Sum('profit'))['total'] or 0
+
+        # Daily Chart Dataset
+        daily_chart_data = daily_stats.annotate(
+            date_str=TruncDay('date')
+        ).order_by('date').values('date_str', 'daily_pnl')
+
+        # Monthly Chart Dataset
+        monthly_chart_data = (
+            daily_stats.annotate(month=TruncMonth('date'))
+            .values('month')
+            .annotate(monthly_pnl=Sum('daily_pnl'))
+            .order_by('month')
+        )
+
+        response_data = {
+            "account_type": account.account_type,
+            "balance": account.balance,
+            "equity": account.equity,
+            "profitability": account.equity - account.balance,
+            "avg_winning_trade": winning_trades.aggregate(avg=Avg('profit'))['avg'] or 0,
+            "avg_losing_trade": losing_trades.aggregate(avg=Avg('profit'))['avg'] or 0,
+            "min_trading_days": f"{days_with_trades}/{min_required_days}",
+            "consistency": round((days_with_trades / total_days) * 100, 2) if total_days else 0,
+            "profit_target": account.size * account.risk_profit_target,
+            "profit_made": total_profit,
+            "soft_breach_limit": f"{risk_violations}/2",
+            "average_win": winning_trades.aggregate(avg=Avg('profit'))['avg'] or 0,
+            "average_loss": losing_trades.aggregate(avg=Avg('profit'))['avg'] or 0,
+            "profit_factor": round(gross_profit / abs(gross_loss), 2) if gross_loss else '∞',
+            "win_ratio": round((winning_trades.count() / trades.count()) * 100, 2) if trades.exists() else 0,
+            "HWM_balance": daily_stats.aggregate(max=Max('starting_balance'))['max'] or 0,
+            "HWM_equity": daily_stats.aggregate(max=Max('highest_equity'))['max'] or 0,
+            "LWM_balance": daily_stats.aggregate(min=Min('starting_balance'))['min'] or 0,
+            "LWM_equity": daily_stats.aggregate(min=Min('lowest_equity'))['min'] or 0,
+            
+            "summary": DailySummarySerializer(daily_stats.order_by('-created_at'), many=True).data,
+
+            "open_trades": open_trade_data,
+            "daily_chart_data": [
+                {
+                    "date": stat["date_str"].strftime('%Y-%m-%d'),
+                    "pnl": float(stat["daily_pnl"])
+                } for stat in daily_chart_data
+            ],
+            "monthly_chart_data": [
+                {
+                    "month": stat["month"].strftime('%Y-%m'),
+                    "pnl": float(stat["monthly_pnl"])
+                } for stat in monthly_chart_data
+            ]
+        }
+
+        return Response(response_data)

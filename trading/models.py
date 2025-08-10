@@ -5,6 +5,7 @@ from decimal import Decimal
 import json
 from django.contrib.auth import get_user_model
 from challenge.models import PropFirmChallenge
+
 User = get_user_model()
 
 class TradingAccount(models.Model):

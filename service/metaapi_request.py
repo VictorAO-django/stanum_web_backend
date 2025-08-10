@@ -1,5 +1,5 @@
 import requests
-from typing import Dict, Any
+from typing import Dict, Any, Literal
 from django.conf import settings
 from metaapi_cloud_sdk import MetaApi
 import logging
@@ -93,38 +93,43 @@ class MetaApiRequest:
         """Get account statistics"""
         return self._request('GET', f'/accounts/{account_id}/stats')
     
-    
 
-async def create_account():
+async def create_account(
+    type: str,
+    index: str,
+    login: str,
+    password: str,
+    platform: Literal['mt4', 'mt5']
+):
     try:
         api = MetaApi(settings.METAAPI_TOKEN)
+
         account = await api.metatrader_account_api.create_account(account={
-            'name': 'Trading account #1',
+            'name': f'Stanum Prop Firm {type} account #{index}',
             'type': 'cloud',
-            'login': '1234567',
-            'platform': 'mt5',
-            # password can be investor password for read-only access
-            'password': 'qwerty',
+            'login': login,
+            'platform': platform,
+            'password': password,  # could be investor password
             'server': 'ICMarketsSC-Demo',
             'magic': 123456,
-            'keywords': ["Raw Trading Ltd"],
-            'quoteStreamingIntervalInSeconds': 2.5, # set to 0 to receive quote per tick
-            'reliability': 'high' # set this field to 'high' value if you want to increase uptime of your account (recommended for production environments)
+            'keywords': ['Raw Trading Ltd'],
+            'quoteStreamingIntervalInSeconds': 2.5,
+            'reliability': 'high'
         })
+
         return account
-    
+
     except Exception as err:
-        # process errors
         if hasattr(err, 'details'):
-            # returned if the server file for the specified server name has not been found
-            # recommended to check the server name or create the account using a provisioning profile
             if err.details == 'E_SRV_NOT_FOUND':
-                print(err)
-            # returned if the server has failed to connect to the broker using your credentials
-            # recommended to check your login and password
+                print('Server not found:', err)
             elif err.details == 'E_AUTH':
-                print(err)
-            # returned if the server has failed to detect the broker settings
-            # recommended to try again later or create the account using a provisioning profile
+                print('Authentication failed:', err)
             elif err.details == 'E_SERVER_TIMEZONE':
-                print(err)
+                print('Server timezone detection failed:', err)
+            else:
+                print('Other MetaAPI error:', err)
+        else:
+            print('Unexpected error:', err)
+
+        return None  # or raise if you want to fail upwards
