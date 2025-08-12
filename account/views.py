@@ -1,6 +1,8 @@
 import json
+from decimal import Decimal
 from django.utils.decorators import method_decorator
 from django.http import Http404
+from django.db.models import Sum, Avg, Count, Max, Min
 from django.views.decorators.cache import cache_page
 from django.utils.dateparse import parse_datetime
 from metaapi_cloud_sdk import MetaApi
@@ -67,7 +69,8 @@ class TokenRefreshView(APIView):
         }
     )
     def post(self, request):
-        refresh_token = request.data.get('refresh')
+        refresh_token = request.data.get('refresh_token')
+        print("REFRESH TOKEN", refresh_token)
         try:
             token = CustomAuthToken.objects.get(refresh_token=refresh_token)
 
@@ -81,10 +84,13 @@ class TokenRefreshView(APIView):
             }, status=200)
         
         except Exception as e:
+            print("REFRESH ERROR", str(e))
             return Response({"message": str(e)}, status=400)
         except AssertionError as e:
+            print("REFRESH ERROR", str(e))
             return Response({"message": str(e)}, status=400)
-        except CustomAuthToken.DoesNotExist:
+        except CustomAuthToken.DoesNotExist as e:
+            print("REFRESH ERROR", str(e))
             return Response({'message': 'Invalid refresh token'}, status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -98,6 +104,15 @@ class SignupView(APIView):
         operation_description="This is to create an account",
         operation_id="account-creation",
         request_body=RegistrationSerializer,
+        manual_parameters=[
+            openapi.Parameter(
+                name="rf",
+                in_=openapi.IN_QUERY,
+                description="Referral code from inviter",
+                type=openapi.TYPE_STRING,
+                required=False
+            )
+        ],
         responses={
             201: openapi.Response(
                 description="Created",
@@ -142,6 +157,19 @@ class SignupView(APIView):
             otp = UserOtp(user.email, 'registration')
             otp.generate_otp()
             otp.send_otp(user)
+
+            # Extract referrals
+            ref_code = request.query_params.get('rf', '').strip()
+            referrer = None
+
+            if ref_code:
+                referrer = Referral.objects.filter(code=ref_code).first()
+
+            # Only create referral profile if it doesn't exist
+            referral_obj, created = Referral.objects.get_or_create(
+                user=user,
+                defaults={'referred_by': referrer.user if referrer and referrer.user != user else None}
+            )
 
             return custom_response(
                 status="success",
@@ -299,6 +327,7 @@ class LoginView(APIView):
                             'user': {
                                 'email': user.email,
                                 'full_name': user.full_name,
+                                'referral_link': user.referral_profile.get_referral_link(),
                             },
                         }
                     )
@@ -555,4 +584,127 @@ class PasswordResetView(APIView):
             message=f"Invalid Data.",
             data=serializer.errors,
             http_status=status.HTTP_403_FORBIDDEN
+        )
+    
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        request_body=ChangePasswordSerializer,
+    )
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        data = {}
+            
+        if serializer.is_valid():
+            old_password = serializer.validated_data['old_password']
+            new_password = serializer.validated_data['new_password']
+    
+            user = request.user
+            if user.check_password(old_password):
+                if check_special_character(new_password) == False:
+                    return Response({"message": "Password must contains a special character."}, status=status.HTTP_400_BAD_REQUEST)
+                user.set_password(new_password)
+                user.save()
+
+                token, created = CustomAuthToken.objects.get_or_create(
+                    user_type=ContentType.objects.get_for_model(user),
+                    user_id=user.id,
+                )
+                token.rotate_access_token()
+
+                return custom_response(
+                    status="success",
+                    message="Password Change Successful",
+                    data={}
+                )
+            else:
+                return custom_response(
+                    status="error",
+                    message="Your current password is incorrect",
+                    data={},
+                    http_status=status.HTTP_403_FORBIDDEN
+                )
+        else:
+            return custom_response(
+                status="error",
+                message=str(next(iter(serializer.errors.values()))[0]),
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ReferralDetailView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name="start_date",
+                in_=openapi.IN_QUERY,
+                description="Statistics Start Date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE,
+                required=False
+            ),
+            openapi.Parameter(
+                name="end_date",
+                in_=openapi.IN_QUERY,
+                description="Statistics End Date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE,
+                required=False
+            )
+        ],
+    )
+    def get(self, request, *args, **kwargs):
+        user=request.user
+        start_date_str = request.query_params.get('start_date', '').strip()
+        end_date_str = request.query_params.get('end_date', '').strip()
+
+        # Parse dates safely
+        start_date = None
+        end_date = None
+        date_format = "%Y-%m-%d"
+        try:
+            if start_date_str:
+                start_date = make_aware(datetime.datetime.strptime(start_date_str, date_format))
+            if end_date_str:
+                end_date = make_aware(datetime.datetime.strptime(end_date_str, date_format))
+        except ValueError:
+            return custom_response(
+                status="error",
+                message="Invalid date format. Use YYYY-MM-DD.",
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        ref = get_object_or_404(Referral, user=user)
+        earning, _ = ReferralEarning.objects.get_or_create(user=user)
+
+        # Build filters dynamically
+        earning_filters = {'user': user, 'transaction_type': 'credit'}
+        referrals_filters = {'referred_by': user}
+
+        if start_date:
+            earning_filters['created_at__gte'] = start_date
+            referrals_filters['created_at__gte'] = start_date
+        if end_date:
+            earning_filters['created_at__lte'] = end_date
+            referrals_filters['created_at__lte'] = end_date
+
+        earning_transactions = ReferalEarningTransaction.objects.filter(**earning_filters).aggregate(
+            reward=Sum('amount')
+        )
+
+        referrals = Referral.objects.filter(**referrals_filters)
+        
+
+        return custom_response(
+            status="success",
+            message="Referral details retrieved",
+            data={
+                'link': ref.get_referral_link(),
+                'balance': earning.amount,
+                'stats': {
+                    'count': referrals.count(),
+                    'reward': earning_transactions['reward'] or 0.00
+                }
+            }
         )

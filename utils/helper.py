@@ -1,12 +1,16 @@
 import re
+from decimal import Decimal
 from rest_framework.views import exception_handler
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
+from django.db import transaction
 from trading.models import TradingAccount
+from account.models import Referral, ReferralEarning, ReferalEarningTransaction
 
 User = get_user_model()
 
@@ -90,6 +94,16 @@ def has_no_special_character(value):
         return False
     return True
 
+def check_special_character(password: str)->bool:
+    # Define the regular expression for special characters
+    special_char_pattern = r'[!@#$%^&*(),.?":{}|<>]'
+    
+    # Search for a special character in the password
+    if re.search(special_char_pattern, password):
+        return True
+    else:
+        return False
+
 def format_date(date):
     """Generates and returns the formatted date
 
@@ -119,3 +133,36 @@ def get_selected_account(user) -> TradingAccount:
     if q.exists():
         return q.first()
     return None
+
+
+def award_referral_reward(referral: Referral, amount: int | Decimal):
+    """
+    Awards a referral reward to the user who referred the given referral.user.
+    
+    Only awards if:
+    - referral has a referrer (referred_by is not None)
+    - referral.reward_used is False
+    """
+    if not referral.referred_by or referral.reward_used:
+        return  # No referrer or already rewarded
+    
+    # Ensure we're working with Decimal for precision
+    amount = Decimal(amount)
+    percentage = Decimal(str(settings.REFERRAL_PROFIT_PERCENTAGE)) / Decimal("100")
+    reward_amount = percentage * amount
+
+    with transaction.atomic():
+        earning, _ = ReferralEarning.objects.get_or_create(user=referral.referred_by)
+        earning.amount += reward_amount
+        earning.save()
+
+        ReferalEarningTransaction.objects.create(
+            user=referral.referred_by,
+            transaction_type="credit",
+            amount=reward_amount,
+            description=f"First deposit reward from {referral.user.full_name}"
+        )
+
+        # Mark reward as used so it won't be awarded twice
+        referral.reward_used = True
+        referral.save(update_fields=["reward_used"])

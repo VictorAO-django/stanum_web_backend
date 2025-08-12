@@ -38,7 +38,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 AUTH_USER_MODEL = "account.User"
 
-
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://127.0.0.1:5173/')
 METAAPI_TOKEN =os.getenv('METAAPI_TOKEN')
 GLOBAL_SERVICE_NAME = os.getenv("GLOBAL_SERVICE_NAME",'Stanum')
 
@@ -179,8 +179,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
@@ -325,3 +325,6 @@ NOWPAYMENTS_BASE_URL = os.getenv('NOWPAYMENTS_BASE_URL')
 PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 PAYSTACK_BASE_URL = os.getenv('PAYSTACK_BASE_URL', 'https://api.paystack.co')
+
+#Referral
+REFERRAL_PROFIT = os.getenv('REFERRAL_PROFIT_PERCENTAGE', 20)

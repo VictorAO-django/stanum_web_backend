@@ -9,6 +9,8 @@ from uuid import uuid4
 from django.contrib.postgres.fields import ArrayField, JSONField 
 import datetime, secrets
 from datetime import timedelta
+import uuid
+from django.utils.crypto import get_random_string
 
 phone_validator = RegexValidator(
     regex=r'^\+\d{6,15}$',
@@ -160,4 +162,65 @@ class OTP(models.Model):
 
     def __str__(self):
         return f"OTP for {self.user} - {self.event}"
-# Create your models here.
+
+
+
+def generate_referral_code():
+    return get_random_string(12).upper()
+
+class Referral(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="referral_profile")
+    code = models.CharField(max_length=12, unique=True, default=generate_referral_code)
+    referred_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="referrals_made"
+    )
+    reward_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_referral_link(self):
+        return f"{settings.FRONTEND_BASE_URL}signup?rf={self.code}"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.code}"
+
+
+class ReferralEarning(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="wallet")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateField(auto_now_add=True)
+
+    def deposit(self, value):
+        self.amount += value
+        self.save()
+
+    def withdraw(self, value):
+        if self.amount >= value:
+            self.amount -= value
+            self.save()
+            return True
+        return False
+
+    def __str__(self):
+        return f"{self.user.username} - Balance: {self.amount}"
+
+
+class ReferalEarningTransaction(models.Model):
+    TRANSACTION_TYPES = (
+        ('credit', 'Credit'),
+        ('debit', 'Debit'),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="transactions")
+    transaction_type = models.CharField(max_length=6, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.transaction_type.title()} - {self.amount} for {self.user.username}"

@@ -27,4 +27,7 @@ urlpatterns = [
     path('auth/password/forget', ForgetPasswordView.as_view()),
     path('auth/password/reset/validate-otp/<int:id>/<int:otp>', PasswordResetOTPValidationView.as_view()),
     path('auth/password/reset/<int:id>/<str:token>', PasswordResetView.as_view()),
+    path('auth/password/change', ChangePasswordView.as_view()),
+
+    path('referral/stats', ReferralDetailView.as_view()),
 ]

@@ -5612,3 +5612,1834 @@ INFO 2025-08-05 13:13:03,240 autoreload 18932 856 C:\Users\user\Documents\Projec
 INFO 2025-08-05 13:13:07,014 autoreload 16532 12740 Watching for file changes with StatReloader
 INFO 2025-08-05 13:17:12,330 autoreload 16532 12740 C:\Users\user\Documents\Project\stanum_web\service\metaapi_request.py changed, reloading.
 INFO 2025-08-05 13:17:15,137 autoreload 8832 8780 Watching for file changes with StatReloader
+INFO 2025-08-12 06:23:49,965 autoreload 7200 2732 Watching for file changes with StatReloader
+INFO 2025-08-12 06:24:30,009 runserver 7200 11600 [mHTTP GET /swagger/ 200 [0.12, 127.0.0.1:63183][0m
+INFO 2025-08-12 06:24:32,725 runserver 7200 11600 [mHTTP GET /admin/trading/tradingaccount/ 200 [4.57, 127.0.0.1:63182][0m
+INFO 2025-08-12 06:24:35,635 runserver 7200 11600 [mHTTP GET /admin/jsi18n/ 200 [2.86, 127.0.0.1:63182][0m
+WARNING 2025-08-12 06:24:36,058 log 7200 10140 Not Found: /favicon.ico
+WARNING 2025-08-12 06:24:36,058 runserver 7200 11600 [33mHTTP GET /favicon.ico 404 [0.27, 127.0.0.1:63182][0m
+ERROR 2025-08-12 06:54:30,360 log 7200 10140 Internal Server Error: /api/v1/challenge/balance
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\challenge\views.py", line 36, in get
+    balance = list(
+              ^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 398, in __iter__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 285, in __iter__
+    for row in compiler.results_iter(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1513, in results_iter
+    results = self.execute_sql(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 06:54:30,401 log 7200 5036 Internal Server Error: /api/v1/challenge/
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\generics.py", line 199, in get
+    return self.list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\mixins.py", line 46, in list
+    return Response(serializer.data)
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 686, in to_representation
+    return [
+           ^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 398, in __iter__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 06:54:30,445 runserver 7200 11600 [35;1mHTTP GET /api/v1/challenge/balance 500 [0.42, 127.0.0.1:63428][0m
+ERROR 2025-08-12 06:54:30,513 runserver 7200 11600 [35;1mHTTP GET /api/v1/challenge/ 500 [0.47, 127.0.0.1:63429][0m
+ERROR 2025-08-12 06:54:30,639 log 7200 10140 Internal Server Error: /api/v1/challenge/balance
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\challenge\views.py", line 36, in get
+    balance = list(
+              ^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 398, in __iter__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 285, in __iter__
+    for row in compiler.results_iter(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1513, in results_iter
+    results = self.execute_sql(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 06:54:30,670 runserver 7200 11600 [35;1mHTTP GET /api/v1/challenge/balance 500 [0.16, 127.0.0.1:63430][0m
+ERROR 2025-08-12 06:54:30,704 log 7200 5036 Internal Server Error: /api/v1/challenge/
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\generics.py", line 199, in get
+    return self.list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\mixins.py", line 46, in list
+    return Response(serializer.data)
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 686, in to_representation
+    return [
+           ^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 398, in __iter__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 06:54:30,730 runserver 7200 11600 [35;1mHTTP GET /api/v1/challenge/ 500 [0.21, 127.0.0.1:63428][0m
+INFO 2025-08-12 06:58:12,134 runserver 7200 11600 [mHTTP GET /api/v1/challenge/ 200 [4.68, 127.0.0.1:63490][0m
+ERROR 2025-08-12 06:58:12,620 runserver 7200 11600 [35;1mHTTP GET /api/v1/challenge/ 500 [0.48, 127.0.0.1:63490][0m
+INFO 2025-08-12 06:58:13,002 runserver 7200 11600 [mHTTP GET /api/v1/challenge/balance 200 [5.56, 127.0.0.1:63489][0m
+INFO 2025-08-12 06:58:18,152 autoreload 19016 10216 Watching for file changes with StatReloader
+INFO 2025-08-12 06:58:35,674 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [1.63, 127.0.0.1:63513][0m
+INFO 2025-08-12 06:58:35,687 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [1.62, 127.0.0.1:63514][0m
+INFO 2025-08-12 06:58:37,251 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [1.57, 127.0.0.1:63513][0m
+INFO 2025-08-12 06:58:37,253 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [1.56, 127.0.0.1:63514][0m
+INFO 2025-08-12 07:02:26,111 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [2.47, 127.0.0.1:63530][0m
+INFO 2025-08-12 07:02:26,116 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [2.46, 127.0.0.1:63531][0m
+INFO 2025-08-12 07:02:27,317 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [1.20, 127.0.0.1:63530][0m
+INFO 2025-08-12 07:02:27,474 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [1.35, 127.0.0.1:63531][0m
+WARNING 2025-08-12 07:18:44,559 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:44,560 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:44,578 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:44,580 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.02, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:45,202 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:45,203 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:45,216 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:45,217 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:45,581 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:45,582 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:45,593 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:45,595 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:45,910 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:45,910 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:45,918 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:45,918 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:46,216 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:46,217 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:46,226 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:46,227 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:46,515 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:46,515 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:46,524 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:46,525 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:46,841 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:46,844 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:46,854 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:46,857 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:47,232 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:47,233 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.02, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:47,243 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:47,245 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:47,573 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:47,574 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:47,585 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:47,586 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:47,929 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:47,930 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:47,939 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:47,940 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:48,271 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:48,272 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:48,286 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:48,287 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:48,557 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:48,558 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:48,567 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:48,568 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:48,839 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:48,840 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:48,848 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:48,850 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:49,141 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:49,142 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:49,151 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:49,152 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:49,433 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:49,434 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:49,463 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:49,465 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:49,779 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:49,780 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:49,791 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:49,791 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:50,083 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:50,084 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:50,092 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:50,093 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:50,395 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:50,396 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:18:50,403 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:18:50,404 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63591][0m
+WARNING 2025-08-12 07:20:52,339 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:20:52,339 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.01, 127.0.0.1:63661][0m
+WARNING 2025-08-12 07:20:52,376 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:20:52,377 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.03, 127.0.0.1:63661][0m
+WARNING 2025-08-12 07:20:53,096 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:20:53,096 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.00, 127.0.0.1:63661][0m
+WARNING 2025-08-12 07:20:53,106 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 07:20:53,106 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.00, 127.0.0.1:63661][0m
+INFO 2025-08-12 07:22:43,355 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [3.77, 127.0.0.1:63695][0m
+INFO 2025-08-12 07:22:43,434 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [3.87, 127.0.0.1:63694][0m
+INFO 2025-08-12 07:22:44,718 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [1.35, 127.0.0.1:63695][0m
+INFO 2025-08-12 07:22:44,779 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [1.34, 127.0.0.1:63694][0m
+INFO 2025-08-12 07:22:59,912 runserver 19016 7908 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:63694][0m
+INFO 2025-08-12 07:23:04,288 runserver 19016 7908 [mHTTP POST /api/v1/account/auth/login 200 [4.37, 127.0.0.1:63694][0m
+ERROR 2025-08-12 07:24:04,685 log 19016 12792 Internal Server Error: /api/v1/account/auth/login
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\account\views.py", line 267, in post
+    user = User.objects.get(email=request.data['email'].lower(), email_verified=True, is_deleted=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 633, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 380, in __len__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 07:24:04,757 runserver 19016 7908 [35;1mHTTP POST /api/v1/account/auth/login 500 [0.32, 127.0.0.1:63707][0m
+INFO 2025-08-12 07:33:09,905 runserver 19016 7908 [mHTTP POST /api/v1/account/auth/login 200 [6.32, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:10,107 runserver 19016 7908 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:10,107 runserver 19016 7908 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:63847][0m
+INFO 2025-08-12 07:33:13,736 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.63, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:17,566 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.83, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:28,744 runserver 19016 7908 [mHTTP OPTIONS /api/v1/trading/account/select/9 200 [0.01, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:34,175 runserver 19016 7908 [mHTTP POST /api/v1/trading/account/select/9 200 [5.43, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:40,798 runserver 19016 7908 [mHTTP OPTIONS /api/v1/trading/account/select/10 200 [0.00, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:44,776 runserver 19016 7908 [mHTTP POST /api/v1/trading/account/select/10 200 [3.97, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:55,964 runserver 19016 7908 [mHTTP OPTIONS /api/v1/trading/accounts/10/stats 200 [0.00, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:33:55,966 runserver 19016 7908 [mHTTP OPTIONS /api/v1/trading/accounts/10/stats 200 [0.00, 127.0.0.1:63847][0m
+WARNING 2025-08-12 07:33:59,255 log 19016 12792 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:33:59,268 log 19016 17328 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:33:59,272 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [3.30, 127.0.0.1:63847][0m
+WARNING 2025-08-12 07:33:59,276 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [3.31, 127.0.0.1:63844][0m
+WARNING 2025-08-12 07:34:15,594 log 19016 12792 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:34:15,594 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [1.38, 127.0.0.1:63847][0m
+WARNING 2025-08-12 07:34:15,913 log 19016 17328 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:34:15,913 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [1.70, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:34:17,299 runserver 19016 7908 [mHTTP OPTIONS /api/v1/challenge 200 [0.02, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:34:17,299 runserver 19016 7908 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:63847][0m
+INFO 2025-08-12 07:34:17,304 runserver 19016 7908 [mHTTP OPTIONS /api/v1/challenge 200 [0.01, 127.0.0.1:63860][0m
+INFO 2025-08-12 07:34:17,305 runserver 19016 7908 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:63861][0m
+INFO 2025-08-12 07:34:17,318 runserver 19016 7908 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.01, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:34:17,320 runserver 19016 7908 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.01, 127.0.0.1:63860][0m
+INFO 2025-08-12 07:34:19,854 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [2.55, 127.0.0.1:63847][0m
+INFO 2025-08-12 07:34:19,867 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [2.54, 127.0.0.1:63860][0m
+INFO 2025-08-12 07:34:22,410 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [2.54, 127.0.0.1:63847][0m
+INFO 2025-08-12 07:34:22,415 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [2.54, 127.0.0.1:63844][0m
+WARNING 2025-08-12 07:35:00,601 log 19016 12792 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:35:00,601 log 19016 17328 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:35:00,601 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [2.87, 127.0.0.1:63847][0m
+WARNING 2025-08-12 07:35:00,609 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [2.88, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:35:28,143 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [4.21, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:35:32,129 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.98, 127.0.0.1:63844][0m
+INFO 2025-08-12 07:37:30,921 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [6.40, 127.0.0.1:63952][0m
+INFO 2025-08-12 07:37:30,922 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [6.40, 127.0.0.1:63953][0m
+INFO 2025-08-12 07:37:33,386 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [2.46, 127.0.0.1:63952][0m
+INFO 2025-08-12 07:39:17,025 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [3.62, 127.0.0.1:64016][0m
+INFO 2025-08-12 07:39:17,028 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [3.62, 127.0.0.1:64017][0m
+INFO 2025-08-12 07:39:18,955 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [1.92, 127.0.0.1:64016][0m
+INFO 2025-08-12 07:39:19,536 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [2.49, 127.0.0.1:64017][0m
+INFO 2025-08-12 07:40:22,986 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [3.23, 127.0.0.1:64056][0m
+INFO 2025-08-12 07:40:23,304 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [3.55, 127.0.0.1:64055][0m
+INFO 2025-08-12 07:40:24,573 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [1.58, 127.0.0.1:64056][0m
+INFO 2025-08-12 07:40:25,024 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [1.72, 127.0.0.1:64055][0m
+INFO 2025-08-12 07:40:32,166 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [2.17, 127.0.0.1:64055][0m
+INFO 2025-08-12 07:40:32,167 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [2.14, 127.0.0.1:64056][0m
+INFO 2025-08-12 07:40:34,619 runserver 19016 7908 [mHTTP GET /api/v1/challenge/ 200 [2.45, 127.0.0.1:64062][0m
+INFO 2025-08-12 07:40:34,619 runserver 19016 7908 [mHTTP GET /api/v1/challenge/balance 200 [2.45, 127.0.0.1:64055][0m
+WARNING 2025-08-12 07:47:56,072 log 19016 12792 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:47:56,073 log 19016 17328 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:47:56,076 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [4.57, 127.0.0.1:64254][0m
+WARNING 2025-08-12 07:47:56,081 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [4.57, 127.0.0.1:64253][0m
+WARNING 2025-08-12 07:48:11,234 log 19016 12792 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:48:11,234 log 19016 17328 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 07:48:11,238 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [2.92, 127.0.0.1:64254][0m
+WARNING 2025-08-12 07:48:11,243 runserver 19016 7908 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [2.93, 127.0.0.1:64253][0m
+WARNING 2025-08-12 08:57:32,995 log 19016 12792 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 08:57:32,995 runserver 19016 7908 [31;1mHTTP GET /api/v1/trading/accounts 401 [3.10, 127.0.0.1:64334][0m
+INFO 2025-08-12 08:57:33,012 runserver 19016 7908 [mHTTP OPTIONS /api/v1/account/auth/refresh 200 [0.02, 127.0.0.1:64343][0m
+WARNING 2025-08-12 08:57:33,027 log 19016 12792 Not Found: /api/v1/account/auth/refresh
+WARNING 2025-08-12 08:57:33,027 runserver 19016 7908 [33mHTTP POST /api/v1/account/auth/refresh 404 [0.01, 127.0.0.1:64343][0m
+WARNING 2025-08-12 08:57:34,304 log 19016 17328 Unauthorized: /api/v1/trading/accounts
+INFO 2025-08-12 09:00:08,899 runserver 19016 7908 [mHTTP POST /api/v1/account/auth/login 200 [3.77, 127.0.0.1:64388][0m
+INFO 2025-08-12 09:00:12,016 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [2.91, 127.0.0.1:64388][0m
+INFO 2025-08-12 09:00:15,334 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.31, 127.0.0.1:64388][0m
+INFO 2025-08-12 09:05:08,610 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.17, 127.0.0.1:64441][0m
+INFO 2025-08-12 09:05:11,377 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [2.76, 127.0.0.1:64441][0m
+INFO 2025-08-12 09:13:39,379 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [4.70, 127.0.0.1:64500][0m
+INFO 2025-08-12 09:13:43,535 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [4.15, 127.0.0.1:64500][0m
+INFO 2025-08-12 09:14:13,392 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [5.03, 127.0.0.1:64500][0m
+INFO 2025-08-12 09:14:16,525 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.13, 127.0.0.1:64500][0m
+INFO 2025-08-12 09:14:42,140 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [2.85, 127.0.0.1:64500][0m
+INFO 2025-08-12 09:14:44,701 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [2.56, 127.0.0.1:64500][0m
+INFO 2025-08-12 09:16:02,716 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [4.32, 127.0.0.1:64524][0m
+INFO 2025-08-12 09:16:05,293 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [2.57, 127.0.0.1:64524][0m
+INFO 2025-08-12 09:17:01,412 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.65, 127.0.0.1:64524][0m
+INFO 2025-08-12 09:17:04,480 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.06, 127.0.0.1:64524][0m
+INFO 2025-08-12 09:20:35,015 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.28, 127.0.0.1:64553][0m
+INFO 2025-08-12 09:20:38,286 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.26, 127.0.0.1:64553][0m
+INFO 2025-08-12 09:24:17,521 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [2.79, 127.0.0.1:64571][0m
+INFO 2025-08-12 09:24:20,702 runserver 19016 7908 [mHTTP GET /api/v1/trading/accounts 200 [3.18, 127.0.0.1:64571][0m
+INFO 2025-08-12 09:35:15,232 autoreload 19016 10216 C:\Users\user\Documents\Project\stanum_web\account\models.py changed, reloading.
+INFO 2025-08-12 09:35:18,892 autoreload 10228 16576 Watching for file changes with StatReloader
+INFO 2025-08-12 09:59:12,104 autoreload 4232 14560 Watching for file changes with StatReloader
+INFO 2025-08-12 10:01:03,595 autoreload 4232 14560 C:\Users\user\Documents\Project\stanum_web\stanum_web\settings.py changed, reloading.
+INFO 2025-08-12 10:01:06,108 autoreload 17160 5816 Watching for file changes with StatReloader
+INFO 2025-08-12 10:07:08,570 autoreload 17160 5816 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 10:07:43,646 autoreload 14700 13596 Watching for file changes with StatReloader
+INFO 2025-08-12 10:07:55,347 runserver 14700 14636 [mHTTP OPTIONS /api/v1/challenge 200 [0.01, 127.0.0.1:65058][0m
+INFO 2025-08-12 10:07:55,349 runserver 14700 14636 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:65061][0m
+INFO 2025-08-12 10:07:55,350 runserver 14700 14636 [mHTTP OPTIONS /api/v1/challenge 200 [0.01, 127.0.0.1:65062][0m
+INFO 2025-08-12 10:07:55,351 runserver 14700 14636 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:65063][0m
+INFO 2025-08-12 10:07:55,381 runserver 14700 14636 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.00, 127.0.0.1:65062][0m
+INFO 2025-08-12 10:07:55,382 runserver 14700 14636 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.01, 127.0.0.1:65063][0m
+INFO 2025-08-12 10:07:56,844 runserver 14700 14636 [mHTTP GET /api/v1/challenge/balance 200 [1.49, 127.0.0.1:65058][0m
+INFO 2025-08-12 10:07:56,956 runserver 14700 14636 [mHTTP GET /api/v1/challenge/ 200 [1.57, 127.0.0.1:65063][0m
+INFO 2025-08-12 10:07:58,430 runserver 14700 14636 [mHTTP GET /api/v1/challenge/balance 200 [1.56, 127.0.0.1:65058][0m
+INFO 2025-08-12 10:07:58,646 runserver 14700 14636 [mHTTP GET /api/v1/challenge/ 200 [1.68, 127.0.0.1:65062][0m
+INFO 2025-08-12 10:11:06,732 autoreload 892 14888 Watching for file changes with StatReloader
+INFO 2025-08-12 10:11:17,410 runserver 892 15400 [mHTTP GET /api/v1/challenge/balance 200 [1.23, 127.0.0.1:65096][0m
+INFO 2025-08-12 10:11:17,483 runserver 892 15400 [mHTTP GET /api/v1/challenge/ 200 [1.27, 127.0.0.1:65098][0m
+INFO 2025-08-12 10:11:18,678 runserver 892 15400 [mHTTP GET /api/v1/challenge/balance 200 [1.27, 127.0.0.1:65096][0m
+INFO 2025-08-12 10:11:18,816 runserver 892 15400 [mHTTP GET /api/v1/challenge/ 200 [1.33, 127.0.0.1:65098][0m
+INFO 2025-08-12 10:11:29,047 runserver 892 15400 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:65098][0m
+INFO 2025-08-12 10:11:33,298 runserver 892 15400 [mHTTP POST /api/v1/account/auth/login 200 [4.25, 127.0.0.1:65098][0m
+INFO 2025-08-12 10:11:33,455 runserver 892 15400 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:65098][0m
+INFO 2025-08-12 10:11:33,458 runserver 892 15400 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:65096][0m
+INFO 2025-08-12 10:11:35,698 runserver 892 15400 [mHTTP GET /api/v1/trading/accounts 200 [2.24, 127.0.0.1:65096][0m
+INFO 2025-08-12 10:11:37,937 runserver 892 15400 [mHTTP GET /api/v1/trading/accounts 200 [2.22, 127.0.0.1:65096][0m
+INFO 2025-08-12 10:22:56,017 autoreload 892 14888 C:\Users\user\Documents\Project\stanum_web\account\serializers.py changed, reloading.
+INFO 2025-08-12 10:22:58,898 autoreload 3308 9188 Watching for file changes with StatReloader
+INFO 2025-08-12 10:46:38,873 runserver 3308 3628 [mHTTP GET /api/v1/trading/accounts 200 [7.41, 127.0.0.1:65307][0m
+INFO 2025-08-12 10:46:41,124 runserver 3308 3628 [mHTTP GET /api/v1/trading/accounts 200 [2.25, 127.0.0.1:65307][0m
+INFO 2025-08-12 11:21:45,286 autoreload 13092 9600 Watching for file changes with StatReloader
+INFO 2025-08-12 11:21:56,353 runserver 13092 11696 [mHTTP OPTIONS /api/v1/account/stats 200 [0.02, 127.0.0.1:49383][0m
+INFO 2025-08-12 11:21:56,353 runserver 13092 11696 [mHTTP OPTIONS /api/v1/account/stats 200 [0.02, 127.0.0.1:49384][0m
+WARNING 2025-08-12 11:21:56,475 log 13092 8112 Not Found: /api/v1/account/stats
+WARNING 2025-08-12 11:21:56,475 runserver 13092 11696 [33mHTTP GET /api/v1/account/stats 404 [0.12, 127.0.0.1:49384][0m
+WARNING 2025-08-12 11:21:56,498 log 13092 8112 Not Found: /api/v1/account/stats
+WARNING 2025-08-12 11:21:56,498 runserver 13092 11696 [33mHTTP GET /api/v1/account/stats 404 [0.02, 127.0.0.1:49383][0m
+WARNING 2025-08-12 11:21:57,640 log 13092 8112 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 11:21:57,640 runserver 13092 11696 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.30, 127.0.0.1:49385][0m
+INFO 2025-08-12 11:21:57,640 runserver 13092 11696 [mHTTP OPTIONS /api/v1/account/auth/token/refresh 200 [0.00, 127.0.0.1:49383][0m
+WARNING 2025-08-12 11:21:58,857 log 13092 8112 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-12 11:21:58,857 runserver 13092 11696 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [1.20, 127.0.0.1:49383][0m
+WARNING 2025-08-12 11:21:58,857 log 13092 8112 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 11:21:58,857 runserver 13092 11696 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.22, 127.0.0.1:49385][0m
+INFO 2025-08-12 11:24:00,466 autoreload 13092 9600 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 11:24:02,066 autoreload 8624 10572 Watching for file changes with StatReloader
+INFO 2025-08-12 11:24:12,642 runserver 8624 12904 [mHTTP POST /api/v1/account/auth/login 200 [3.07, 127.0.0.1:49463][0m
+WARNING 2025-08-12 11:24:12,846 log 8624 14684 Not Found: /api/v1/account/stats
+WARNING 2025-08-12 11:24:12,857 runserver 8624 12904 [33mHTTP GET /api/v1/account/stats 404 [0.03, 127.0.0.1:49466][0m
+WARNING 2025-08-12 11:24:12,875 log 8624 14684 Not Found: /api/v1/account/stats
+WARNING 2025-08-12 11:24:12,875 runserver 8624 12904 [33mHTTP GET /api/v1/account/stats 404 [0.01, 127.0.0.1:49466][0m
+INFO 2025-08-12 11:24:15,060 runserver 8624 12904 [mHTTP GET /api/v1/trading/accounts 200 [2.24, 127.0.0.1:49463][0m
+INFO 2025-08-12 11:24:17,249 runserver 8624 12904 [mHTTP GET /api/v1/trading/accounts 200 [2.17, 127.0.0.1:49463][0m
+INFO 2025-08-12 11:24:56,891 runserver 8624 12904 [mHTTP OPTIONS /api/v1/account/referral/stats 200 [0.02, 127.0.0.1:49463][0m
+INFO 2025-08-12 11:24:56,891 runserver 8624 12904 [mHTTP OPTIONS /api/v1/account/referral/stats 200 [0.02, 127.0.0.1:49466][0m
+INFO 2025-08-12 11:25:01,863 runserver 8624 12904 [mHTTP GET /api/v1/account/referral/stats 200 [4.97, 127.0.0.1:49463][0m
+INFO 2025-08-12 11:25:02,565 runserver 8624 12904 [mHTTP GET /api/v1/trading/accounts 200 [5.69, 127.0.0.1:49468][0m
+INFO 2025-08-12 11:25:03,994 runserver 8624 12904 [mHTTP GET /api/v1/account/referral/stats 200 [2.13, 127.0.0.1:49463][0m
+INFO 2025-08-12 11:25:04,977 runserver 8624 12904 [mHTTP GET /api/v1/trading/accounts 200 [2.41, 127.0.0.1:49468][0m
+INFO 2025-08-12 11:25:52,385 autoreload 8624 10572 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 11:25:53,960 autoreload 5780 8576 Watching for file changes with StatReloader
+INFO 2025-08-12 11:26:04,666 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats 200 [2.47, 127.0.0.1:49559][0m
+INFO 2025-08-12 11:26:05,476 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [3.28, 127.0.0.1:49560][0m
+INFO 2025-08-12 11:26:06,737 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats 200 [2.06, 127.0.0.1:49559][0m
+INFO 2025-08-12 11:26:08,009 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [2.53, 127.0.0.1:49560][0m
+INFO 2025-08-12 11:31:25,889 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats 200 [2.34, 127.0.0.1:49618][0m
+INFO 2025-08-12 11:31:26,261 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [2.71, 127.0.0.1:49619][0m
+INFO 2025-08-12 11:31:27,797 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats 200 [1.91, 127.0.0.1:49618][0m
+INFO 2025-08-12 11:31:28,302 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [2.03, 127.0.0.1:49619][0m
+INFO 2025-08-12 11:32:43,732 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [4.29, 127.0.0.1:49634][0m
+INFO 2025-08-12 11:32:44,006 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats 200 [4.58, 127.0.0.1:49633][0m
+INFO 2025-08-12 11:32:45,776 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [2.03, 127.0.0.1:49634][0m
+INFO 2025-08-12 11:32:45,970 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats 200 [1.96, 127.0.0.1:49633][0m
+INFO 2025-08-12 11:34:16,627 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats 200 [3.27, 127.0.0.1:49654][0m
+INFO 2025-08-12 11:34:16,934 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [3.58, 127.0.0.1:49655][0m
+INFO 2025-08-12 11:34:18,615 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats 200 [1.98, 127.0.0.1:49654][0m
+INFO 2025-08-12 11:34:19,894 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [2.95, 127.0.0.1:49655][0m
+INFO 2025-08-12 11:45:06,758 runserver 5780 13532 [mHTTP OPTIONS /api/v1/account/referral/stats?start_date=&end_date= 200 [0.01, 127.0.0.1:49723][0m
+INFO 2025-08-12 11:45:09,348 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.59, 127.0.0.1:49723][0m
+INFO 2025-08-12 11:47:40,847 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [9.13, 127.0.0.1:49740][0m
+INFO 2025-08-12 11:47:41,040 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [9.32, 127.0.0.1:49741][0m
+INFO 2025-08-12 11:53:45,688 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [3.49, 127.0.0.1:49781][0m
+INFO 2025-08-12 11:53:45,974 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [3.78, 127.0.0.1:49782][0m
+INFO 2025-08-12 11:53:48,238 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.55, 127.0.0.1:49781][0m
+INFO 2025-08-12 11:53:48,453 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [2.47, 127.0.0.1:49782][0m
+INFO 2025-08-12 11:58:11,317 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.65, 127.0.0.1:49930][0m
+INFO 2025-08-12 11:58:11,516 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [2.84, 127.0.0.1:49931][0m
+INFO 2025-08-12 11:58:14,015 runserver 5780 13532 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.69, 127.0.0.1:49930][0m
+INFO 2025-08-12 11:58:14,504 runserver 5780 13532 [mHTTP GET /api/v1/trading/accounts 200 [2.98, 127.0.0.1:49931][0m
+INFO 2025-08-12 11:58:15,864 runserver 5780 13532 [mHTTP OPTIONS /api/v1/account/referral/stats?start_date=2025-08-05&end_date= 200 [0.00, 127.0.0.1:49931][0m
+ERROR 2025-08-12 11:58:17,935 log 5780 19412 Internal Server Error: /api/v1/account/referral/stats
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\account\views.py", line 625, in get
+    start_date = make_aware(datetime.strptime(start_date_str, date_format))
+                            ^^^^^^^^^^^^^^^^^
+AttributeError: module 'datetime' has no attribute 'strptime'
+ERROR 2025-08-12 11:58:17,962 runserver 5780 13532 [35;1mHTTP GET /api/v1/account/referral/stats?start_date=2025-08-05&end_date= 500 [2.10, 127.0.0.1:49931][0m
+INFO 2025-08-12 12:00:36,197 autoreload 5780 8576 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 12:00:39,101 autoreload 15380 12916 Watching for file changes with StatReloader
+INFO 2025-08-12 12:01:02,539 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [3.07, 127.0.0.1:50042][0m
+INFO 2025-08-12 12:01:02,542 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [3.07, 127.0.0.1:50041][0m
+INFO 2025-08-12 12:01:05,289 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.74, 127.0.0.1:50041][0m
+INFO 2025-08-12 12:01:05,458 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [2.90, 127.0.0.1:50042][0m
+INFO 2025-08-12 12:01:08,140 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=2025-08-05&end_date= 200 [2.70, 127.0.0.1:50041][0m
+INFO 2025-08-12 12:01:15,361 runserver 15380 16792 [mHTTP OPTIONS /api/v1/account/referral/stats?start_date=2025-08-05&end_date=2025-08-14 200 [0.00, 127.0.0.1:50041][0m
+INFO 2025-08-12 12:01:18,081 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=2025-08-05&end_date=2025-08-14 200 [2.72, 127.0.0.1:50041][0m
+INFO 2025-08-12 12:01:47,688 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.82, 127.0.0.1:50041][0m
+INFO 2025-08-12 12:01:47,885 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [3.01, 127.0.0.1:50042][0m
+INFO 2025-08-12 12:01:50,352 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.66, 127.0.0.1:50041][0m
+INFO 2025-08-12 12:01:50,754 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [2.83, 127.0.0.1:50042][0m
+INFO 2025-08-12 12:18:17,684 runserver 15380 16792 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:50633][0m
+INFO 2025-08-12 12:18:17,686 runserver 15380 16792 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:50634][0m
+INFO 2025-08-12 12:18:21,582 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [3.89, 127.0.0.1:50633][0m
+INFO 2025-08-12 12:18:24,226 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [2.64, 127.0.0.1:50633][0m
+INFO 2025-08-12 12:20:02,838 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [3.09, 127.0.0.1:50691][0m
+INFO 2025-08-12 12:20:35,289 runserver 15380 16792 [mHTTP OPTIONS /api/v1/trading/accounts/10/stats 200 [0.00, 127.0.0.1:50691][0m
+INFO 2025-08-12 12:20:35,291 runserver 15380 16792 [mHTTP OPTIONS /api/v1/trading/accounts/10/stats 200 [0.00, 127.0.0.1:50717][0m
+WARNING 2025-08-12 12:20:37,141 log 15380 18856 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 12:20:37,143 log 15380 2424 Method Not Allowed: /api/v1/trading/accounts/10/stats
+WARNING 2025-08-12 12:20:37,144 runserver 15380 16792 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [1.85, 127.0.0.1:50717][0m
+WARNING 2025-08-12 12:20:37,146 runserver 15380 16792 [31;1mHTTP POST /api/v1/trading/accounts/10/stats 405 [1.85, 127.0.0.1:50691][0m
+INFO 2025-08-12 12:21:20,562 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts/10/stats 200 [8.85, 127.0.0.1:50691][0m
+INFO 2025-08-12 12:21:47,892 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [3.02, 127.0.0.1:50766][0m
+INFO 2025-08-12 12:21:51,385 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [3.49, 127.0.0.1:50766][0m
+INFO 2025-08-12 12:21:59,376 runserver 15380 16792 [mHTTP OPTIONS /api/v1/challenge 200 [0.00, 127.0.0.1:50766][0m
+INFO 2025-08-12 12:21:59,381 runserver 15380 16792 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:50781][0m
+INFO 2025-08-12 12:21:59,381 runserver 15380 16792 [mHTTP OPTIONS /api/v1/challenge 200 [0.01, 127.0.0.1:50782][0m
+INFO 2025-08-12 12:21:59,385 runserver 15380 16792 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:50783][0m
+INFO 2025-08-12 12:21:59,427 runserver 15380 16792 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.01, 127.0.0.1:50782][0m
+INFO 2025-08-12 12:21:59,429 runserver 15380 16792 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.01, 127.0.0.1:50781][0m
+INFO 2025-08-12 12:22:01,118 runserver 15380 16792 [mHTTP GET /api/v1/challenge/balance 200 [1.73, 127.0.0.1:50783][0m
+INFO 2025-08-12 12:22:01,122 runserver 15380 16792 [mHTTP GET /api/v1/challenge/ 200 [1.69, 127.0.0.1:50782][0m
+INFO 2025-08-12 12:22:02,870 runserver 15380 16792 [mHTTP GET /api/v1/challenge/balance 200 [1.75, 127.0.0.1:50783][0m
+INFO 2025-08-12 12:22:02,874 runserver 15380 16792 [mHTTP GET /api/v1/challenge/ 200 [1.75, 127.0.0.1:50781][0m
+WARNING 2025-08-12 12:23:31,692 log 15380 18856 Unauthorized: /api/v1/account/referral/stats
+WARNING 2025-08-12 12:23:31,692 runserver 15380 16792 [31;1mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 401 [0.02, 127.0.0.1:50834][0m
+WARNING 2025-08-12 12:23:31,707 log 15380 2424 Unauthorized: /api/v1/account/referral/stats
+WARNING 2025-08-12 12:23:31,710 runserver 15380 16792 [31;1mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 401 [0.02, 127.0.0.1:50834][0m
+WARNING 2025-08-12 12:23:31,716 log 15380 18856 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-12 12:23:31,718 runserver 15380 16792 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [0.02, 127.0.0.1:50835][0m
+INFO 2025-08-12 12:24:01,718 runserver 15380 16792 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:50870][0m
+INFO 2025-08-12 12:24:05,865 runserver 15380 16792 [mHTTP POST /api/v1/account/auth/login 200 [4.14, 127.0.0.1:50870][0m
+INFO 2025-08-12 12:24:08,252 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [2.15, 127.0.0.1:50883][0m
+INFO 2025-08-12 12:24:08,282 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.18, 127.0.0.1:50870][0m
+INFO 2025-08-12 12:24:10,527 runserver 15380 16792 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.23, 127.0.0.1:50870][0m
+INFO 2025-08-12 12:24:10,844 runserver 15380 16792 [mHTTP GET /api/v1/trading/accounts 200 [2.58, 127.0.0.1:50883][0m
+INFO 2025-08-12 13:49:56,282 runserver 15380 16792 [mHTTP OPTIONS /api/v1/account/referral/stats?start_date=&end_date= 200 [0.01, 127.0.0.1:51009][0m
+INFO 2025-08-12 13:49:56,282 runserver 15380 16792 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:51010][0m
+INFO 2025-08-12 13:49:56,282 runserver 15380 16792 [mHTTP OPTIONS /api/v1/account/referral/stats?start_date=&end_date= 200 [0.01, 127.0.0.1:51011][0m
+INFO 2025-08-12 13:49:56,290 runserver 15380 16792 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:51012][0m
+WARNING 2025-08-12 13:50:03,125 log 15380 2424 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 13:50:03,125 log 15380 18856 Unauthorized: /api/v1/account/referral/stats
+WARNING 2025-08-12 13:50:03,125 runserver 15380 16792 [31;1mHTTP GET /api/v1/trading/accounts 401 [6.83, 127.0.0.1:51012][0m
+WARNING 2025-08-12 13:50:03,128 log 15380 2424 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 13:50:03,128 runserver 15380 16792 [31;1mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 401 [6.84, 127.0.0.1:51010][0m
+WARNING 2025-08-12 13:50:03,131 runserver 15380 16792 [31;1mHTTP GET /api/v1/trading/accounts 401 [6.84, 127.0.0.1:51011][0m
+INFO 2025-08-12 13:50:03,139 runserver 15380 16792 [mHTTP OPTIONS /api/v1/account/auth/token/refresh 200 [0.01, 127.0.0.1:51010][0m
+WARNING 2025-08-12 13:50:03,728 log 15380 18856 Unauthorized: /api/v1/account/referral/stats
+WARNING 2025-08-12 13:50:03,728 runserver 15380 16792 [31;1mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 401 [7.44, 127.0.0.1:51009][0m
+WARNING 2025-08-12 13:50:04,824 log 15380 2424 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-12 13:50:04,824 runserver 15380 16792 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [1.69, 127.0.0.1:51010][0m
+INFO 2025-08-12 18:55:01,866 autoreload 15380 12916 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 18:55:05,980 autoreload 9424 15700 Watching for file changes with StatReloader
+WARNING 2025-08-12 18:55:23,383 log 9424 15660 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 18:55:23,384 log 9424 19184 Unauthorized: /api/v1/account/referral/stats
+WARNING 2025-08-12 18:55:23,385 runserver 9424 2840 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.02, 127.0.0.1:52154][0m
+WARNING 2025-08-12 18:55:23,387 runserver 9424 2840 [31;1mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 401 [0.03, 127.0.0.1:52153][0m
+WARNING 2025-08-12 18:55:23,409 log 9424 15660 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 18:55:23,409 log 9424 19184 Unauthorized: /api/v1/account/referral/stats
+WARNING 2025-08-12 18:55:23,411 runserver 9424 2840 [31;1mHTTP GET /api/v1/trading/accounts 401 [0.02, 127.0.0.1:52154][0m
+WARNING 2025-08-12 18:55:23,413 runserver 9424 2840 [31;1mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 401 [0.02, 127.0.0.1:52153][0m
+INFO 2025-08-12 18:55:50,367 runserver 9424 2840 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:52153][0m
+INFO 2025-08-12 18:55:57,924 runserver 9424 2840 [mHTTP POST /api/v1/account/auth/login 200 [7.55, 127.0.0.1:52153][0m
+INFO 2025-08-12 18:55:58,050 runserver 9424 2840 [mHTTP OPTIONS /api/v1/account/referral/stats?start_date=&end_date= 200 [0.01, 127.0.0.1:52153][0m
+INFO 2025-08-12 18:55:58,051 runserver 9424 2840 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:52154][0m
+INFO 2025-08-12 18:55:58,054 runserver 9424 2840 [mHTTP OPTIONS /api/v1/account/referral/stats?start_date=&end_date= 200 [0.01, 127.0.0.1:52177][0m
+INFO 2025-08-12 18:55:58,056 runserver 9424 2840 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:52178][0m
+INFO 2025-08-12 18:56:00,818 runserver 9424 2840 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.76, 127.0.0.1:52154][0m
+INFO 2025-08-12 18:56:00,947 runserver 9424 2840 [mHTTP GET /api/v1/trading/accounts 200 [2.89, 127.0.0.1:52153][0m
+INFO 2025-08-12 18:56:02,690 runserver 9424 2840 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [1.86, 127.0.0.1:52154][0m
+INFO 2025-08-12 18:56:02,921 runserver 9424 2840 [mHTTP GET /api/v1/trading/accounts 200 [1.97, 127.0.0.1:52153][0m
+INFO 2025-08-12 18:56:37,717 runserver 9424 2840 [mHTTP OPTIONS /api/v1/trading/accounts/10/stats 200 [0.00, 127.0.0.1:52153][0m
+INFO 2025-08-12 18:56:37,718 runserver 9424 2840 [mHTTP OPTIONS /api/v1/trading/accounts/10/stats 200 [0.00, 127.0.0.1:52154][0m
+INFO 2025-08-12 18:56:46,091 runserver 9424 2840 [mHTTP GET /api/v1/trading/accounts/10/stats 200 [8.37, 127.0.0.1:52154][0m
+INFO 2025-08-12 18:57:17,390 runserver 9424 2840 [mHTTP OPTIONS /api/v1/challenge 200 [0.01, 127.0.0.1:52153][0m
+INFO 2025-08-12 18:57:17,392 runserver 9424 2840 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:52231][0m
+INFO 2025-08-12 18:57:17,393 runserver 9424 2840 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:52233][0m
+INFO 2025-08-12 18:57:17,395 runserver 9424 2840 [mHTTP OPTIONS /api/v1/challenge 200 [0.01, 127.0.0.1:52232][0m
+INFO 2025-08-12 18:57:17,464 runserver 9424 2840 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.01, 127.0.0.1:52233][0m
+INFO 2025-08-12 18:57:17,467 runserver 9424 2840 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.01, 127.0.0.1:52231][0m
+INFO 2025-08-12 18:57:19,647 runserver 9424 2840 [mHTTP GET /api/v1/challenge/balance 200 [2.24, 127.0.0.1:52232][0m
+INFO 2025-08-12 18:57:19,651 runserver 9424 2840 [mHTTP GET /api/v1/challenge/ 200 [2.18, 127.0.0.1:52233][0m
+INFO 2025-08-12 18:57:21,592 runserver 9424 2840 [mHTTP GET /api/v1/challenge/balance 200 [1.93, 127.0.0.1:52232][0m
+INFO 2025-08-12 18:57:21,595 runserver 9424 2840 [mHTTP GET /api/v1/challenge/ 200 [1.93, 127.0.0.1:52231][0m
+INFO 2025-08-12 18:58:14,634 runserver 9424 2840 [mHTTP POST /api/v1/account/auth/login 200 [5.47, 127.0.0.1:52231][0m
+INFO 2025-08-12 18:58:18,425 runserver 9424 2840 [mHTTP GET /api/v1/trading/accounts 200 [3.59, 127.0.0.1:52231][0m
+INFO 2025-08-12 18:58:23,449 runserver 9424 2840 [mHTTP GET /api/v1/trading/accounts 200 [5.02, 127.0.0.1:52231][0m
+INFO 2025-08-12 19:01:52,431 runserver 9424 2840 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [3.82, 127.0.0.1:52372][0m
+WARNING 2025-08-12 20:34:04,485 log 9424 15660 Unauthorized: /api/v1/account/referral/stats
+WARNING 2025-08-12 20:34:04,485 runserver 9424 2840 [31;1mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 401 [0.01, 127.0.0.1:52874][0m
+WARNING 2025-08-12 20:34:04,498 log 9424 19184 Unauthorized: /api/v1/account/referral/stats
+WARNING 2025-08-12 20:34:04,498 runserver 9424 2840 [31;1mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 401 [0.01, 127.0.0.1:52874][0m
+INFO 2025-08-12 20:34:04,538 runserver 9424 2840 [mHTTP OPTIONS /api/v1/account/auth/token/refresh 200 [0.01, 127.0.0.1:52874][0m
+WARNING 2025-08-12 20:34:04,546 log 9424 15660 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-12 20:34:04,554 runserver 9424 2840 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [0.02, 127.0.0.1:52874][0m
+INFO 2025-08-12 20:44:12,634 runserver 9424 2840 [mHTTP POST /api/v1/account/auth/login 200 [6.67, 127.0.0.1:53235][0m
+INFO 2025-08-12 20:44:15,199 runserver 9424 2840 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [2.28, 127.0.0.1:53235][0m
+INFO 2025-08-12 20:44:15,334 runserver 9424 2840 [mHTTP GET /api/v1/trading/accounts 200 [2.41, 127.0.0.1:53240][0m
+INFO 2025-08-12 20:44:18,574 runserver 9424 2840 [mHTTP GET /api/v1/account/referral/stats?start_date=&end_date= 200 [3.35, 127.0.0.1:53235][0m
+INFO 2025-08-12 20:44:18,935 runserver 9424 2840 [mHTTP GET /api/v1/trading/accounts 200 [3.60, 127.0.0.1:53240][0m
+INFO 2025-08-12 20:47:00,692 autoreload 9424 15700 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 20:47:06,696 autoreload 8464 19280 Watching for file changes with StatReloader
+INFO 2025-08-12 20:47:43,087 autoreload 8464 19280 C:\Users\user\Documents\Project\stanum_web\stanum_web\settings.py changed, reloading.
+INFO 2025-08-12 20:47:45,731 autoreload 10424 10104 Watching for file changes with StatReloader
+INFO 2025-08-12 20:48:41,923 runserver 10424 7360 [mHTTP OPTIONS /api/v1/account/auth/signup?rf=DSCPAANL 200 [0.01, 127.0.0.1:53414][0m
+WARNING 2025-08-12 20:48:46,378 log 10424 18372 Forbidden: /api/v1/account/auth/signup
+WARNING 2025-08-12 20:48:46,378 runserver 10424 7360 [31;1mHTTP POST /api/v1/account/auth/signup?rf=DSCPAANL 403 [4.45, 127.0.0.1:53414][0m
+INFO 2025-08-12 20:48:59,854 runserver 10424 7360 [mHTTP POST /admin/payment/transaction/ 200 [3.55, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:48:59,952 runserver 10424 7360 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:48:59,964 runserver 10424 7360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:48:59,966 runserver 10424 7360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:48:59,975 runserver 10424 7360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:48:59,978 runserver 10424 7360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:48:59,986 runserver 10424 7360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:48:59,988 runserver 10424 7360 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:48:59,998 runserver 10424 7360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:48:59,999 runserver 10424 7360 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:49:00,006 runserver 10424 7360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:49:00,006 runserver 10424 7360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:49:00,020 runserver 10424 7360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:49:00,025 runserver 10424 7360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:49:00,034 runserver 10424 7360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:49:00,063 runserver 10424 7360 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:49:00,148 runserver 10424 7360 [mHTTP GET /static/admin/js/cancel.js 200 [0.12, 127.0.0.1:53419][0m
+WARNING 2025-08-12 20:49:00,376 log 10424 18488 Not Found: /favicon.ico
+WARNING 2025-08-12 20:49:00,377 runserver 10424 7360 [33mHTTP GET /favicon.ico 404 [0.21, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:49:31,499 runserver 10424 7360 [mHTTP GET /admin/account/user/ 200 [3.75, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:49:31,534 runserver 10424 7360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:49:31,574 runserver 10424 7360 [mHTTP GET /static/admin/img/icon-no.svg 200 [0.03, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:49:31,574 runserver 10424 7360 [mHTTP GET /static/admin/img/icon-yes.svg 200 [0.03, 127.0.0.1:53419][0m
+INFO 2025-08-12 20:49:31,588 runserver 10424 7360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:49:33,767 runserver 10424 7360 [mHTTP GET /admin/jsi18n/ 200 [2.22, 127.0.0.1:53426][0m
+INFO 2025-08-12 20:49:33,825 runserver 10424 7360 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.01, 127.0.0.1:53426][0m
+INFO 2025-08-12 20:49:51,146 runserver 10424 7360 [mHTTP POST /admin/account/user/ 200 [4.58, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:50:03,455 runserver 10424 7360 [32mHTTP POST /admin/account/user/ 302 [9.04, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:50:07,083 runserver 10424 7360 [mHTTP GET /admin/account/user/ 200 [3.62, 127.0.0.1:53420][0m
+INFO 2025-08-12 20:50:09,441 runserver 10424 7360 [mHTTP GET /admin/jsi18n/ 200 [2.30, 127.0.0.1:53420][0m
+ERROR 2025-08-12 20:50:33,944 log 10424 18372 Internal Server Error: /api/v1/account/auth/signup
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 916, in get_or_create
+    return self.get(**kwargs), False
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 637, in get
+    raise self.model.DoesNotExist(
+account.models.Referral.DoesNotExist: Referral matching query does not exist.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\account\views.py", line 169, in post
+    referral_obj, created = Referral.objects.get_or_create(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 923, in get_or_create
+    return self.create(**params), True
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 656, in create
+    obj = self.model(**kwargs)
+          ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\base.py", line 543, in __init__
+    _setattr(self, field.name, rel_obj)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\fields\related_descriptors.py", line 266, in __set__
+    raise ValueError(
+ValueError: Cannot assign "<Referral: None - DSCPAANL>": "Referral.referred_by" must be a "User" instance.
+ERROR 2025-08-12 20:51:00,357 log 10424 18488 Internal Server Error: /api/v1/account/auth/signup
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 916, in get_or_create
+    return self.get(**kwargs), False
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 637, in get
+    raise self.model.DoesNotExist(
+account.models.Referral.DoesNotExist: Referral matching query does not exist.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\account\views.py", line 169, in post
+    referral_obj, created = Referral.objects.get_or_create(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 923, in get_or_create
+    return self.create(**params), True
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 656, in create
+    obj = self.model(**kwargs)
+          ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\base.py", line 543, in __init__
+    _setattr(self, field.name, rel_obj)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\fields\related_descriptors.py", line 266, in __set__
+    raise ValueError(
+ValueError: Cannot assign "<Referral: None - DSCPAANL>": "Referral.referred_by" must be a "User" instance.
+INFO 2025-08-12 20:53:11,391 autoreload 10424 10104 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 20:53:14,063 autoreload 10964 8068 Watching for file changes with StatReloader
+INFO 2025-08-12 20:53:32,660 runserver 10964 16436 [mHTTP POST /api/v1/account/auth/signup?rf=DSCPAANL 201 [7.80, 127.0.0.1:53535][0m
+INFO 2025-08-12 20:53:47,506 runserver 10964 16436 [mHTTP OPTIONS /api/v1/account/auth/verify/9/648210 200 [0.01, 127.0.0.1:53535][0m
+WARNING 2025-08-12 20:53:47,539 log 10964 7216 Method Not Allowed: /api/v1/account/auth/verify/9/648210
+WARNING 2025-08-12 20:53:47,544 runserver 10964 16436 [31;1mHTTP POST /api/v1/account/auth/verify/9/648210 405 [0.03, 127.0.0.1:53535][0m
+INFO 2025-08-12 20:55:01,334 runserver 10964 16436 [mHTTP GET /api/v1/account/auth/verify/9/648210 200 [8.47, 127.0.0.1:53582][0m
+INFO 2025-08-12 20:55:04,407 runserver 10964 16436 [mHTTP GET /api/v1/trading/accounts 200 [2.84, 127.0.0.1:53582][0m
+INFO 2025-08-12 20:55:07,357 runserver 10964 16436 [mHTTP GET /api/v1/trading/accounts 200 [2.94, 127.0.0.1:53582][0m
+INFO 2025-08-12 20:55:27,456 runserver 10964 16436 [mHTTP GET /admin/account/referral/ 200 [5.91, 127.0.0.1:53602][0m
+INFO 2025-08-12 20:55:29,625 runserver 10964 16436 [mHTTP GET /admin/jsi18n/ 200 [2.08, 127.0.0.1:53602][0m
+INFO 2025-08-12 20:59:03,563 autoreload 10964 8068 C:\Users\user\Documents\Project\stanum_web\stanum_web\settings.py changed, reloading.
+INFO 2025-08-12 20:59:06,443 autoreload 14796 10088 Watching for file changes with StatReloader
+INFO 2025-08-12 21:08:22,683 autoreload 14796 10088 C:\Users\user\Documents\Project\stanum_web\utils\helper.py changed, reloading.
+INFO 2025-08-12 21:08:25,457 autoreload 18168 17032 Watching for file changes with StatReloader
+INFO 2025-08-12 21:11:41,840 autoreload 18168 17032 C:\Users\user\Documents\Project\stanum_web\utils\helper.py changed, reloading.
+INFO 2025-08-12 21:11:44,859 autoreload 12788 11752 Watching for file changes with StatReloader
+INFO 2025-08-12 21:14:06,857 autoreload 12788 11752 C:\Users\user\Documents\Project\stanum_web\payment\views.py changed, reloading.
+INFO 2025-08-12 21:14:09,926 autoreload 7260 7192 Watching for file changes with StatReloader
+INFO 2025-08-12 21:39:32,369 runserver 7260 17576 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.02, 127.0.0.1:53910][0m
+INFO 2025-08-12 21:39:32,371 runserver 7260 17576 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.02, 127.0.0.1:53909][0m
+INFO 2025-08-12 21:39:34,894 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.52, 127.0.0.1:53909][0m
+INFO 2025-08-12 21:39:36,736 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [1.84, 127.0.0.1:53909][0m
+INFO 2025-08-12 22:07:05,911 runserver 7260 17576 [mHTTP OPTIONS /api/v1/challenge 200 [0.01, 127.0.0.1:54198][0m
+INFO 2025-08-12 22:07:05,913 runserver 7260 17576 [mHTTP OPTIONS /api/v1/challenge 200 [0.01, 127.0.0.1:54200][0m
+INFO 2025-08-12 22:07:05,914 runserver 7260 17576 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:54199][0m
+INFO 2025-08-12 22:07:05,915 runserver 7260 17576 [mHTTP OPTIONS /api/v1/challenge/balance 200 [0.01, 127.0.0.1:54201][0m
+INFO 2025-08-12 22:07:05,959 runserver 7260 17576 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.00, 127.0.0.1:54201][0m
+INFO 2025-08-12 22:07:05,971 runserver 7260 17576 [mHTTP OPTIONS /api/v1/challenge/ 200 [0.01, 127.0.0.1:54200][0m
+ERROR 2025-08-12 22:07:06,450 log 7260 13476 Internal Server Error: /api/v1/challenge/balance
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\challenge\views.py", line 36, in get
+    balance = list(
+              ^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 398, in __iter__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 285, in __iter__
+    for row in compiler.results_iter(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1513, in results_iter
+    results = self.execute_sql(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 22:07:06,459 log 7260 20072 Internal Server Error: /api/v1/challenge/
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\generics.py", line 199, in get
+    return self.list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\mixins.py", line 46, in list
+    return Response(serializer.data)
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 686, in to_representation
+    return [
+           ^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 398, in __iter__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 22:07:06,505 runserver 7260 17576 [35;1mHTTP GET /api/v1/challenge/balance 500 [0.59, 127.0.0.1:54199][0m
+ERROR 2025-08-12 22:07:06,534 runserver 7260 17576 [35;1mHTTP GET /api/v1/challenge/ 500 [0.57, 127.0.0.1:54201][0m
+ERROR 2025-08-12 22:07:06,719 log 7260 20072 Internal Server Error: /api/v1/challenge/balance
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\challenge\views.py", line 36, in get
+    balance = list(
+              ^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 398, in __iter__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 285, in __iter__
+    for row in compiler.results_iter(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1513, in results_iter
+    results = self.execute_sql(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 22:07:06,781 log 7260 13476 Internal Server Error: /api/v1/challenge/
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\generics.py", line 199, in get
+    return self.list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\mixins.py", line 46, in list
+    return Response(serializer.data)
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 768, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 253, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 686, in to_representation
+    return [
+           ^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 398, in __iter__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 22:07:06,793 runserver 7260 17576 [35;1mHTTP GET /api/v1/challenge/balance 500 [0.27, 127.0.0.1:54200][0m
+ERROR 2025-08-12 22:07:06,807 runserver 7260 17576 [35;1mHTTP GET /api/v1/challenge/ 500 [0.27, 127.0.0.1:54199][0m
+INFO 2025-08-12 22:07:20,390 runserver 7260 17576 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:54199][0m
+ERROR 2025-08-12 22:07:20,464 log 7260 13476 Internal Server Error: /api/v1/account/auth/login
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\account\views.py", line 295, in post
+    user = User.objects.get(email=request.data['email'].lower(), email_verified=True, is_deleted=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 633, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 380, in __len__
+    self._fetch_all()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1881, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 330, in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 306, in _cursor
+    self.ensure_connection()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 288, in ensure_connection
+    with self.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 289, in ensure_connection
+    self.connect()
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\base\base.py", line 270, in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\postgresql\base.py", line 275, in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: could not translate host name "victor-ao-ayomideolusola5002-b13e.h.aivencloud.com" to address: No such host is known. 
+
+ERROR 2025-08-12 22:07:20,480 runserver 7260 17576 [35;1mHTTP POST /api/v1/account/auth/login 500 [0.09, 127.0.0.1:54199][0m
+INFO 2025-08-12 22:08:16,809 runserver 7260 17576 [mHTTP POST /api/v1/account/auth/login 200 [6.45, 127.0.0.1:54258][0m
+INFO 2025-08-12 22:08:19,609 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.64, 127.0.0.1:54258][0m
+INFO 2025-08-12 22:08:22,483 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.87, 127.0.0.1:54258][0m
+INFO 2025-08-12 22:13:05,621 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [4.24, 127.0.0.1:54300][0m
+INFO 2025-08-12 22:13:08,134 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.50, 127.0.0.1:54300][0m
+INFO 2025-08-12 22:35:37,889 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [5.56, 127.0.0.1:54460][0m
+INFO 2025-08-12 22:35:40,463 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.57, 127.0.0.1:54460][0m
+INFO 2025-08-12 22:40:11,709 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [4.31, 127.0.0.1:54499][0m
+INFO 2025-08-12 22:40:14,562 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.85, 127.0.0.1:54499][0m
+INFO 2025-08-12 22:41:07,362 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [6.27, 127.0.0.1:54499][0m
+INFO 2025-08-12 22:41:09,857 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.48, 127.0.0.1:54499][0m
+INFO 2025-08-12 22:44:39,078 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [4.71, 127.0.0.1:54568][0m
+INFO 2025-08-12 22:44:41,629 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.54, 127.0.0.1:54568][0m
+INFO 2025-08-12 22:44:46,954 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.92, 127.0.0.1:54568][0m
+INFO 2025-08-12 22:44:49,751 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [2.79, 127.0.0.1:54568][0m
+INFO 2025-08-12 23:06:17,494 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [4.89, 127.0.0.1:54778][0m
+INFO 2025-08-12 23:06:20,709 runserver 7260 17576 [mHTTP GET /api/v1/trading/accounts 200 [3.21, 127.0.0.1:54778][0m
+INFO 2025-08-12 23:09:37,395 autoreload 7260 7192 C:\Users\user\Documents\Project\stanum_web\utils\helper.py changed, reloading.
+INFO 2025-08-12 23:09:40,418 autoreload 8896 18168 Watching for file changes with StatReloader
+INFO 2025-08-12 23:10:06,991 autoreload 8896 18168 C:\Users\user\Documents\Project\stanum_web\account\serializers.py changed, reloading.
+INFO 2025-08-12 23:10:09,652 autoreload 13260 13348 Watching for file changes with StatReloader
+INFO 2025-08-12 23:12:55,575 autoreload 13260 13348 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 23:12:59,103 autoreload 3432 10832 Watching for file changes with StatReloader
+INFO 2025-08-12 23:13:15,976 autoreload 3432 10832 C:\Users\user\Documents\Project\stanum_web\account\urls.py changed, reloading.
+INFO 2025-08-12 23:13:19,061 autoreload 14520 18696 Watching for file changes with StatReloader
+WARNING 2025-08-12 23:15:28,966 log 14520 5316 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 23:15:28,966 runserver 14520 14992 [31;1mHTTP GET /api/v1/trading/accounts 401 [3.71, 127.0.0.1:54945][0m
+INFO 2025-08-12 23:15:28,998 runserver 14520 14992 [mHTTP OPTIONS /api/v1/account/auth/token/refresh 200 [0.01, 127.0.0.1:54948][0m
+WARNING 2025-08-12 23:15:30,663 log 14520 5316 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-12 23:15:30,663 log 14520 5316 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-12 23:15:30,684 runserver 14520 14992 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.71, 127.0.0.1:54945][0m
+WARNING 2025-08-12 23:15:30,687 runserver 14520 14992 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [1.68, 127.0.0.1:54948][0m
+INFO 2025-08-12 23:16:20,388 autoreload 14520 18696 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-12 23:16:23,422 autoreload 9892 20064 Watching for file changes with StatReloader

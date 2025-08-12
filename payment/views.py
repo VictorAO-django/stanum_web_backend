@@ -22,7 +22,7 @@ from trading.models import *
 
 from service.paystack import PaystackService
 from service.metaapi_request import *
-from utils.helper import custom_response
+from utils.helper import *
 
 User = get_user_model()
 
@@ -469,6 +469,9 @@ class PaystackWebhookView(APIView):
                             server="MetaQuotes-Demo",
                             leverage=100,
                         )
+
+                        award_referral_reward(user.referral_profile, transaction.amount)
+
                         Mailer(user.email).payment_successful(challenge.challenge_fee, challenge)
 
                     elif event in ['charge.failed', 'charge.cancelled']:

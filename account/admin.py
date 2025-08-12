@@ -7,4 +7,8 @@ class UserAdmin(admin.ModelAdmin):
 admin.site.register(User, UserAdmin)
 admin.site.register(OTP)
 admin.site.register(CustomAuthToken)
+
+admin.site.register(Referral)
+admin.site.register(ReferralEarning)
+admin.site.register(ReferalEarningTransaction)
 # Register your models here.
