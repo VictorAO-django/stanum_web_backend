@@ -29,5 +29,11 @@ urlpatterns = [
     path('auth/password/reset/<int:id>/<str:token>', PasswordResetView.as_view()),
     path('auth/password/change', ChangePasswordView.as_view()),
 
+    path('auth/logout', LogoutView.as_view()),
+    path('auth/login/history', LoginHistoryView.as_view()),
+    path('auth/close', CloseAccountView.as_view()),
+
+    path('user', UserDataView.as_view()),
+
     path('referral/stats', ReferralDetailView.as_view()),
 ]

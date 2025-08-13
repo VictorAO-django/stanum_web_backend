@@ -20,6 +20,7 @@ django-rest-framework-social-oauth2==1.1.0
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.1
 django-crontab
+drf-writable-nested
 drf-yasg==1.21.7
 elasticsearch==7.17.9
 elasticsearch-dsl==7.4.1

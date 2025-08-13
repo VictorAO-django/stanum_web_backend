@@ -119,10 +119,6 @@ class User(AbstractUser):
     def __str__(self):
         return f'{self.email}'
     
-    @property
-    def full_name(self):
-        return f'{self.first_name} {self.last_name}'
-    
     def is_locked(self):
         now = timezone.now()
         if self.lock_duration:
@@ -163,6 +159,28 @@ class OTP(models.Model):
     def __str__(self):
         return f"OTP for {self.user} - {self.event}"
 
+
+class LoginHistory(models.Model):
+    ACTION_CHOICES = [
+        ('login', 'Login'),
+        ('logout', 'Logout'),
+    ]
+
+    STATUS_CHOICES = [
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    ip_address = models.GenericIPAddressField()
+    browser = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        user_display = self.user.email if self.user else "Unknown User"
+        return f"{user_display} - {self.action} - {self.status} @ {self.timestamp}"
 
 
 def generate_referral_code():
@@ -224,3 +242,22 @@ class ReferalEarningTransaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_type.title()} - {self.amount} for {self.user.username}"
+
+
+class Address(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    home_address = models.TextField(blank=True, null=True)
+    town = models.CharField(max_length=255, blank=True, null=True)
+    state = models.CharField(max_length=255, blank=True, null=False)
+    zip_code = models.CharField(max_length=255, blank=True, null=False)
+
+    home_address2 = models.TextField(blank=True, null=True)
+    town2 = models.CharField(max_length=255, blank=True, null=True)
+    state2 = models.CharField(max_length=255, blank=True, null=False)
+    zip_code2 = models.CharField(max_length=255, blank=True, null=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.full_name} Address"

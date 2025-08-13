@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from utils.helper import *
+from drf_writable_nested.serializers import WritableNestedModelSerializer
 
 class RegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={"input_type":"password"}, write_only=True)
@@ -45,3 +46,37 @@ class PasswordResetSerializer(serializers.Serializer):
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only = True)
     new_password = serializers.CharField(write_only = True)
+
+
+class LoginHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LoginHistory
+        fields = ['action', 'status', 'ip_address', 'browser', 'timestamp']
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = [
+            'home_address', 'town', 'state', 'zip_code',
+            'home_address2', 'town2', 'state2', 'zip_code2',
+        ]
+        depth=1
+
+class UserDataSerializer(WritableNestedModelSerializer):
+    address = AddressSerializer()
+    class Meta:
+        model = User
+        fields = ['email', 'phone_number', 'date_of_birth', 'full_name', 'country', 'address']
+        read_only_fields = ['email']
+    
+    def validate_full_name(self, value):
+        value = value.strip()  # remove extra spaces
+        if not value:
+            raise serializers.ValidationError("Full name cannot be blank.")
+        return value
+    
+    def update(self, instance, validated_data):
+        request_data = self.context['request'].data
+        print("VALIDATED DATA:", request_data)
+        return super().update(instance, validated_data)

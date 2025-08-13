@@ -166,3 +166,27 @@ def award_referral_reward(referral: Referral, amount: int | Decimal):
         # Mark reward as used so it won't be awarded twice
         referral.reward_used = True
         referral.save(update_fields=["reward_used"])
+
+
+def get_client_ip(request):
+    """Get the real client IP address even if behind a proxy."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+def get_browser_info(request):
+    ua_string = request.META.get('HTTP_USER_AGENT', '')
+
+    # Look for major browsers
+    match = re.search(r'(Chrome|Firefox|Safari|Edge|Opera|MSIE|Trident)\/([\d.]+)', ua_string)
+    if match:
+        browser, version = match.groups()
+        # Map "Trident" to "Internet Explorer"
+        if browser == "Trident":
+            browser = "Internet Explorer"
+        return f"{browser} {version}"
+
+    return "Unknown Browser"

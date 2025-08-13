@@ -23,7 +23,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from django.contrib.auth import user_logged_in
+from django.contrib.auth import user_logged_in, user_logged_out, user_login_failed
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db import transaction
 from asgiref.sync import async_to_sync
@@ -72,11 +72,11 @@ class TokenRefreshView(APIView):
         refresh_token = request.data.get('refresh_token')
         print("REFRESH TOKEN", refresh_token)
         try:
-            token = CustomAuthToken.objects.get(refresh_token=refresh_token)
+            token = CustomAuthToken.objects.get(refresh_token=refresh_token.strip())
 
             if token.has_refresh_expired():
                 return Response({'detail': 'Refresh token expired'}, status=status.HTTP_401_UNAUTHORIZED)
-            token.refresh()
+            token.refresh() 
             
             return Response({
                 "token": token.access_token,
@@ -293,7 +293,7 @@ class LoginView(APIView):
         password = request.data["password"]
         try:
             user = User.objects.get(email=request.data['email'].lower(), email_verified=True, is_deleted=False)
-            
+
             if user.is_locked():
                 return custom_response(
                     status="Error",
@@ -340,6 +340,7 @@ class LoginView(APIView):
                         http_status=status.HTTP_403_FORBIDDEN
                     )
             else: 
+                user_login_failed.send(sender=user.__class__, credentials={'email': user.email}, request=request)
                 return custom_response(
                     status="Error",
                     message=f"Incorrect credentials, you have {5-trial_count} attempt(s) left.",
@@ -422,7 +423,26 @@ class AccountVerificationView(APIView):
                 },
             },
         )
-    
+
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        token = CustomAuthToken.objects.filter(user_type=ContentType.objects.get_for_model(user), user_id=user.id)
+        if token.exists():
+            token.delete()
+            user_logged_out.send(sender=user.__class__, request=request, user=user)
+
+        return custom_response(
+            status="success",
+            message="Logout successful",
+            data={},
+        )
+
+
 
 class ForgetPasswordView(APIView):
     authentication_classes = []
@@ -708,3 +728,40 @@ class ReferralDetailView(APIView):
                 }
             }
         )
+
+
+
+class LoginHistoryView(generics.ListAPIView):
+    serializer_class=LoginHistorySerializer
+    pagination_class=LargeResultsSetPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = LoginHistory.objects.filter(user=user).order_by('-id')
+        return queryset
+    
+
+class CloseAccountView(APIView):
+    def delete(self, request, *args, **kwargs):
+        user=request.user
+        user.is_deleted = True
+        user.save()
+
+        token = CustomAuthToken.objects.filter(user_type=ContentType.objects.get_for_model(user), user_id=user.id)
+        token.delete()
+        
+        return custom_response(
+            status="success",
+            message="Account closed successfully",
+            data={},
+        )
+    
+
+
+class UserDataView(generics.RetrieveUpdateAPIView):
+    serializer_class=UserDataSerializer
+    http_method_names = ['get', 'patch']
+
+    def get_object(self):
+        return self.request.user
+        
