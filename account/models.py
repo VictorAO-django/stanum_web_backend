@@ -9,7 +9,7 @@ from uuid import uuid4
 from django.contrib.postgres.fields import ArrayField, JSONField 
 import datetime, secrets
 from datetime import timedelta
-import uuid
+import uuid, pyotp
 from django.utils.crypto import get_random_string
 
 phone_validator = RegexValidator(
@@ -109,6 +109,9 @@ class User(AbstractUser):
     has_accepted_terms = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
 
+    otp_secret = models.CharField(max_length=32, blank=True, null=True)
+    is_2fa_enabled = models.BooleanField(default=False)
+
     lock_count = models.PositiveIntegerField(default=0)
     lock_duration = models.DateTimeField(blank=True, null=True)
     
@@ -126,7 +129,7 @@ class User(AbstractUser):
                 return False
             return True
         return False    
-  
+    
 
 class OTP(models.Model):
     EVENT_CHOICES = (
@@ -261,3 +264,61 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.user.full_name} Address"
+
+
+class DocumentType(models.Model):
+    TYPE_CHOICES = (
+        ('identity', 'Identity'),
+        ('address', 'Address'),
+    )
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    name = models.CharField(max_length=100)  # e.g. Passport, Driver's License
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.name}"
+
+class ProofOfIdentity(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    document_type = models.ForeignKey(DocumentType, on_delete=models.PROTECT)
+    document_number = models.CharField(max_length=100, blank=True, null=True)
+    document_file_front = models.FileField(upload_to='static/kyc/identity/')
+    document_file_back = models.FileField(upload_to='static/kyc/identity/')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    admin_notes = models.TextField(blank=True, null=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.document_type}"
+
+
+class ProofOfAddress(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    ADDRESS = [
+        ('home_address_1', "Home Address 1"),
+        ('home_address_2', "Home Address 2")
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    address_type = models.CharField(choices=ADDRESS, max_length=20)
+    document_type = models.ForeignKey(DocumentType, on_delete=models.PROTECT)
+    document_file = models.FileField(upload_to='static/kyc/address/')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    admin_notes = models.TextField(blank=True, null=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.document_type}"

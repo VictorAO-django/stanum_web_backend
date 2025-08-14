@@ -19,6 +19,7 @@ from django.urls import path
 
 urlpatterns = [
     path('auth/login', LoginView.as_view()),
+    path('auth/login/2fa', Verify2FALoginView.as_view()),
     path('auth/signup', SignupView.as_view()),
     path('auth/otp/resend', ResendOtpView.as_view()),
     path('auth/token/refresh', TokenRefreshView.as_view()),
@@ -36,4 +37,10 @@ urlpatterns = [
     path('user', UserDataView.as_view()),
 
     path('referral/stats', ReferralDetailView.as_view()),
+
+    path('document-types', DocumentTypeListView.as_view()),
+    path('kyc/identity', SubmitProofOfIdentityView.as_view()),
+    path('kyc/address', SubmitProofOfAddressView.as_view()),
+
+    path('2fa/setup', TwoFASetupView.as_view()),
 ]

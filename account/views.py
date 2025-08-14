@@ -1,4 +1,4 @@
-import json
+import json, io, base64, qrcode, pyotp
 from decimal import Decimal
 from django.utils.decorators import method_decorator
 from django.http import Http404
@@ -281,18 +281,18 @@ class LoginView(APIView):
             },
             required=['email', 'password'],
         ),
-        responses={
-            200: "Login successful, User Authenticated!",
-            400: "Wrong Password",
-            401: "Email not  verified",
-            403: "Your account  is connected to Google - use the Google button to log in.",
-            404: "No user found with this email",
-        }
     )
     def post(self, request):
         password = request.data["password"]
         try:
             user = User.objects.get(email=request.data['email'].lower(), email_verified=True, is_deleted=False)
+            if user.is_2fa_enabled or user.otp_secret:
+                return custom_response(
+                    status="error",
+                    message=f"Two Factor Authentication is required",
+                    data={},
+                    http_status=status.HTTP_409_CONFLICT
+                )
 
             if user.is_locked():
                 return custom_response(
@@ -328,6 +328,114 @@ class LoginView(APIView):
                                 'email': user.email,
                                 'full_name': user.full_name,
                                 'referral_link': user.referral_profile.get_referral_link(),
+                                'proof_of_identity': ProofOfIdentity.objects.filter(user=user).exists(),
+                                'proof_of_address1': ProofOfAddress.objects.filter(user=user, address_type='home_address_1').exists(),
+                                'proof_of_address2': ProofOfAddress.objects.filter(user=user, address_type='home_address_2').exists(),
+                            },
+                        }
+                    )
+    
+                else:
+                    return custom_response(
+                        status="Error",
+                        message=f"Please Verify your email!, you have {5-trial_count} attempt(s) left.",
+                        data={},
+                        http_status=status.HTTP_400_BAD_REQUEST
+                    )
+            else: 
+                user_login_failed.send(sender=user.__class__, credentials={'email': user.email}, request=request)
+                return custom_response(
+                    status="Error",
+                    message=f"Incorrect credentials, you have {5-trial_count} attempt(s) left.",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+            
+        except User.DoesNotExist:
+            return custom_response(
+                status="Error",
+                message="Incorrect credentials",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class Verify2FALoginView(APIView):
+    authentication_classes=[]
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_summary="Login Endpoint",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD),
+                'code': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+            required=['email', 'password', 'code'],
+        ),
+    )
+    def post(self, request):
+        email = request.data.get("email").lower()
+        password = request.data.get("password")
+        code = request.data.get("code")
+
+        try:
+            user = User.objects.get(email=email, email_verified=True, is_deleted=False, is_2fa_enabled=True)
+            
+            if user.is_locked():
+                return custom_response(
+                    status="Error",
+                    message="Too many attempts, try again in 5 minutes.",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            trial_count, trial_valid = update_lock_count(user, 'increase')            
+            if user.check_password(password):
+                if user.email_verified:
+                    if user.is_2fa_enabled:
+                        if not code:
+                            return custom_response(
+                                status="Error",
+                                message=f"OTP code required!, you have {5-trial_count} attempt(s) left.",
+                                data={},
+                                http_status=status.HTTP_400_BAD_REQUEST
+                            )
+                        totp = pyotp.TOTP(user.otp_secret)
+                        if not totp.verify(code):
+                            return custom_response(
+                                status="Error",
+                                message=f"Invalid OTP code!, you have {5-trial_count} attempt(s) left.",
+                                data={},
+                                http_status=status.HTTP_400_BAD_REQUEST
+                            )
+                       
+                    token, created = CustomAuthToken.objects.get_or_create(
+                        user_type=ContentType.objects.get_for_model(user),
+                        user_id=user.id,
+                    )
+                    if not created:
+                        token.refresh()
+                    
+                    trial_count, trial_valid = update_lock_count(user, 'fallback')
+
+                    user_logged_in.send(sender=user.__class__, request=request, user=user)
+
+                    return custom_response(
+                        status="Success",
+                        message="Login successful, User Authenticated!",
+                        data={
+                            'access': token.access_token,
+                            'refresh': token.refresh_token,
+                            'user': {
+                                'email': user.email,
+                                'full_name': user.full_name,
+                                'referral_link': user.referral_profile.get_referral_link(),
+                                'proof_of_identity': ProofOfIdentity.objects.filter(user=user).exists(),
+                                'proof_of_address1': ProofOfAddress.objects.filter(user=user, address_type='home_address_1').exists(),
+                                'proof_of_address2': ProofOfAddress.objects.filter(user=user, address_type='home_address_2').exists(),
                             },
                         }
                     )
@@ -765,3 +873,207 @@ class UserDataView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
         
+
+
+class DocumentTypeListView(generics.ListAPIView):
+    serializer_class = DocumentTypeSerializer
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='type',
+                in_=openapi.IN_QUERY,
+                description='Filter document types by category',
+                type=openapi.TYPE_STRING,
+                enum=[choice[0] for choice in DocumentType.TYPE_CHOICES],
+                required=False
+            )
+        ],
+        operation_description="Retrieve the list of available document types. Optionally filter by `type`."
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        queryset = DocumentType.objects.filter(is_active=True)
+        doc_type = self.request.query_params.get('type', None)
+
+        if doc_type:
+            valid_types = [choice[0] for choice in DocumentType.TYPE_CHOICES]
+            if doc_type in valid_types:
+                queryset = queryset.filter(type=doc_type)
+
+        return queryset
+    
+
+class SubmitProofOfIdentityView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=ProofOfIdentitySerializer
+    )
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        # Prevent multiple pending submissions
+        if ProofOfIdentity.objects.filter(user=user, status="pending").exists():
+            return custom_response(
+                status="error",
+                message="Document already submitted and pending review.",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = ProofOfIdentitySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=user)  # Ensure user is set
+            return custom_response(
+                status="success",
+                message="Document uploaded. Admin will review within 24 hours.",
+                data={}
+            )
+
+        # Extract first error safely
+        first_error = next(iter(serializer.errors.values()))[0] if serializer.errors else "Invalid data"
+        return custom_response(
+            status="error",
+            message=str(first_error),
+            data={},
+            http_status=status.HTTP_403_FORBIDDEN
+        )
+    
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        proof = ProofOfIdentity.objects.filter(user=user)
+        if proof.exists():
+            return Response(
+                data=ProofOfIdentitySerializer(proof.first()).data,
+                status=status.HTTP_200_OK
+            )
+        return Response(data={}, status=status.HTTP_200_OK)
+
+
+class SubmitProofOfAddressView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=ProofOfAddressSerializer
+    )
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data
+        # Prevent multiple pending submissions
+        if ProofOfAddress.objects.filter(user=user, status="pending", address_type=data['address_type']).exists():
+            return custom_response(
+                status="error",
+                message="Document already submitted and pending review.",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = ProofOfAddressSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=user)  # Ensure user is set
+            return custom_response(
+                status="success",
+                message="Document uploaded. Admin will review within 24 hours.",
+                data={}
+            )
+
+        # Extract first error safely
+        first_error = next(iter(serializer.errors.values()))[0] if serializer.errors else "Invalid data"
+        return custom_response(
+            status="error",
+            message=str(first_error),
+            data={},
+            http_status=status.HTTP_403_FORBIDDEN
+        )
+    
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        proof = ProofOfAddress.objects.filter(user=user)
+        if proof.exists():
+            return Response(
+                data=ProofOfAddressSerializer(proof, many=True).data,
+                status=status.HTTP_200_OK
+            )
+        return Response(data=[], status=status.HTTP_200_OK)
+
+
+class TwoFASetupView(generics.GenericAPIView):
+    
+    def get(self, request):
+        """Generate (or return existing) secret and QR code."""
+        user = request.user
+
+        if user.is_2fa_enabled:
+            return custom_response(
+                status="error",
+                message="2FA already enabled",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Use existing secret if present, otherwise generate and store
+        if not user.otp_secret:
+            user.otp_secret = pyotp.random_base32()
+            user.save(update_fields=["otp_secret"])
+
+        uri = pyotp.TOTP(user.otp_secret).provisioning_uri(
+            name=user.email,
+            issuer_name="Stanumcapital"
+        )
+
+        # Create QR code
+        qr = qrcode.make(uri)
+        buf = io.BytesIO()
+        qr.save(buf, format='PNG')
+        qr_base64 = base64.b64encode(buf.getvalue()).decode()
+
+        return custom_response(
+            status="success",
+            message="2FA details retrieved",
+            data={
+                "secret": user.otp_secret,
+                "qr_code_base64": qr_base64
+            }
+        )
+
+    def post(self, request):
+        """Verify OTP and enable 2FA."""
+        otp = request.data.get("otp")
+        user = request.user
+
+        if not otp:
+            return custom_response(
+                status="error",
+                message="Missing OTP",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not user.otp_secret:
+            return custom_response(
+                status="error",
+                message="No OTP secret found. Please start setup again.",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        totp = pyotp.TOTP(user.otp_secret)
+        if not totp.verify(otp):
+            return custom_response(
+                status="error",
+                message="Invalid OTP",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.is_2fa_enabled = True
+        user.save(update_fields=["is_2fa_enabled"])
+
+        return custom_response(
+            status="success",
+            message="2FA enabled successfully",
+            data={}
+        )

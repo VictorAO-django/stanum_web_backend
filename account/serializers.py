@@ -80,3 +80,22 @@ class UserDataSerializer(WritableNestedModelSerializer):
         request_data = self.context['request'].data
         print("VALIDATED DATA:", request_data)
         return super().update(instance, validated_data)
+    
+
+class DocumentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentType
+        fields = ['id', 'type', 'name']
+
+class ProofOfIdentitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProofOfIdentity
+        fields = ['id', 'document_type', 'document_number', 'document_file_front', 'document_file_back', 'status', 'submitted_at']
+        read_only_fields = ['status', 'submitted_at']
+
+
+class ProofOfAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProofOfAddress
+        fields = ['id', 'address_type', 'document_type', 'document_file', 'status', 'submitted_at']
+        read_only_fields = ['status', 'submitted_at']

@@ -9041,3 +9041,776 @@ INFO 2025-08-13 17:49:18,608 runserver 8332 2952 [mHTTP OPTIONS /api/v1/account
 INFO 2025-08-13 17:50:53,818 autoreload 8332 2488 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
 INFO 2025-08-13 17:50:56,641 autoreload 14620 15036 Watching for file changes with StatReloader
 INFO 2025-08-13 17:52:17,678 autoreload 6448 9924 Watching for file changes with StatReloader
+INFO 2025-08-14 06:12:32,793 autoreload 11132 7160 Watching for file changes with StatReloader
+INFO 2025-08-14 06:12:50,546 runserver 11132 8920 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:50608][0m
+INFO 2025-08-14 06:12:50,546 runserver 11132 8920 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:50606][0m
+INFO 2025-08-14 06:12:50,547 runserver 11132 8920 [mHTTP OPTIONS /api/v1/account/user 200 [0.01, 127.0.0.1:50607][0m
+INFO 2025-08-14 06:12:50,548 runserver 11132 8920 [mHTTP OPTIONS /api/v1/account/user 200 [0.02, 127.0.0.1:50605][0m
+WARNING 2025-08-14 06:12:52,160 log 11132 6624 Unauthorized: /api/v1/account/user
+WARNING 2025-08-14 06:12:52,175 runserver 11132 8920 [31;1mHTTP GET /api/v1/account/user 401 [1.62, 127.0.0.1:50606][0m
+INFO 2025-08-14 06:12:52,197 runserver 11132 8920 [mHTTP OPTIONS /api/v1/account/auth/token/refresh 200 [0.01, 127.0.0.1:50605][0m
+WARNING 2025-08-14 06:12:52,262 log 11132 6624 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 06:12:52,276 runserver 11132 8920 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.73, 127.0.0.1:50608][0m
+WARNING 2025-08-14 06:12:53,914 log 11132 6624 Unauthorized: /api/v1/account/user
+WARNING 2025-08-14 06:12:53,914 log 11132 17372 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-14 06:12:53,929 runserver 11132 8920 [31;1mHTTP GET /api/v1/account/user 401 [1.75, 127.0.0.1:50606][0m
+WARNING 2025-08-14 06:12:53,934 runserver 11132 8920 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [1.72, 127.0.0.1:50605][0m
+WARNING 2025-08-14 06:12:54,094 log 11132 6624 Unauthorized: /api/v1/trading/accounts
+INFO 2025-08-14 06:13:03,215 runserver 11132 8920 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:50605][0m
+INFO 2025-08-14 06:13:10,503 runserver 11132 8920 [mHTTP POST /api/v1/account/auth/login 200 [7.28, 127.0.0.1:50605][0m
+INFO 2025-08-14 06:13:12,542 runserver 11132 8920 [mHTTP GET /api/v1/account/user 200 [1.85, 127.0.0.1:50605][0m
+INFO 2025-08-14 06:13:13,688 runserver 11132 8920 [mHTTP GET /api/v1/trading/accounts 200 [3.00, 127.0.0.1:50606][0m
+INFO 2025-08-14 06:13:14,711 runserver 11132 8920 [mHTTP GET /api/v1/account/user 200 [2.17, 127.0.0.1:50605][0m
+INFO 2025-08-14 06:13:16,545 runserver 11132 8920 [mHTTP GET /api/v1/trading/accounts 200 [2.85, 127.0.0.1:50606][0m
+INFO 2025-08-14 06:14:24,030 runserver 11132 8920 [mHTTP PATCH /api/v1/account/user 200 [5.70, 127.0.0.1:50633][0m
+INFO 2025-08-14 06:14:29,048 runserver 11132 8920 [mHTTP GET /api/v1/account/user 200 [2.17, 127.0.0.1:50633][0m
+INFO 2025-08-14 06:14:29,871 runserver 11132 8920 [mHTTP GET /api/v1/trading/accounts 200 [2.99, 127.0.0.1:50643][0m
+INFO 2025-08-14 06:14:31,204 runserver 11132 8920 [mHTTP GET /api/v1/account/user 200 [2.14, 127.0.0.1:50633][0m
+INFO 2025-08-14 06:14:32,623 runserver 11132 8920 [mHTTP GET /api/v1/trading/accounts 200 [2.75, 127.0.0.1:50643][0m
+INFO 2025-08-14 06:15:13,786 runserver 11132 8920 [mHTTP GET /api/v1/trading/accounts 200 [4.03, 127.0.0.1:50658][0m
+INFO 2025-08-14 06:15:16,532 runserver 11132 8920 [mHTTP GET /api/v1/trading/accounts 200 [2.74, 127.0.0.1:50658][0m
+INFO 2025-08-14 06:15:19,406 runserver 11132 8920 [mHTTP GET /api/v1/trading/accounts 200 [2.86, 127.0.0.1:50658][0m
+INFO 2025-08-14 06:15:22,317 runserver 11132 8920 [mHTTP GET /api/v1/trading/accounts 200 [2.90, 127.0.0.1:50658][0m
+INFO 2025-08-14 06:15:31,836 runserver 11132 8920 [mHTTP OPTIONS /api/v1/account/auth/login/history?page=1&page_size=10 200 [0.02, 127.0.0.1:50658][0m
+INFO 2025-08-14 06:15:31,842 runserver 11132 8920 [mHTTP OPTIONS /api/v1/account/auth/login/history?page=1&page_size=10 200 [0.02, 127.0.0.1:50667][0m
+INFO 2025-08-14 06:15:39,425 runserver 11132 8920 [mHTTP GET /api/v1/account/auth/login/history?page=1&page_size=10 200 [7.58, 127.0.0.1:50658][0m
+INFO 2025-08-14 06:15:43,728 runserver 11132 8920 [mHTTP OPTIONS /api/v1/account/auth/login/history?page=2&page_size=10 200 [0.00, 127.0.0.1:50667][0m
+INFO 2025-08-14 06:15:45,944 runserver 11132 8920 [mHTTP GET /api/v1/account/auth/login/history?page=2&page_size=10 200 [2.21, 127.0.0.1:50667][0m
+INFO 2025-08-14 06:15:57,442 runserver 11132 8920 [mHTTP OPTIONS /api/v1/account/auth/login/history?page=3&page_size=10 200 [0.00, 127.0.0.1:50667][0m
+INFO 2025-08-14 06:16:00,049 runserver 11132 8920 [mHTTP GET /api/v1/account/auth/login/history?page=3&page_size=10 200 [2.60, 127.0.0.1:50667][0m
+INFO 2025-08-14 06:36:35,361 autoreload 19612 7096 Watching for file changes with StatReloader
+INFO 2025-08-14 06:37:06,671 runserver 19612 14548 [mHTTP GET /api/v1/account/auth/login/history?page=1&page_size=10 200 [5.06, 127.0.0.1:50911][0m
+INFO 2025-08-14 06:37:09,630 runserver 19612 14548 [mHTTP GET /api/v1/account/auth/login/history?page=1&page_size=10 200 [2.95, 127.0.0.1:50911][0m
+INFO 2025-08-14 06:40:40,764 runserver 19612 14548 [mHTTP GET /api/v1/trading/accounts 200 [3.88, 127.0.0.1:50968][0m
+INFO 2025-08-14 06:40:43,849 runserver 19612 14548 [mHTTP GET /api/v1/trading/accounts 200 [3.08, 127.0.0.1:50968][0m
+INFO 2025-08-14 06:42:14,650 autoreload 19612 7096 C:\Users\user\Documents\Project\stanum_web\account\urls.py changed, reloading.
+INFO 2025-08-14 06:42:18,390 autoreload 11756 5232 Watching for file changes with StatReloader
+INFO 2025-08-14 06:51:09,285 runserver 11756 17952 [mHTTP GET /api/v1/trading/accounts 200 [4.16, 127.0.0.1:51111][0m
+INFO 2025-08-14 06:51:13,208 runserver 11756 17952 [mHTTP GET /api/v1/trading/accounts 200 [3.92, 127.0.0.1:51111][0m
+INFO 2025-08-14 06:51:52,880 runserver 11756 17952 [mHTTP GET /api/v1/trading/accounts 200 [4.19, 127.0.0.1:51111][0m
+INFO 2025-08-14 06:51:57,217 runserver 11756 17952 [mHTTP GET /api/v1/trading/accounts 200 [4.33, 127.0.0.1:51111][0m
+INFO 2025-08-14 06:59:57,976 runserver 11756 17952 [mHTTP OPTIONS /api/v1/account/document-types?type=identity 200 [0.01, 127.0.0.1:51275][0m
+INFO 2025-08-14 06:59:57,981 runserver 11756 17952 [mHTTP OPTIONS /api/v1/account/document-types?type=identity 200 [0.01, 127.0.0.1:51277][0m
+INFO 2025-08-14 07:00:01,780 runserver 11756 17952 [mHTTP GET /api/v1/account/document-types?type=identity 200 [3.80, 127.0.0.1:51275][0m
+INFO 2025-08-14 07:00:03,005 runserver 11756 17952 [mHTTP GET /api/v1/trading/accounts 200 [5.04, 127.0.0.1:51276][0m
+INFO 2025-08-14 07:00:04,841 runserver 11756 17952 [mHTTP GET /api/v1/account/document-types?type=identity 200 [3.05, 127.0.0.1:51275][0m
+INFO 2025-08-14 07:00:06,994 runserver 11756 17952 [mHTTP GET /api/v1/trading/accounts 200 [3.98, 127.0.0.1:51276][0m
+INFO 2025-08-14 07:04:53,649 autoreload 19588 14304 Watching for file changes with StatReloader
+INFO 2025-08-14 07:25:44,058 autoreload 3116 14128 Watching for file changes with StatReloader
+WARNING 2025-08-14 07:31:34,979 log 3116 5704 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 07:31:34,983 log 3116 10160 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 07:31:34,987 runserver 3116 13016 [31;1mHTTP GET /api/v1/account/document-types?type=identity 401 [5.19, 127.0.0.1:52547][0m
+WARNING 2025-08-14 07:31:34,993 runserver 3116 13016 [31;1mHTTP GET /api/v1/trading/accounts 401 [5.20, 127.0.0.1:52548][0m
+WARNING 2025-08-14 07:31:37,127 log 3116 5704 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 07:31:37,127 log 3116 10160 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 07:31:37,127 runserver 3116 13016 [31;1mHTTP GET /api/v1/trading/accounts 401 [2.12, 127.0.0.1:52548][0m
+WARNING 2025-08-14 07:31:37,127 runserver 3116 13016 [31;1mHTTP GET /api/v1/account/document-types?type=identity 401 [2.13, 127.0.0.1:52547][0m
+INFO 2025-08-14 07:31:37,336 runserver 3116 13016 [mHTTP POST /api/v1/account/auth/token/refresh 200 [2.32, 127.0.0.1:52555][0m
+WARNING 2025-08-14 07:31:39,026 log 3116 5704 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 07:31:39,027 log 3116 10160 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 07:31:39,031 runserver 3116 13016 [31;1mHTTP GET /api/v1/account/document-types?type=identity 401 [1.68, 127.0.0.1:52555][0m
+WARNING 2025-08-14 07:31:39,034 runserver 3116 13016 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.69, 127.0.0.1:52547][0m
+WARNING 2025-08-14 07:31:41,078 log 3116 5704 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 07:31:41,080 log 3116 10160 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 07:31:41,080 log 3116 18492 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-14 07:31:41,080 runserver 3116 13016 [31;1mHTTP GET /api/v1/trading/accounts 401 [2.03, 127.0.0.1:52547][0m
+WARNING 2025-08-14 07:31:41,090 runserver 3116 13016 [31;1mHTTP GET /api/v1/account/document-types?type=identity 401 [2.04, 127.0.0.1:52548][0m
+WARNING 2025-08-14 07:31:41,095 runserver 3116 13016 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [2.03, 127.0.0.1:52555][0m
+INFO 2025-08-14 07:32:08,741 runserver 3116 13016 [mHTTP POST /api/v1/account/auth/login 200 [5.28, 127.0.0.1:52548][0m
+INFO 2025-08-14 07:32:10,927 runserver 3116 13016 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.03, 127.0.0.1:52548][0m
+INFO 2025-08-14 07:32:12,308 runserver 3116 13016 [mHTTP GET /api/v1/trading/accounts 200 [3.41, 127.0.0.1:52555][0m
+INFO 2025-08-14 07:32:13,309 runserver 3116 13016 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.37, 127.0.0.1:52548][0m
+INFO 2025-08-14 07:32:15,760 runserver 3116 13016 [mHTTP GET /api/v1/trading/accounts 200 [3.37, 127.0.0.1:52555][0m
+INFO 2025-08-14 07:37:53,220 autoreload 10424 8892 Watching for file changes with StatReloader
+INFO 2025-08-14 07:49:00,574 autoreload 10424 8892 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 07:49:03,456 autoreload 10836 15628 Watching for file changes with StatReloader
+INFO 2025-08-14 07:49:11,541 autoreload 10836 15628 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 07:49:15,340 autoreload 8772 8548 Watching for file changes with StatReloader
+INFO 2025-08-14 07:49:20,063 autoreload 8772 8548 C:\Users\user\Documents\Project\stanum_web\account\urls.py changed, reloading.
+INFO 2025-08-14 07:49:23,439 autoreload 14784 9580 Watching for file changes with StatReloader
+INFO 2025-08-14 07:50:53,975 autoreload 14784 9580 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 07:50:57,308 autoreload 14928 4148 Watching for file changes with StatReloader
+INFO 2025-08-14 07:51:32,076 runserver 14928 8008 [mHTTP GET /api/v1/account/document-types?type=identity 200 [5.20, 127.0.0.1:53366][0m
+INFO 2025-08-14 07:51:33,174 runserver 14928 8008 [mHTTP GET /api/v1/trading/accounts 200 [6.29, 127.0.0.1:53367][0m
+INFO 2025-08-14 07:51:34,933 runserver 14928 8008 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.85, 127.0.0.1:53366][0m
+INFO 2025-08-14 08:17:58,335 runserver 14928 8008 [mHTTP GET /api/v1/account/document-types?type=identity 200 [4.45, 127.0.0.1:54327][0m
+INFO 2025-08-14 08:24:01,579 runserver 14928 8008 [mHTTP OPTIONS /api/v1/kyc/identity 200 [0.00, 127.0.0.1:54387][0m
+WARNING 2025-08-14 08:24:01,794 log 14928 7192 Not Found: /api/v1/kyc/identity
+WARNING 2025-08-14 08:24:01,794 runserver 14928 8008 [33mHTTP POST /api/v1/kyc/identity 404 [0.19, 127.0.0.1:54387][0m
+WARNING 2025-08-14 08:24:19,066 log 14928 7192 Not Found: /api/v1/kyc/identity
+WARNING 2025-08-14 08:24:19,072 runserver 14928 8008 [33mHTTP POST /api/v1/kyc/identity 404 [0.04, 127.0.0.1:54387][0m
+WARNING 2025-08-14 08:24:27,615 log 14928 7192 Not Found: /api/v1/kyc/identity
+WARNING 2025-08-14 08:24:27,624 runserver 14928 8008 [33mHTTP POST /api/v1/kyc/identity 404 [0.02, 127.0.0.1:54387][0m
+INFO 2025-08-14 08:24:47,643 runserver 14928 8008 [mHTTP OPTIONS /api/v1/account/kyc/identity 200 [0.00, 127.0.0.1:54387][0m
+ERROR 2025-08-14 08:24:47,824 log 14928 7192 Internal Server Error: /api/v1/account/kyc/identity
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\utils\deprecation.py", line 152, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\middleware\common.py", line 108, in process_response
+    return self.response_redirect_class(self.get_full_path_with_slash(request))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\middleware\common.py", line 87, in get_full_path_with_slash
+    raise RuntimeError(
+RuntimeError: You called this URL via POST, but the URL doesn't end in a slash and you have APPEND_SLASH set. Django can't redirect to the slash URL while maintaining POST data. Change your form to point to 127.0.0.1:8000/api/v1/account/kyc/identity/ (note the trailing slash), or set APPEND_SLASH=False in your Django settings.
+ERROR 2025-08-14 08:24:47,835 runserver 14928 8008 [35;1mHTTP POST /api/v1/account/kyc/identity 500 [0.18, 127.0.0.1:54387][0m
+INFO 2025-08-14 08:25:08,924 autoreload 14928 4148 C:\Users\user\Documents\Project\stanum_web\account\urls.py changed, reloading.
+INFO 2025-08-14 08:25:12,046 autoreload 15328 18676 Watching for file changes with StatReloader
+INFO 2025-08-14 08:25:27,154 runserver 15328 2064 [mHTTP POST /api/v1/account/kyc/identity 200 [3.57, 127.0.0.1:54438][0m
+INFO 2025-08-14 08:26:53,683 autoreload 15328 18676 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 08:26:56,666 autoreload 18012 15584 Watching for file changes with StatReloader
+INFO 2025-08-14 08:29:24,047 runserver 18012 11604 [mHTTP OPTIONS /api/v1/account/auth/logout 200 [0.01, 127.0.0.1:54584][0m
+INFO 2025-08-14 08:29:29,949 runserver 18012 11604 [mHTTP POST /api/v1/account/auth/logout 200 [5.90, 127.0.0.1:54584][0m
+INFO 2025-08-14 08:29:37,567 runserver 18012 11604 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:54584][0m
+INFO 2025-08-14 08:29:44,478 runserver 18012 11604 [mHTTP POST /api/v1/account/auth/login 200 [6.91, 127.0.0.1:54584][0m
+INFO 2025-08-14 08:29:44,722 runserver 18012 11604 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:54584][0m
+INFO 2025-08-14 08:29:44,725 runserver 18012 11604 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:54605][0m
+INFO 2025-08-14 08:29:48,107 runserver 18012 11604 [mHTTP GET /api/v1/trading/accounts 200 [3.38, 127.0.0.1:54584][0m
+INFO 2025-08-14 08:29:51,514 runserver 18012 11604 [mHTTP GET /api/v1/trading/accounts 200 [3.40, 127.0.0.1:54584][0m
+INFO 2025-08-14 08:30:00,253 runserver 18012 11604 [mHTTP OPTIONS /api/v1/account/user 200 [0.00, 127.0.0.1:54584][0m
+INFO 2025-08-14 08:30:00,253 runserver 18012 11604 [mHTTP OPTIONS /api/v1/account/user 200 [0.00, 127.0.0.1:54605][0m
+INFO 2025-08-14 08:30:03,198 runserver 18012 11604 [mHTTP GET /api/v1/account/user 200 [2.94, 127.0.0.1:54605][0m
+INFO 2025-08-14 08:30:05,845 runserver 18012 11604 [mHTTP GET /api/v1/account/user 200 [2.63, 127.0.0.1:54605][0m
+INFO 2025-08-14 08:30:20,525 runserver 18012 11604 [mHTTP GET /api/v1/account/document-types?type=identity 200 [5.15, 127.0.0.1:54605][0m
+INFO 2025-08-14 08:30:22,876 runserver 18012 11604 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.34, 127.0.0.1:54605][0m
+INFO 2025-08-14 08:33:09,438 runserver 18012 11604 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.64, 127.0.0.1:54740][0m
+INFO 2025-08-14 08:33:12,930 runserver 18012 11604 [mHTTP GET /api/v1/account/document-types?type=identity 200 [3.48, 127.0.0.1:54740][0m
+WARNING 2025-08-14 08:33:32,408 log 18012 9196 Forbidden: /api/v1/account/kyc/identity
+WARNING 2025-08-14 08:33:32,412 runserver 18012 11604 [31;1mHTTP POST /api/v1/account/kyc/identity 403 [5.02, 127.0.0.1:54740][0m
+INFO 2025-08-14 08:35:40,714 runserver 18012 11604 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.84, 127.0.0.1:54822][0m
+WARNING 2025-08-14 08:38:59,382 log 18012 9196 Unauthorized: /api/v1/account/kyc/identity
+WARNING 2025-08-14 08:39:18,840 log 18012 9196 Forbidden: /api/v1/account/kyc/identity
+WARNING 2025-08-14 08:39:18,843 runserver 18012 11604 [31;1mHTTP POST /api/v1/account/kyc/identity 403 [2.96, 127.0.0.1:54972][0m
+WARNING 2025-08-14 08:40:23,435 log 18012 9196 Unauthorized: /api/v1/account/kyc/identity
+INFO 2025-08-14 08:40:29,183 runserver 18012 11604 [mHTTP POST /api/v1/account/kyc/identity 200 [3.79, 127.0.0.1:55027][0m
+INFO 2025-08-14 08:46:11,313 runserver 18012 11604 [mHTTP GET /api/v1/account/document-types?type=identity 200 [8.34, 127.0.0.1:55224][0m
+INFO 2025-08-14 08:49:48,401 autoreload 18012 15584 C:\Users\user\Documents\Project\stanum_web\account\models.py changed, reloading.
+INFO 2025-08-14 08:49:54,260 autoreload 14220 15788 Watching for file changes with StatReloader
+INFO 2025-08-14 08:50:04,108 autoreload 14220 15788 C:\Users\user\Documents\Project\stanum_web\account\serializers.py changed, reloading.
+INFO 2025-08-14 08:54:46,093 autoreload 17484 672 Watching for file changes with StatReloader
+INFO 2025-08-14 08:55:59,351 runserver 17484 19236 [mHTTP GET /api/v1/account/document-types?type=identity 200 [4.13, 127.0.0.1:55615][0m
+INFO 2025-08-14 08:56:00,529 runserver 17484 19236 [mHTTP GET /api/v1/trading/accounts 200 [5.30, 127.0.0.1:55616][0m
+INFO 2025-08-14 08:56:02,114 runserver 17484 19236 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.73, 127.0.0.1:55615][0m
+INFO 2025-08-14 08:56:04,292 runserver 17484 19236 [mHTTP GET /api/v1/trading/accounts 200 [3.75, 127.0.0.1:55616][0m
+INFO 2025-08-14 08:57:16,021 autoreload 17484 672 C:\Users\user\Documents\Project\stanum_web\account\models.py changed, reloading.
+INFO 2025-08-14 08:57:21,770 autoreload 19652 20176 Watching for file changes with StatReloader
+INFO 2025-08-14 08:57:55,902 autoreload 19652 20176 C:\Users\user\Documents\Project\stanum_web\account\models.py changed, reloading.
+INFO 2025-08-14 08:58:02,081 autoreload 6716 5904 Watching for file changes with StatReloader
+INFO 2025-08-14 09:02:15,188 autoreload 6716 5904 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 09:02:21,150 autoreload 2164 16420 Watching for file changes with StatReloader
+INFO 2025-08-14 09:02:39,724 runserver 2164 20072 [mHTTP OPTIONS /api/v1/account/document-types?type=identity 200 [0.02, 127.0.0.1:55882][0m
+INFO 2025-08-14 09:02:39,727 runserver 2164 20072 [mHTTP OPTIONS /api/v1/account/document-types?type=identity 200 [0.01, 127.0.0.1:55884][0m
+INFO 2025-08-14 09:02:43,243 runserver 2164 20072 [mHTTP GET /api/v1/account/document-types?type=identity 200 [3.51, 127.0.0.1:55884][0m
+INFO 2025-08-14 09:02:44,464 runserver 2164 20072 [mHTTP GET /api/v1/trading/accounts 200 [4.75, 127.0.0.1:55883][0m
+INFO 2025-08-14 09:02:45,904 runserver 2164 20072 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.65, 127.0.0.1:55884][0m
+INFO 2025-08-14 19:34:54,443 runserver 2164 20072 [mHTTP OPTIONS /api/v1/account/document-types?type=identity 200 [0.02, 127.0.0.1:56359][0m
+INFO 2025-08-14 19:34:54,443 runserver 2164 20072 [mHTTP OPTIONS /api/v1/account/document-types?type=identity 200 [0.02, 127.0.0.1:56361][0m
+INFO 2025-08-14 19:34:54,443 runserver 2164 20072 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.02, 127.0.0.1:56360][0m
+INFO 2025-08-14 19:34:54,443 runserver 2164 20072 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.02, 127.0.0.1:56362][0m
+WARNING 2025-08-14 19:35:05,618 log 2164 7916 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 19:35:05,622 log 2164 7916 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 19:35:05,627 log 2164 20788 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 19:35:05,627 log 2164 7916 Unauthorized: /api/v1/account/document-types
+INFO 2025-08-14 19:36:17,322 autoreload 2164 16420 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 19:36:21,257 autoreload 17092 5560 Watching for file changes with StatReloader
+INFO 2025-08-14 19:38:49,790 runserver 17092 21400 [mHTTP OPTIONS /api/v1/account/document-types?type=address 200 [0.00, 127.0.0.1:56557][0m
+WARNING 2025-08-14 19:38:52,403 log 17092 12344 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 19:38:52,403 runserver 17092 21400 [31;1mHTTP GET /api/v1/account/document-types?type=address 401 [2.60, 127.0.0.1:56557][0m
+INFO 2025-08-14 19:38:52,437 runserver 17092 21400 [mHTTP OPTIONS /api/v1/account/auth/token/refresh 200 [0.01, 127.0.0.1:56557][0m
+INFO 2025-08-14 19:38:53,887 runserver 17092 21400 [mHTTP POST /api/v1/account/auth/token/refresh 200 [1.45, 127.0.0.1:56557][0m
+WARNING 2025-08-14 19:38:55,169 log 17092 12344 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 19:38:55,169 runserver 17092 21400 [31;1mHTTP GET /api/v1/account/document-types?type=address 401 [1.28, 127.0.0.1:56557][0m
+WARNING 2025-08-14 19:39:25,370 log 17092 12344 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 19:39:25,385 log 17092 18920 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 19:39:25,385 log 17092 12344 Unauthorized: /api/v1/account/document-types
+INFO 2025-08-14 19:39:48,737 runserver 17092 21400 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:56588][0m
+INFO 2025-08-14 19:40:08,346 autoreload 8240 4132 Watching for file changes with StatReloader
+INFO 2025-08-14 19:40:29,155 runserver 8240 15224 [mHTTP POST /api/v1/account/auth/login 200 [4.97, 127.0.0.1:56644][0m
+INFO 2025-08-14 19:40:31,655 runserver 8240 15224 [mHTTP GET /api/v1/trading/accounts 200 [2.33, 127.0.0.1:56644][0m
+INFO 2025-08-14 19:40:33,928 runserver 8240 15224 [mHTTP GET /api/v1/trading/accounts 200 [2.27, 127.0.0.1:56644][0m
+INFO 2025-08-14 19:40:35,584 runserver 8240 15224 [mHTTP OPTIONS /api/v1/account/user 200 [0.00, 127.0.0.1:56644][0m
+INFO 2025-08-14 19:40:35,585 runserver 8240 15224 [mHTTP OPTIONS /api/v1/account/user 200 [0.00, 127.0.0.1:56654][0m
+INFO 2025-08-14 19:40:37,260 runserver 8240 15224 [mHTTP GET /api/v1/account/user 200 [1.67, 127.0.0.1:56654][0m
+INFO 2025-08-14 19:40:38,954 runserver 8240 15224 [mHTTP GET /api/v1/account/user 200 [1.69, 127.0.0.1:56654][0m
+WARNING 2025-08-14 19:41:08,958 log 8240 6644 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 19:41:08,960 log 8240 5244 Unauthorized: /api/v1/account/document-types
+INFO 2025-08-14 19:41:46,652 runserver 8240 15224 [mHTTP GET /api/v1/account/document-types?type=address 200 [5.85, 127.0.0.1:56710][0m
+INFO 2025-08-14 19:41:47,201 runserver 8240 15224 [mHTTP GET /api/v1/trading/accounts 200 [6.40, 127.0.0.1:56711][0m
+INFO 2025-08-14 19:41:48,315 runserver 8240 15224 [mHTTP GET /api/v1/account/document-types?type=address 200 [1.65, 127.0.0.1:56710][0m
+INFO 2025-08-14 19:41:49,441 runserver 8240 15224 [mHTTP GET /api/v1/trading/accounts 200 [2.24, 127.0.0.1:56711][0m
+INFO 2025-08-14 19:44:22,423 runserver 8240 15224 [mHTTP OPTIONS /api/v1/account/kyc/address 200 [0.00, 127.0.0.1:56806][0m
+INFO 2025-08-14 19:44:27,462 runserver 8240 15224 [mHTTP POST /api/v1/account/kyc/address 200 [5.03, 127.0.0.1:56806][0m
+WARNING 2025-08-14 19:44:44,801 log 8240 6644 Forbidden: /api/v1/account/kyc/address
+WARNING 2025-08-14 19:44:44,803 runserver 8240 15224 [31;1mHTTP POST /api/v1/account/kyc/address 403 [1.66, 127.0.0.1:56806][0m
+WARNING 2025-08-14 19:45:21,270 log 8240 5244 Unauthorized: /api/v1/account/kyc/address
+ERROR 2025-08-14 19:45:30,002 log 8240 6644 Internal Server Error: /api/v1/account/kyc/address
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "account_proofofaddress_user_id_1f5005bc_uniq"
+DETAIL:  Key (user_id)=(3) already exists.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\Project\stanum_web\account\views.py", line 861, in post
+    serializer.save(user=user)  # Ensure user is set
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 212, in save
+    self.instance = self.create(validated_data)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\serializers.py", line 962, in create
+    instance = ModelClass._default_manager.create(**validated_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 658, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\base.py", line 814, in save
+    self.save_base(
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\base.py", line 877, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\base.py", line 1020, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\base.py", line 1061, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\query.py", line 1805, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1822, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "account_proofofaddress_user_id_1f5005bc_uniq"
+DETAIL:  Key (user_id)=(3) already exists.
+
+ERROR 2025-08-14 19:45:30,018 runserver 8240 15224 [35;1mHTTP POST /api/v1/account/kyc/address 500 [4.54, 127.0.0.1:56851][0m
+INFO 2025-08-14 19:46:00,525 autoreload 8240 4132 C:\Users\user\Documents\Project\stanum_web\account\models.py changed, reloading.
+INFO 2025-08-14 19:48:09,218 autoreload 17368 12792 Watching for file changes with StatReloader
+INFO 2025-08-14 19:48:46,262 runserver 17368 13624 [mHTTP POST /api/v1/account/kyc/address 200 [4.18, 127.0.0.1:56996][0m
+INFO 2025-08-14 19:51:22,088 runserver 17368 13624 [mHTTP GET /api/v1/account/document-types?type=identity 200 [7.85, 127.0.0.1:57096][0m
+INFO 2025-08-14 19:51:23,751 runserver 17368 13624 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.66, 127.0.0.1:57096][0m
+INFO 2025-08-14 19:57:38,144 autoreload 17368 12792 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 19:57:40,409 autoreload 952 19124 Watching for file changes with StatReloader
+INFO 2025-08-14 20:03:10,072 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=identity 200 [3.54, 127.0.0.1:57250][0m
+INFO 2025-08-14 20:03:10,634 runserver 952 1300 [mHTTP GET /api/v1/trading/accounts 200 [4.11, 127.0.0.1:57251][0m
+INFO 2025-08-14 20:03:11,673 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.60, 127.0.0.1:57250][0m
+INFO 2025-08-14 20:03:13,291 runserver 952 1300 [mHTTP GET /api/v1/trading/accounts 200 [2.65, 127.0.0.1:57251][0m
+INFO 2025-08-14 20:06:20,843 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=address 200 [3.51, 127.0.0.1:57302][0m
+INFO 2025-08-14 20:06:22,439 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=address 200 [1.59, 127.0.0.1:57302][0m
+INFO 2025-08-14 20:06:22,579 runserver 952 1300 [mHTTP GET /api/v1/account/kyc/address 200 [1.73, 127.0.0.1:57305][0m
+INFO 2025-08-14 20:06:24,660 runserver 952 1300 [mHTTP GET /api/v1/account/kyc/address 200 [2.06, 127.0.0.1:57305][0m
+INFO 2025-08-14 20:23:10,858 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:11,497 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=address 200 [3.69, 127.0.0.1:57903][0m
+INFO 2025-08-14 20:23:13,366 runserver 952 1300 [mHTTP GET /api/v1/account/kyc/address 200 [1.87, 127.0.0.1:57903][0m
+INFO 2025-08-14 20:23:14,717 runserver 952 1300 [mHTTP POST /api/v1/account/auth/login 200 [3.86, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:14,833 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/user 200 [0.01, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:14,835 runserver 952 1300 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:57911][0m
+INFO 2025-08-14 20:23:14,835 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/user 200 [0.01, 127.0.0.1:57912][0m
+INFO 2025-08-14 20:23:14,835 runserver 952 1300 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:57913][0m
+INFO 2025-08-14 20:23:16,533 runserver 952 1300 [mHTTP GET /api/v1/account/user 200 [1.70, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:17,065 runserver 952 1300 [mHTTP GET /api/v1/trading/accounts 200 [2.23, 127.0.0.1:57911][0m
+INFO 2025-08-14 20:23:18,297 runserver 952 1300 [mHTTP GET /api/v1/account/user 200 [1.76, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:19,359 runserver 952 1300 [mHTTP GET /api/v1/trading/accounts 200 [2.29, 127.0.0.1:57911][0m
+INFO 2025-08-14 20:23:32,729 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/document-types?type=address 200 [0.00, 127.0.0.1:57911][0m
+INFO 2025-08-14 20:23:32,729 runserver 952 1300 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:32,738 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/document-types?type=address 200 [0.01, 127.0.0.1:57913][0m
+INFO 2025-08-14 20:23:32,738 runserver 952 1300 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:57912][0m
+INFO 2025-08-14 20:23:35,356 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=address 200 [2.62, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:35,356 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/kyc/address 200 [0.00, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:35,389 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=address 200 [2.65, 127.0.0.1:57911][0m
+INFO 2025-08-14 20:23:36,092 runserver 952 1300 [mHTTP GET /api/v1/trading/accounts 200 [3.35, 127.0.0.1:57913][0m
+INFO 2025-08-14 20:23:36,092 runserver 952 1300 [mHTTP GET /api/v1/trading/accounts 200 [3.35, 127.0.0.1:57912][0m
+INFO 2025-08-14 20:23:37,456 runserver 952 1300 [mHTTP GET /api/v1/account/kyc/address 200 [2.08, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:39,304 runserver 952 1300 [mHTTP GET /api/v1/account/kyc/address 200 [1.85, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:45,630 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/document-types?type=identity 200 [0.00, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:45,632 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/document-types?type=identity 200 [0.01, 127.0.0.1:57912][0m
+INFO 2025-08-14 20:23:47,243 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.61, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:23:48,908 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.65, 127.0.0.1:57906][0m
+INFO 2025-08-14 20:28:26,629 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.84, 127.0.0.1:58136][0m
+INFO 2025-08-14 20:28:26,635 runserver 952 1300 [mHTTP OPTIONS /api/v1/account/kyc/identity 200 [0.00, 127.0.0.1:58136][0m
+INFO 2025-08-14 20:28:28,428 runserver 952 1300 [mHTTP GET /api/v1/account/kyc/identity 200 [1.79, 127.0.0.1:58136][0m
+INFO 2025-08-14 20:29:28,590 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=identity 200 [3.11, 127.0.0.1:58136][0m
+INFO 2025-08-14 20:29:29,308 runserver 952 1300 [mHTTP GET /api/v1/trading/accounts 200 [3.82, 127.0.0.1:58185][0m
+INFO 2025-08-14 20:29:30,291 runserver 952 1300 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.70, 127.0.0.1:58136][0m
+INFO 2025-08-14 20:29:30,557 runserver 952 1300 [mHTTP GET /api/v1/account/kyc/identity 200 [1.95, 127.0.0.1:58189][0m
+INFO 2025-08-14 20:29:31,758 runserver 952 1300 [mHTTP GET /api/v1/trading/accounts 200 [2.43, 127.0.0.1:58185][0m
+INFO 2025-08-14 20:29:32,560 runserver 952 1300 [mHTTP GET /api/v1/account/kyc/identity 200 [2.00, 127.0.0.1:58189][0m
+INFO 2025-08-14 20:30:49,116 runserver 952 1300 [32mHTTP GET /admin/account/customauthtoken/ 302 [0.08, 127.0.0.1:58243][0m
+INFO 2025-08-14 20:30:49,240 runserver 952 1300 [mHTTP GET /admin/login/?next=/admin/account/customauthtoken/ 200 [0.12, 127.0.0.1:58243][0m
+INFO 2025-08-14 20:30:49,333 runserver 952 1300 [mHTTP GET /static/admin/css/login.css 200 [0.08, 127.0.0.1:58243][0m
+WARNING 2025-08-14 20:30:49,397 log 952 4876 Not Found: /favicon.ico
+WARNING 2025-08-14 20:30:49,397 runserver 952 1300 [33mHTTP GET /favicon.ico 404 [0.03, 127.0.0.1:58243][0m
+INFO 2025-08-14 20:31:09,821 runserver 952 1300 [32mHTTP POST /admin/login/?next=/admin/account/customauthtoken/ 302 [6.52, 127.0.0.1:58243][0m
+INFO 2025-08-14 20:31:11,902 runserver 952 1300 [mHTTP GET /admin/account/customauthtoken/ 200 [2.08, 127.0.0.1:58243][0m
+INFO 2025-08-14 20:31:13,416 runserver 952 1300 [mHTTP GET /admin/jsi18n/ 200 [1.49, 127.0.0.1:58243][0m
+WARNING 2025-08-14 20:31:24,621 log 952 4876 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-14 20:31:24,622 runserver 952 1300 [33mHTTP GET /.well-known/appspecific/com.chrome.devtools.json 404 [0.02, 127.0.0.1:58243][0m
+INFO 2025-08-14 20:34:11,449 runserver 952 1300 [32mHTTP GET /admin 301 [0.02, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:11,465 runserver 952 1300 [32mHTTP GET /admin/ 302 [0.02, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:11,482 runserver 952 1300 [mHTTP GET /admin/login/?next=/admin/ 200 [0.01, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:11,529 runserver 952 1300 [mHTTP GET /static/admin/css/base.css 200 [0.02, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:11,536 runserver 952 1300 [mHTTP GET /static/admin/css/dark_mode.css 200 [0.01, 127.0.0.1:58386][0m
+INFO 2025-08-14 20:34:11,541 runserver 952 1300 [mHTTP GET /static/admin/css/login.css 200 [0.00, 127.0.0.1:58386][0m
+INFO 2025-08-14 20:34:11,545 runserver 952 1300 [mHTTP GET /static/admin/css/nav_sidebar.css 200 [0.01, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:11,557 runserver 952 1300 [mHTTP GET /static/admin/css/responsive.css 200 [0.01, 127.0.0.1:58386][0m
+INFO 2025-08-14 20:34:11,585 runserver 952 1300 [mHTTP GET /static/admin/js/nav_sidebar.js 200 [0.02, 127.0.0.1:58386][0m
+INFO 2025-08-14 20:34:11,587 runserver 952 1300 [mHTTP GET /static/admin/js/theme.js 200 [0.04, 127.0.0.1:58385][0m
+WARNING 2025-08-14 20:34:11,622 log 952 4876 Not Found: /favicon.ico
+WARNING 2025-08-14 20:34:11,623 runserver 952 1300 [33mHTTP GET /favicon.ico 404 [0.01, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:33,776 runserver 952 1300 [32mHTTP POST /admin/login/?next=/admin/ 302 [5.81, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:35,535 runserver 952 1300 [mHTTP GET /admin/ 200 [1.76, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:35,613 runserver 952 1300 [mHTTP GET /static/admin/css/dashboard.css 200 [0.01, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:34:35,632 runserver 952 1300 [mHTTP GET /static/admin/img/icon-changelink.svg 200 [0.01, 127.0.0.1:58386][0m
+INFO 2025-08-14 20:34:35,632 runserver 952 1300 [mHTTP GET /static/admin/img/icon-deletelink.svg 200 [0.01, 127.0.0.1:58390][0m
+INFO 2025-08-14 20:34:35,634 runserver 952 1300 [mHTTP GET /static/admin/img/icon-addlink.svg 200 [0.02, 127.0.0.1:58385][0m
+INFO 2025-08-14 20:35:00,963 autoreload 952 19124 C:\Users\user\Documents\Project\stanum_web\account\admin.py changed, reloading.
+INFO 2025-08-14 20:35:03,186 autoreload 7784 14228 Watching for file changes with StatReloader
+INFO 2025-08-14 20:35:11,989 runserver 7784 16452 [mHTTP GET /admin/ 200 [2.10, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:37,925 runserver 7784 16452 [mHTTP GET /admin/account/proofofaddress/ 200 [12.00, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:38,080 runserver 7784 16452 [mHTTP GET /static/admin/css/changelists.css 200 [0.10, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:38,098 runserver 7784 16452 [mHTTP GET /static/admin/js/jquery.init.js 200 [0.02, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:38,126 runserver 7784 16452 [mHTTP GET /static/admin/js/core.js 200 [0.03, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:38,131 runserver 7784 16452 [mHTTP GET /static/admin/js/vendor/jquery/jquery.js 200 [0.15, 127.0.0.1:58442][0m
+INFO 2025-08-14 20:35:38,155 runserver 7784 16452 [mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 200 [0.03, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:38,169 runserver 7784 16452 [mHTTP GET /static/admin/js/actions.js 200 [0.02, 127.0.0.1:58442][0m
+INFO 2025-08-14 20:35:38,169 runserver 7784 16452 [mHTTP GET /static/admin/js/urlify.js 200 [0.01, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:38,194 runserver 7784 16452 [mHTTP GET /static/admin/js/prepopulate.js 200 [0.02, 127.0.0.1:58442][0m
+INFO 2025-08-14 20:35:38,231 runserver 7784 16452 [mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 200 [0.05, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:38,265 runserver 7784 16452 [mHTTP GET /static/admin/js/filters.js 200 [0.01, 127.0.0.1:58439][0m
+INFO 2025-08-14 20:35:39,486 runserver 7784 16452 [mHTTP GET /admin/jsi18n/ 200 [1.51, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:35:39,543 runserver 7784 16452 [mHTTP GET /static/admin/img/tooltag-add.svg 200 [0.02, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:28,367 runserver 7784 16452 [mHTTP POST /admin/account/proofofaddress/ 200 [4.08, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:28,401 runserver 7784 16452 [mHTTP GET /static/admin/js/cancel.js 200 [0.02, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:33,965 runserver 7784 16452 [32mHTTP POST /admin/account/proofofaddress/ 302 [3.83, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:36,066 runserver 7784 16452 [mHTTP GET /admin/account/proofofaddress/ 200 [2.10, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:37,651 runserver 7784 16452 [mHTTP GET /admin/jsi18n/ 200 [1.56, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:37,704 runserver 7784 16452 [mHTTP GET /static/admin/img/icon-yes.svg 200 [0.02, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:42,068 runserver 7784 16452 [mHTTP GET /admin/account/proofofidentity/ 200 [2.39, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:43,822 runserver 7784 16452 [mHTTP GET /admin/jsi18n/ 200 [1.73, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:52,963 runserver 7784 16452 [mHTTP POST /admin/account/proofofidentity/ 200 [2.98, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:36:58,821 runserver 7784 16452 [32mHTTP POST /admin/account/proofofidentity/ 302 [3.18, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:37:01,030 runserver 7784 16452 [mHTTP GET /admin/account/proofofidentity/ 200 [2.20, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:37:02,569 runserver 7784 16452 [mHTTP GET /admin/jsi18n/ 200 [1.50, 127.0.0.1:58440][0m
+INFO 2025-08-14 20:37:09,164 runserver 7784 16452 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.87, 127.0.0.1:58526][0m
+INFO 2025-08-14 20:37:09,881 runserver 7784 16452 [mHTTP GET /api/v1/trading/accounts 200 [2.59, 127.0.0.1:58527][0m
+INFO 2025-08-14 20:37:10,833 runserver 7784 16452 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.67, 127.0.0.1:58526][0m
+ERROR 2025-08-14 20:37:10,917 log 7784 15860 Internal Server Error: /api/v1/account/kyc/identity
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 511, in dispatch
+    self.response = self.finalize_response(request, response, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 423, in finalize_response
+    assert isinstance(response, HttpResponseBase), (
+AssertionError: Expected a `Response`, `HttpResponse` or `HttpStreamingResponse` to be returned from the view, but received a `<class 'dict'>`
+ERROR 2025-08-14 20:37:10,917 runserver 7784 16452 [35;1mHTTP GET /api/v1/account/kyc/identity 500 [1.73, 127.0.0.1:58531][0m
+INFO 2025-08-14 20:37:12,268 runserver 7784 16452 [mHTTP GET /api/v1/trading/accounts 200 [2.39, 127.0.0.1:58527][0m
+ERROR 2025-08-14 20:37:15,521 log 7784 15860 Internal Server Error: /api/v1/account/kyc/identity
+Traceback (most recent call last):
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 511, in dispatch
+    self.response = self.finalize_response(request, response, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Documents\venv\Lib\site-packages\rest_framework\views.py", line 423, in finalize_response
+    assert isinstance(response, HttpResponseBase), (
+AssertionError: Expected a `Response`, `HttpResponse` or `HttpStreamingResponse` to be returned from the view, but received a `<class 'dict'>`
+ERROR 2025-08-14 20:37:15,521 runserver 7784 16452 [35;1mHTTP GET /api/v1/account/kyc/identity 500 [4.60, 127.0.0.1:58526][0m
+INFO 2025-08-14 20:38:10,410 autoreload 7784 14228 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 20:38:12,674 autoreload 18644 15064 Watching for file changes with StatReloader
+INFO 2025-08-14 20:39:02,525 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=identity 200 [5.43, 127.0.0.1:58617][0m
+INFO 2025-08-14 20:39:03,143 runserver 18644 10384 [mHTTP GET /api/v1/trading/accounts 200 [6.05, 127.0.0.1:58618][0m
+INFO 2025-08-14 20:39:04,176 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/identity 200 [1.63, 127.0.0.1:58626][0m
+INFO 2025-08-14 20:39:04,510 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.97, 127.0.0.1:58617][0m
+INFO 2025-08-14 20:39:05,481 runserver 18644 10384 [mHTTP GET /api/v1/trading/accounts 200 [2.34, 127.0.0.1:58618][0m
+INFO 2025-08-14 20:39:06,256 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/identity 200 [1.75, 127.0.0.1:58617][0m
+INFO 2025-08-14 20:39:36,306 runserver 18644 10384 [mHTTP POST /api/v1/account/kyc/identity 200 [2.34, 127.0.0.1:58617][0m
+INFO 2025-08-14 20:39:44,375 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=address 200 [1.61, 127.0.0.1:58617][0m
+INFO 2025-08-14 20:39:46,175 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=address 200 [1.80, 127.0.0.1:58617][0m
+INFO 2025-08-14 20:39:46,327 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/address 200 [1.94, 127.0.0.1:58618][0m
+INFO 2025-08-14 20:39:48,071 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/address 200 [1.74, 127.0.0.1:58618][0m
+INFO 2025-08-14 20:40:05,385 runserver 18644 10384 [mHTTP POST /api/v1/account/kyc/address 200 [4.61, 127.0.0.1:58618][0m
+INFO 2025-08-14 20:40:18,089 runserver 18644 10384 [mHTTP POST /api/v1/account/kyc/address 200 [2.02, 127.0.0.1:58618][0m
+WARNING 2025-08-14 20:41:02,555 log 18644 15148 Forbidden: /api/v1/account/kyc/address
+WARNING 2025-08-14 20:41:02,555 runserver 18644 10384 [31;1mHTTP POST /api/v1/account/kyc/address 403 [2.13, 127.0.0.1:58618][0m
+INFO 2025-08-14 20:41:08,824 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=address 200 [1.61, 127.0.0.1:58618][0m
+INFO 2025-08-14 20:41:09,441 runserver 18644 10384 [mHTTP GET /api/v1/trading/accounts 200 [2.23, 127.0.0.1:58713][0m
+INFO 2025-08-14 20:41:10,408 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=address 200 [1.58, 127.0.0.1:58618][0m
+INFO 2025-08-14 20:41:10,724 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/address 200 [1.88, 127.0.0.1:58717][0m
+INFO 2025-08-14 20:41:12,153 runserver 18644 10384 [mHTTP GET /api/v1/trading/accounts 200 [2.71, 127.0.0.1:58713][0m
+INFO 2025-08-14 20:41:12,515 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/address 200 [1.79, 127.0.0.1:58717][0m
+INFO 2025-08-14 20:41:47,014 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=identity 200 [2.60, 127.0.0.1:58717][0m
+INFO 2025-08-14 20:41:48,693 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.68, 127.0.0.1:58717][0m
+INFO 2025-08-14 20:41:48,783 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/identity 200 [1.77, 127.0.0.1:58713][0m
+INFO 2025-08-14 20:41:50,624 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/identity 200 [1.84, 127.0.0.1:58713][0m
+INFO 2025-08-14 20:47:24,335 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=address 200 [2.06, 127.0.0.1:58955][0m
+INFO 2025-08-14 20:47:25,934 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=address 200 [1.60, 127.0.0.1:58955][0m
+INFO 2025-08-14 20:47:26,085 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/address 200 [1.73, 127.0.0.1:58958][0m
+INFO 2025-08-14 20:47:27,857 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/address 200 [1.77, 127.0.0.1:58958][0m
+INFO 2025-08-14 20:47:49,495 runserver 18644 10384 [mHTTP GET /admin/account/proofofidentity/ 200 [4.41, 127.0.0.1:58980][0m
+INFO 2025-08-14 20:47:50,935 runserver 18644 10384 [mHTTP GET /admin/jsi18n/ 200 [1.43, 127.0.0.1:58980][0m
+INFO 2025-08-14 20:48:31,060 runserver 18644 10384 [mHTTP GET /admin/account/proofofidentity/2/change/ 200 [6.59, 127.0.0.1:58980][0m
+INFO 2025-08-14 20:48:31,176 runserver 18644 10384 [mHTTP GET /static/admin/js/calendar.js 200 [0.10, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:48:31,191 runserver 18644 10384 [mHTTP GET /static/admin/css/forms.css 200 [0.12, 127.0.0.1:58980][0m
+INFO 2025-08-14 20:48:31,204 runserver 18644 10384 [mHTTP GET /static/admin/img/icon-viewlink.svg 200 [0.01, 127.0.0.1:58980][0m
+INFO 2025-08-14 20:48:31,205 runserver 18644 10384 [mHTTP GET /static/admin/js/admin/DateTimeShortcuts.js 200 [0.13, 127.0.0.1:58982][0m
+INFO 2025-08-14 20:48:31,211 runserver 18644 10384 [mHTTP GET /static/admin/css/widgets.css 200 [0.00, 127.0.0.1:58980][0m
+INFO 2025-08-14 20:48:31,227 runserver 18644 10384 [mHTTP GET /static/admin/js/prepopulate_init.js 200 [0.02, 127.0.0.1:58982][0m
+INFO 2025-08-14 20:48:31,242 runserver 18644 10384 [mHTTP GET /static/admin/js/change_form.js 200 [0.01, 127.0.0.1:58982][0m
+INFO 2025-08-14 20:48:32,700 runserver 18644 10384 [mHTTP GET /admin/jsi18n/ 200 [1.52, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:48:32,794 runserver 18644 10384 [mHTTP GET /static/admin/img/icon-clock.svg 200 [0.02, 127.0.0.1:58982][0m
+INFO 2025-08-14 20:48:32,794 runserver 18644 10384 [mHTTP GET /static/admin/img/icon-calendar.svg 200 [0.02, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:48:43,868 runserver 18644 10384 [32mHTTP POST /admin/account/proofofidentity/2/change/ 302 [3.32, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:48:46,582 runserver 18644 10384 [mHTTP GET /admin/account/proofofidentity/ 200 [2.70, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:48:48,104 runserver 18644 10384 [mHTTP GET /admin/jsi18n/ 200 [1.48, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:48:58,702 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=identity 200 [5.04, 127.0.0.1:59032][0m
+INFO 2025-08-14 20:49:00,453 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=identity 200 [1.75, 127.0.0.1:59032][0m
+INFO 2025-08-14 20:49:00,587 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/identity 200 [1.88, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:49:02,532 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/identity 200 [1.94, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:49:11,909 runserver 18644 10384 [mHTTP GET /admin/account/proofofaddress/ 200 [3.01, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:49:13,458 runserver 18644 10384 [mHTTP GET /admin/jsi18n/ 200 [1.52, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:49:19,104 runserver 18644 10384 [mHTTP GET /admin/account/proofofaddress/5/change/ 200 [3.86, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:49:21,828 runserver 18644 10384 [mHTTP GET /admin/jsi18n/ 200 [2.69, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:49:31,300 runserver 18644 10384 [32mHTTP POST /admin/account/proofofaddress/5/change/ 302 [2.99, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:49:34,035 runserver 18644 10384 [mHTTP GET /admin/account/proofofaddress/ 200 [2.73, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:49:35,601 runserver 18644 10384 [mHTTP GET /admin/jsi18n/ 200 [1.53, 127.0.0.1:58981][0m
+INFO 2025-08-14 20:49:41,587 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=address 200 [1.63, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:49:45,172 runserver 18644 10384 [mHTTP GET /api/v1/account/document-types?type=address 200 [3.57, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:49:45,189 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/address 200 [3.59, 127.0.0.1:59032][0m
+INFO 2025-08-14 20:49:47,026 runserver 18644 10384 [mHTTP GET /api/v1/account/kyc/address 200 [1.83, 127.0.0.1:59032][0m
+INFO 2025-08-14 20:49:58,395 runserver 18644 10384 [mHTTP OPTIONS /api/v1/account/auth/login/history?page=1&page_size=10 200 [0.00, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:49:58,396 runserver 18644 10384 [mHTTP OPTIONS /api/v1/account/auth/login/history?page=1&page_size=10 200 [0.00, 127.0.0.1:59032][0m
+INFO 2025-08-14 20:50:00,153 runserver 18644 10384 [mHTTP GET /api/v1/account/auth/login/history?page=1&page_size=10 200 [1.75, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:50:01,936 runserver 18644 10384 [mHTTP GET /api/v1/account/auth/login/history?page=1&page_size=10 200 [1.78, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:50:02,019 runserver 18644 10384 [mHTTP OPTIONS /api/v1/account/auth/login/history?page=4&page_size=10 200 [0.00, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:50:03,844 runserver 18644 10384 [mHTTP GET /api/v1/account/auth/login/history?page=4&page_size=10 200 [1.83, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:50:06,150 runserver 18644 10384 [mHTTP OPTIONS /api/v1/account/auth/login/history?page=3&page_size=10 200 [0.00, 127.0.0.1:59036][0m
+INFO 2025-08-14 20:50:10,164 runserver 18644 10384 [mHTTP GET /api/v1/account/auth/login/history?page=3&page_size=10 200 [4.01, 127.0.0.1:59036][0m
+WARNING 2025-08-14 21:00:57,944 log 18644 15296 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 21:00:57,960 runserver 18644 10384 [31;1mHTTP GET /api/v1/account/document-types?type=address 401 [5.93, 127.0.0.1:59495][0m
+WARNING 2025-08-14 21:00:58,025 log 18644 20512 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 21:00:58,026 runserver 18644 10384 [31;1mHTTP GET /api/v1/trading/accounts 401 [5.99, 127.0.0.1:59496][0m
+INFO 2025-08-14 21:00:59,854 runserver 18644 10384 [mHTTP GET /api/v1/trading/accounts 200 [7.98, 127.0.0.1:59494][0m
+WARNING 2025-08-14 21:00:59,989 log 18644 15296 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 21:00:59,989 runserver 18644 10384 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.96, 127.0.0.1:59496][0m
+WARNING 2025-08-14 21:01:00,161 log 18644 20512 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-14 21:01:00,161 runserver 18644 10384 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [2.19, 127.0.0.1:59505][0m
+WARNING 2025-08-14 21:01:00,211 log 18644 15296 Unauthorized: /api/v1/account/document-types
+WARNING 2025-08-14 21:01:00,211 runserver 18644 10384 [31;1mHTTP GET /api/v1/account/document-types?type=address 401 [2.25, 127.0.0.1:59495][0m
+INFO 2025-08-14 21:02:47,351 autoreload 18644 15064 C:\Users\user\Documents\Project\stanum_web\account\models.py changed, reloading.
+INFO 2025-08-14 21:02:49,806 autoreload 15480 10732 Watching for file changes with StatReloader
+INFO 2025-08-14 21:21:27,911 autoreload 15480 10732 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 21:21:31,215 autoreload 9744 17460 Watching for file changes with StatReloader
+INFO 2025-08-14 21:23:34,760 autoreload 1240 20656 Watching for file changes with StatReloader
+INFO 2025-08-14 21:23:59,940 autoreload 1240 20656 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 21:24:04,472 autoreload 9444 14200 Watching for file changes with StatReloader
+WARNING 2025-08-14 21:25:06,239 log 9444 17496 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 21:25:06,243 runserver 9444 14156 [31;1mHTTP GET /api/v1/trading/accounts 401 [2.20, 127.0.0.1:60386][0m
+INFO 2025-08-14 21:25:06,275 runserver 9444 14156 [mHTTP OPTIONS /api/v1/account/auth/token/refresh 200 [0.01, 127.0.0.1:60389][0m
+WARNING 2025-08-14 21:25:08,074 log 9444 17496 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 21:25:08,075 runserver 9444 14156 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.82, 127.0.0.1:60386][0m
+INFO 2025-08-14 21:25:08,284 runserver 9444 14156 [mHTTP POST /api/v1/account/auth/token/refresh 200 [1.99, 127.0.0.1:60389][0m
+WARNING 2025-08-14 21:25:09,916 log 9444 17496 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 21:25:09,917 runserver 9444 14156 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.62, 127.0.0.1:60389][0m
+WARNING 2025-08-14 21:25:11,760 log 9444 17496 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 21:25:11,762 runserver 9444 14156 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.84, 127.0.0.1:60389][0m
+WARNING 2025-08-14 21:25:13,333 log 9444 17496 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-14 21:25:13,335 runserver 9444 14156 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [1.57, 127.0.0.1:60389][0m
+INFO 2025-08-14 21:27:23,621 runserver 9444 14156 [mHTTP POST /api/v1/account/auth/login 200 [6.05, 127.0.0.1:60471][0m
+INFO 2025-08-14 21:27:26,301 runserver 9444 14156 [mHTTP GET /api/v1/trading/accounts 200 [2.59, 127.0.0.1:60471][0m
+INFO 2025-08-14 21:27:29,486 runserver 9444 14156 [mHTTP GET /api/v1/trading/accounts 200 [3.18, 127.0.0.1:60488][0m
+INFO 2025-08-14 21:36:13,516 autoreload 9444 14200 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 21:36:16,213 autoreload 1932 2000 Watching for file changes with StatReloader
+INFO 2025-08-14 21:43:05,927 autoreload 6652 7216 Watching for file changes with StatReloader
+INFO 2025-08-14 21:51:32,946 autoreload 6652 7216 C:\Users\user\Documents\Project\stanum_web\account\models.py changed, reloading.
+INFO 2025-08-14 21:51:36,200 autoreload 16776 17744 Watching for file changes with StatReloader
+INFO 2025-08-14 21:56:38,745 autoreload 16776 17744 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 21:56:42,273 autoreload 13468 15216 Watching for file changes with StatReloader
+INFO 2025-08-14 22:06:49,817 runserver 13468 20544 [mHTTP OPTIONS /api/v1/account/2fa/setup 200 [0.01, 127.0.0.1:61738][0m
+INFO 2025-08-14 22:06:55,390 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [5.57, 127.0.0.1:61738][0m
+INFO 2025-08-14 22:11:20,449 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [7.97, 127.0.0.1:61877][0m
+INFO 2025-08-14 22:11:21,458 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [8.98, 127.0.0.1:61878][0m
+INFO 2025-08-14 22:11:22,341 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [1.89, 127.0.0.1:61877][0m
+INFO 2025-08-14 22:18:37,178 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [4.92, 127.0.0.1:62098][0m
+INFO 2025-08-14 22:18:38,193 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [5.93, 127.0.0.1:62099][0m
+INFO 2025-08-14 22:18:39,022 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [1.84, 127.0.0.1:62098][0m
+INFO 2025-08-14 22:18:41,364 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [3.16, 127.0.0.1:62099][0m
+INFO 2025-08-14 22:19:28,198 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [2.21, 127.0.0.1:62099][0m
+INFO 2025-08-14 22:19:29,189 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [3.20, 127.0.0.1:62098][0m
+INFO 2025-08-14 22:19:30,088 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [1.89, 127.0.0.1:62099][0m
+INFO 2025-08-14 22:19:32,402 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [3.21, 127.0.0.1:62098][0m
+WARNING 2025-08-14 22:30:09,875 log 13468 13900 Unauthorized: /api/v1/account/2fa/setup
+INFO 2025-08-14 22:31:28,274 runserver 13468 20544 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.00, 127.0.0.1:62510][0m
+INFO 2025-08-14 22:31:28,274 runserver 13468 20544 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:62508][0m
+WARNING 2025-08-14 22:31:32,843 log 13468 13900 Unauthorized: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:31:32,843 log 13468 5960 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 22:31:32,849 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 401 [4.58, 127.0.0.1:62509][0m
+WARNING 2025-08-14 22:31:32,850 runserver 13468 20544 [31;1mHTTP GET /api/v1/trading/accounts 401 [4.57, 127.0.0.1:62508][0m
+WARNING 2025-08-14 22:31:34,495 log 13468 13900 Unauthorized: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:31:34,495 log 13468 5960 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 22:31:34,495 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 401 [1.63, 127.0.0.1:62510][0m
+WARNING 2025-08-14 22:31:34,511 runserver 13468 20544 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.65, 127.0.0.1:62508][0m
+INFO 2025-08-14 22:31:34,787 runserver 13468 20544 [mHTTP POST /api/v1/account/auth/token/refresh 200 [1.92, 127.0.0.1:62509][0m
+WARNING 2025-08-14 22:31:36,140 log 13468 13900 Unauthorized: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:31:36,143 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 401 [1.34, 127.0.0.1:62509][0m
+WARNING 2025-08-14 22:31:36,167 log 13468 5960 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 22:31:36,171 runserver 13468 20544 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.37, 127.0.0.1:62508][0m
+WARNING 2025-08-14 22:31:37,744 log 13468 13900 Unauthorized: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:31:37,744 log 13468 5960 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 22:31:37,760 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 401 [1.61, 127.0.0.1:62510][0m
+WARNING 2025-08-14 22:31:37,760 log 13468 13900 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-14 22:31:37,764 runserver 13468 20544 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.58, 127.0.0.1:62508][0m
+WARNING 2025-08-14 22:31:37,768 runserver 13468 20544 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [1.58, 127.0.0.1:62509][0m
+INFO 2025-08-14 22:31:41,696 runserver 13468 20544 [mHTTP OPTIONS /api/v1/account/auth/login 200 [0.00, 127.0.0.1:62509][0m
+INFO 2025-08-14 22:31:47,059 runserver 13468 20544 [mHTTP POST /api/v1/account/auth/login 200 [5.36, 127.0.0.1:62509][0m
+INFO 2025-08-14 22:31:48,975 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [1.77, 127.0.0.1:62509][0m
+INFO 2025-08-14 22:31:50,038 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [2.84, 127.0.0.1:62508][0m
+INFO 2025-08-14 22:31:51,224 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [2.23, 127.0.0.1:62509][0m
+INFO 2025-08-14 22:31:53,594 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [3.54, 127.0.0.1:62508][0m
+WARNING 2025-08-14 22:32:10,101 log 13468 5960 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:32:10,117 runserver 13468 20544 [31;1mHTTP POST /api/v1/account/2fa/setup 400 [5.48, 127.0.0.1:62508][0m
+INFO 2025-08-14 22:34:04,943 runserver 13468 20544 [mHTTP OPTIONS /api/v1/account/user 200 [0.00, 127.0.0.1:62633][0m
+INFO 2025-08-14 22:34:04,944 runserver 13468 20544 [mHTTP OPTIONS /api/v1/account/user 200 [0.00, 127.0.0.1:62634][0m
+INFO 2025-08-14 22:34:07,561 runserver 13468 20544 [mHTTP GET /api/v1/account/user 200 [2.61, 127.0.0.1:62634][0m
+INFO 2025-08-14 22:34:09,614 runserver 13468 20544 [mHTTP GET /api/v1/account/user 200 [2.05, 127.0.0.1:62634][0m
+INFO 2025-08-14 22:35:08,954 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [4.63, 127.0.0.1:62634][0m
+INFO 2025-08-14 22:35:10,896 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [1.93, 127.0.0.1:62634][0m
+INFO 2025-08-14 22:35:35,501 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [3.27, 127.0.0.1:62634][0m
+INFO 2025-08-14 22:35:36,551 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [4.31, 127.0.0.1:62689][0m
+INFO 2025-08-14 22:35:37,547 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [2.04, 127.0.0.1:62634][0m
+INFO 2025-08-14 22:35:39,661 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [3.10, 127.0.0.1:62689][0m
+INFO 2025-08-14 22:35:52,493 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [2.09, 127.0.0.1:62689][0m
+INFO 2025-08-14 22:35:53,443 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [3.04, 127.0.0.1:62634][0m
+INFO 2025-08-14 22:35:54,420 runserver 13468 20544 [mHTTP GET /api/v1/account/2fa/setup 200 [1.92, 127.0.0.1:62689][0m
+INFO 2025-08-14 22:36:14,434 runserver 13468 20544 [mHTTP POST /api/v1/account/2fa/setup 200 [2.77, 127.0.0.1:62689][0m
+WARNING 2025-08-14 22:37:08,704 log 13468 13900 Unauthorized: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:37:08,705 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 401 [3.92, 127.0.0.1:62689][0m
+WARNING 2025-08-14 22:37:08,712 log 13468 5960 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 22:37:08,718 runserver 13468 20544 [31;1mHTTP GET /api/v1/trading/accounts 401 [3.93, 127.0.0.1:62756][0m
+WARNING 2025-08-14 22:37:10,276 log 13468 13900 Unauthorized: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:37:10,277 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 401 [1.56, 127.0.0.1:62689][0m
+INFO 2025-08-14 22:37:10,444 runserver 13468 20544 [mHTTP POST /api/v1/account/auth/token/refresh 200 [1.71, 127.0.0.1:62761][0m
+WARNING 2025-08-14 22:37:10,479 log 13468 5960 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 22:37:10,480 runserver 13468 20544 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.69, 127.0.0.1:62756][0m
+WARNING 2025-08-14 22:37:12,305 log 13468 13900 Unauthorized: /api/v1/trading/accounts
+WARNING 2025-08-14 22:37:12,307 log 13468 5960 Unauthorized: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:37:12,309 log 13468 13900 Bad Request: /api/v1/account/auth/token/refresh
+WARNING 2025-08-14 22:37:12,312 runserver 13468 20544 [31;1mHTTP GET /api/v1/trading/accounts 401 [1.83, 127.0.0.1:62756][0m
+WARNING 2025-08-14 22:37:12,316 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 401 [1.86, 127.0.0.1:62761][0m
+WARNING 2025-08-14 22:37:12,321 runserver 13468 20544 [31;1mHTTP POST /api/v1/account/auth/token/refresh 400 [1.84, 127.0.0.1:62689][0m
+WARNING 2025-08-14 22:37:14,031 log 13468 21480 Unauthorized: /api/v1/account/2fa/setup
+INFO 2025-08-14 22:37:26,831 runserver 13468 20544 [mHTTP POST /api/v1/account/auth/login 200 [5.49, 127.0.0.1:62689][0m
+WARNING 2025-08-14 22:37:35,330 log 13468 13900 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:37:35,330 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [8.36, 127.0.0.1:62689][0m
+INFO 2025-08-14 22:37:36,601 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [9.63, 127.0.0.1:62756][0m
+WARNING 2025-08-14 22:37:37,686 log 13468 21480 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:37:44,851 log 13468 13900 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:37:44,851 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.90, 127.0.0.1:62804][0m
+INFO 2025-08-14 22:37:46,490 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [4.53, 127.0.0.1:62805][0m
+WARNING 2025-08-14 22:37:47,144 log 13468 21480 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:37:47,146 runserver 13468 20544 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.28, 127.0.0.1:62804][0m
+INFO 2025-08-14 22:37:49,937 runserver 13468 20544 [mHTTP GET /api/v1/trading/accounts 200 [3.45, 127.0.0.1:62805][0m
+INFO 2025-08-14 22:43:30,858 autoreload 13468 15216 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 22:43:34,134 autoreload 9128 5904 Watching for file changes with StatReloader
+WARNING 2025-08-14 22:44:12,432 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:44:12,432 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [7.87, 127.0.0.1:63022][0m
+INFO 2025-08-14 22:44:13,971 runserver 9128 19612 [mHTTP GET /api/v1/trading/accounts 200 [9.41, 127.0.0.1:63023][0m
+WARNING 2025-08-14 22:44:15,041 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:44:35,099 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:44:35,102 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [3.67, 127.0.0.1:63047][0m
+INFO 2025-08-14 22:44:36,197 runserver 9128 19612 [mHTTP GET /api/v1/trading/accounts 200 [4.77, 127.0.0.1:63048][0m
+WARNING 2025-08-14 22:44:37,423 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:44:37,427 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.31, 127.0.0.1:63047][0m
+INFO 2025-08-14 22:44:40,188 runserver 9128 19612 [mHTTP GET /api/v1/trading/accounts 200 [3.98, 127.0.0.1:63048][0m
+WARNING 2025-08-14 22:46:09,018 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:46:09,018 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [5.56, 127.0.0.1:63109][0m
+INFO 2025-08-14 22:46:10,704 runserver 9128 19612 [mHTTP GET /api/v1/trading/accounts 200 [7.24, 127.0.0.1:63110][0m
+WARNING 2025-08-14 22:46:11,807 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:46:11,807 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.77, 127.0.0.1:63109][0m
+INFO 2025-08-14 22:46:23,282 runserver 9128 19612 [mHTTP OPTIONS /api/v1/account/2fa/setup 200 [0.01, 127.0.0.1:63109][0m
+INFO 2025-08-14 22:46:23,286 runserver 9128 19612 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:63131][0m
+INFO 2025-08-14 22:46:23,287 runserver 9128 19612 [mHTTP OPTIONS /api/v1/account/2fa/setup 200 [0.01, 127.0.0.1:63132][0m
+INFO 2025-08-14 22:46:23,289 runserver 9128 19612 [mHTTP OPTIONS /api/v1/trading/accounts 200 [0.01, 127.0.0.1:63133][0m
+WARNING 2025-08-14 22:46:25,865 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:46:25,866 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:46:25,868 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.57, 127.0.0.1:63133][0m
+WARNING 2025-08-14 22:46:25,871 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.58, 127.0.0.1:63109][0m
+INFO 2025-08-14 22:46:27,307 runserver 9128 19612 [mHTTP GET /api/v1/trading/accounts 200 [4.01, 127.0.0.1:63131][0m
+INFO 2025-08-14 22:46:27,315 runserver 9128 19612 [mHTTP GET /api/v1/trading/accounts 200 [4.02, 127.0.0.1:63132][0m
+WARNING 2025-08-14 22:48:44,308 log 9128 8556 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:48:44,308 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [4.32, 127.0.0.1:63217][0m
+INFO 2025-08-14 22:48:45,744 runserver 9128 19612 [mHTTP GET /api/v1/trading/accounts 200 [5.75, 127.0.0.1:63218][0m
+WARNING 2025-08-14 22:48:46,747 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:48:46,747 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.42, 127.0.0.1:63217][0m
+INFO 2025-08-14 22:48:49,614 runserver 9128 19612 [mHTTP GET /api/v1/trading/accounts 200 [3.86, 127.0.0.1:63218][0m
+INFO 2025-08-14 22:53:12,579 runserver 9128 19612 [mHTTP GET /api/v1/account/user 200 [3.05, 127.0.0.1:63380][0m
+INFO 2025-08-14 22:53:15,663 runserver 9128 19612 [mHTTP GET /api/v1/account/user 200 [3.06, 127.0.0.1:63380][0m
+WARNING 2025-08-14 22:53:33,991 log 9128 8556 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:53:33,994 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.53, 127.0.0.1:63380][0m
+WARNING 2025-08-14 22:53:36,492 log 9128 2376 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 22:53:36,492 runserver 9128 19612 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.50, 127.0.0.1:63380][0m
+INFO 2025-08-14 22:57:06,183 autoreload 9128 5904 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 22:57:10,003 autoreload 10084 13504 Watching for file changes with StatReloader
+WARNING 2025-08-14 23:02:20,415 log 10084 12792 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 23:02:20,418 runserver 10084 14932 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.02, 127.0.0.1:63673][0m
+INFO 2025-08-14 23:02:21,625 runserver 10084 14932 [mHTTP GET /api/v1/trading/accounts 200 [3.23, 127.0.0.1:63674][0m
+WARNING 2025-08-14 23:02:22,399 log 10084 12792 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 23:02:22,400 runserver 10084 14932 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [1.98, 127.0.0.1:63673][0m
+INFO 2025-08-14 23:02:25,609 runserver 10084 14932 [mHTTP GET /api/v1/trading/accounts 200 [3.98, 127.0.0.1:63674][0m
+INFO 2025-08-14 23:03:08,533 autoreload 10084 13504 C:\Users\user\Documents\Project\stanum_web\account\urls.py changed, reloading.
+INFO 2025-08-14 23:03:11,283 autoreload 14864 14320 Watching for file changes with StatReloader
+WARNING 2025-08-14 23:04:15,019 log 14864 17256 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 23:04:15,024 runserver 14864 17016 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [4.77, 127.0.0.1:63756][0m
+INFO 2025-08-14 23:04:16,246 runserver 14864 17016 [mHTTP GET /api/v1/trading/accounts 200 [5.99, 127.0.0.1:63757][0m
+WARNING 2025-08-14 23:04:17,571 log 14864 17256 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 23:04:17,574 runserver 14864 17016 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.54, 127.0.0.1:63756][0m
+WARNING 2025-08-14 23:05:23,206 log 14864 17256 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 23:05:23,208 runserver 14864 17016 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [4.11, 127.0.0.1:63801][0m
+INFO 2025-08-14 23:05:24,540 runserver 14864 17016 [mHTTP GET /api/v1/trading/accounts 200 [5.45, 127.0.0.1:63800][0m
+WARNING 2025-08-14 23:05:25,770 log 14864 17256 Bad Request: /api/v1/account/2fa/setup
+WARNING 2025-08-14 23:05:25,773 runserver 14864 17016 [31;1mHTTP GET /api/v1/account/2fa/setup 400 [2.56, 127.0.0.1:63801][0m
+INFO 2025-08-14 23:05:28,539 runserver 14864 17016 [mHTTP GET /api/v1/trading/accounts 200 [3.99, 127.0.0.1:63800][0m
+WARNING 2025-08-14 23:05:48,898 log 14864 17256 Conflict: /api/v1/account/auth/login
+WARNING 2025-08-14 23:05:48,898 runserver 14864 17016 [31;1mHTTP POST /api/v1/account/auth/login 409 [5.02, 127.0.0.1:63800][0m
+WARNING 2025-08-14 23:09:33,051 log 14864 17256 Conflict: /api/v1/account/auth/login
+WARNING 2025-08-14 23:09:39,207 log 14864 17256 Conflict: /api/v1/account/auth/login
+WARNING 2025-08-14 23:09:39,208 runserver 14864 17016 [31;1mHTTP POST /api/v1/account/auth/login 409 [2.87, 127.0.0.1:63937][0m
+WARNING 2025-08-14 23:25:20,256 log 14864 17256 Conflict: /api/v1/account/auth/login
+WARNING 2025-08-14 23:25:20,259 runserver 14864 17016 [31;1mHTTP POST /api/v1/account/auth/login 409 [4.89, 127.0.0.1:64375][0m
+INFO 2025-08-14 23:30:57,119 runserver 14864 17016 [mHTTP OPTIONS /api/v1/account/auth/login/2fa 200 [0.00, 127.0.0.1:64588][0m
+WARNING 2025-08-14 23:31:00,322 log 14864 17256 Bad Request: /api/v1/account/auth/login/2fa
+WARNING 2025-08-14 23:31:00,325 runserver 14864 17016 [31;1mHTTP POST /api/v1/account/auth/login/2fa 400 [3.20, 127.0.0.1:64588][0m
+WARNING 2025-08-14 23:31:16,774 log 14864 17256 Bad Request: /api/v1/account/auth/login/2fa
+WARNING 2025-08-14 23:31:16,776 runserver 14864 17016 [31;1mHTTP POST /api/v1/account/auth/login/2fa 400 [2.65, 127.0.0.1:64588][0m
+INFO 2025-08-14 23:32:38,617 autoreload 14864 14320 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 23:32:42,023 autoreload 21484 21424 Watching for file changes with StatReloader
+WARNING 2025-08-14 23:32:57,149 log 21484 12456 Bad Request: /api/v1/account/auth/login/2fa
+WARNING 2025-08-14 23:32:57,164 runserver 21484 6528 [31;1mHTTP POST /api/v1/account/auth/login/2fa 400 [2.46, 127.0.0.1:64656][0m
+INFO 2025-08-14 23:33:31,434 autoreload 21484 21424 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 23:33:34,444 autoreload 14008 3232 Watching for file changes with StatReloader
+WARNING 2025-08-14 23:37:06,178 log 14008 17208 Bad Request: /api/v1/account/auth/login/2fa
+WARNING 2025-08-14 23:37:06,178 runserver 14008 7776 [31;1mHTTP POST /api/v1/account/auth/login/2fa 400 [2.67, 127.0.0.1:64826][0m
+INFO 2025-08-14 23:44:48,511 autoreload 14008 3232 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 23:44:51,140 autoreload 8124 11836 Watching for file changes with StatReloader
+INFO 2025-08-14 23:47:38,831 autoreload 8124 11836 C:\Users\user\Documents\Project\stanum_web\account\views.py changed, reloading.
+INFO 2025-08-14 23:47:41,418 autoreload 17808 2084 Watching for file changes with StatReloader

@@ -15,4 +15,8 @@ admin.site.register(ReferralEarning)
 admin.site.register(ReferalEarningTransaction)
 
 admin.site.register(Address)
+
+admin.site.register(DocumentType)
+admin.site.register(ProofOfIdentity)
+admin.site.register(ProofOfAddress)
 # Register your models here.
