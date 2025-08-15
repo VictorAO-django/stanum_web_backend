@@ -298,7 +298,7 @@ class LoginView(APIView):
             if user.check_password(password):
                 if user.email_verified:
                     # refresh = CustomRefreshToken(user=user, user_id=user.id, email=user.email, user_type='buyer')
-                    if user.is_2fa_enabled or user.otp_secret:
+                    if user.is_2fa_enabled:
                         return custom_response(
                             status="error",
                             message=f"Two Factor Authentication is required",
