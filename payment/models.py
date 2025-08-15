@@ -72,3 +72,65 @@ class Transaction(models.Model):
     
     def __str__(self):
         return f"{self.reference} - {self.amount} {self.currency}"
+
+
+class PropFirmWallet(models.Model):
+    user = models.OneToOneField( User, on_delete=models.CASCADE, related_name="propfirm_wallet")
+    wallet_id = models.CharField(max_length=20, unique=True, editable=False)
+    withdrawal_profit = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    pending_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    disbursed_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.wallet_id:
+            self.wallet_id = f"#{uuid.uuid4().int % 1000000:06d}"  # e.g. #365435
+        super().save(*args, **kwargs)
+
+
+class PropFirmWalletTransaction(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("disbursed", "Disbursed"),
+    ]
+
+    CRYPTO_NETWORK_CHOICES = [
+        ("BTC", "Bitcoin"),
+        ("ETH", "Ethereum ERC20"),
+        ("TRX", "Tron TRC20"),
+        ("BSC", "Binance Smart Chain BEP20"),
+        ("SOL", "Solana"),
+        ("OTHER", "Other"),
+    ]
+
+    TYPE_CHOICES = [
+        ('credit', "Credit"),
+        ('debit', "Debit")
+    ]
+
+    wallet = models.ForeignKey(PropFirmWallet, on_delete=models.CASCADE, related_name="transactions")
+    transaction_id = models.CharField(max_length=20, unique=True, editable=False)
+    requested_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    disbursed_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    type = models.CharField(choices=TYPE_CHOICES, max_length=20)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    note = models.TextField(blank=True, null=True)
+
+    # Crypto payout fields
+    payout_currency = models.CharField(max_length=10, help_text="e.g. USDT, BTC, ETH", null=True, blank=True)
+    payout_network = models.CharField(max_length=10, choices=CRYPTO_NETWORK_CHOICES, null=True, blank=True)
+    payout_wallet_address = models.CharField(max_length=255, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_id:
+            self.transaction_id = f"#TX-{uuid.uuid4().int % 1000000:06d}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.transaction_id} - {self.status} - {self.requested_amount}"

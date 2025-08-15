@@ -79,8 +79,8 @@ class TokenRefreshView(APIView):
             token.refresh() 
             
             return Response({
-                "token": token.access_token,
-                "refresh": token.refresh_token
+                "access_token": token.access_token,
+                "refresh_token": token.refresh_token
             }, status=200)
         
         except Exception as e:

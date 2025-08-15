@@ -67,3 +67,18 @@ class TransactionSerializer(serializers.ModelSerializer):
             'id', 'reference', 'paystack_reference', 
             'authorization_url', 'access_code', 'created_at', 'updated_at'
         ]
+
+
+class PropFirmWalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PropFirmWallet
+        fields = ['id', 'wallet_id', 'withdrawal_profit', 'pending_amount', 'disbursed_amount']
+
+
+class PropFirmWalletTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PropFirmWalletTransaction
+        fields = [
+            'id', 'transaction_id', 'requested_amount', 'disbursed_amount', 'type',
+            'payout_currency', 'payout_wallet_address', 'payout_network', 'status', 'created_at'
+        ]

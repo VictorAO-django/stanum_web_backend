@@ -3,8 +3,9 @@ from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework import generics
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -23,6 +24,9 @@ from trading.models import *
 from service.paystack import PaystackService
 from service.metaapi_request import *
 from utils.helper import *
+from utils.permission import *
+from utils.pagination import *
+from utils.filters import *
 
 User = get_user_model()
 
@@ -132,7 +136,7 @@ class PaymentCreateAPIView(APIView):
             http_status=status.HTTP_403_FORBIDDEN
         )
 
-class PaymentListAPIView(ListAPIView):
+class PaymentListAPIView(generics.ListAPIView):
     """List user's payments"""
     serializer_class = PaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -140,7 +144,7 @@ class PaymentListAPIView(ListAPIView):
     def get_queryset(self):
         return Payment.objects.filter(user=self.request.user).order_by('-created_at')
 
-class PaymentDetailAPIView(RetrieveAPIView):
+class PaymentDetailAPIView(generics.RetrieveAPIView):
     """Get payment details and update status"""
     serializer_class = PaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -485,3 +489,27 @@ class PaystackWebhookView(APIView):
         except Exception as e:
             print(str(e))
             return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class PropFirmWalletView(generics.RetrieveAPIView):
+    serializer_class = PropFirmWalletSerializer
+    permission_classes = [ permissions.IsAuthenticated, Is2FAEnabled]
+
+    def get_object(self):
+        user = self.request.user
+        obj, _ = PropFirmWallet.objects.get_or_create(user=user)
+        return obj
+    
+
+class PropFirmWalletTransactionView(generics.ListAPIView):
+    serializer_class = PropFirmWalletTransactionSerializer
+    filterset_class = PropFirmWalletTransactionFilter
+    filter_backends = [DjangoFilterBackend]
+    pagination_class = LargeResultsSetPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
+        queryset = PropFirmWalletTransaction.objects.filter(wallet=wallet)
+        return queryset
