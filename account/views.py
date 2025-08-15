@@ -382,7 +382,6 @@ class Verify2FALoginView(APIView):
 
         try:
             user = User.objects.get(email=email, email_verified=True, is_deleted=False, is_2fa_enabled=True)
-            
             if user.is_locked():
                 return custom_response(
                     status="Error",
@@ -1069,7 +1068,7 @@ class TwoFASetupView(generics.GenericAPIView):
             )
 
         user.is_2fa_enabled = True
-        user.save(update_fields=["is_2fa_enabled"])
+        user.save()
 
         return custom_response(
             status="success",
