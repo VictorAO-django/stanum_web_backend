@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path('crypto/currencies/', views.AvailableCurrenciesAPIView.as_view(), name='api_currencies'),
+    path('crypto/currencies/full', views.AvailableFullCurrenciesAPIView.as_view()),
     path('crypto/estimate/', views.EstimateAPIView.as_view(), name='api_estimate'),
     path('crypto/payments/', views.PaymentListAPIView.as_view(), name='api_payment_list'),
     path('crypto/create/', views.PaymentCreateAPIView.as_view(), name='api_payment_create'),
@@ -19,4 +20,5 @@ urlpatterns = [
 
     path('wallet', views.PropFirmWalletView.as_view()),
     path('wallet/transactions', views.PropFirmWalletTransactionView.as_view()),
+    path('wallet/withdraw', views.WithdrawView.as_view())
 ]

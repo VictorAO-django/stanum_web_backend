@@ -1,4 +1,4 @@
-import json, uuid, random
+import json, uuid, random, pyotp
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -32,7 +32,6 @@ User = get_user_model()
 
 class AvailableCurrenciesAPIView(APIView):
     """Get list of available cryptocurrencies"""
-    # authentication_classes = []
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
@@ -44,8 +43,24 @@ class AvailableCurrenciesAPIView(APIView):
                 {'error': currencies['error']}, 
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
-        
         return Response(currencies)
+    
+class AvailableFullCurrenciesAPIView(APIView):
+    """Get list of available full cryptocurrencies"""
+    authentication_classes=[]
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request):
+        service = NOWPaymentsService()
+        currencies = service.get_available_full_currencies()
+        
+        if 'error' in currencies:
+            return Response(
+                {'error': currencies['error']}, 
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        
+        return Response(currencies['currencies'], status=status.HTTP_200_OK)
 
 class EstimateAPIView(APIView):
     """Get crypto amount estimate for fiat amount"""
@@ -513,3 +528,86 @@ class PropFirmWalletTransactionView(generics.ListAPIView):
         wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
         queryset = PropFirmWalletTransaction.objects.filter(wallet=wallet)
         return queryset
+
+
+class WithdrawView(APIView):
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        payload = request.data
+        wallet = get_object_or_404(PropFirmWallet, user=user)
+        service = NOWPaymentsService()
+
+        try:
+            if not user.is_2fa_enabled:
+                return custom_response(
+                    status="Error",
+                    message=f"You need to activate 2FA.",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            code = payload.get('code', None)
+            amount = payload.get('amount', 0)
+            wallet_address = payload.get('address', None)
+            crypto_currency = payload.get('currency', None)
+            crypto_network = payload.get('network', None)
+
+            if Decimal(amount) < Decimal(50):
+                return custom_response(
+                    status="Error",
+                    message=f"You cannot withdraw less than $50",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if wallet.withdrawal_profit < Decimal(amount):
+                return custom_response(
+                    status="Error",
+                    message=f"Insufficient balance",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not code:
+                return custom_response(
+                    status="Error",
+                    message=f"OTP code required!",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            service.verify_wallet_address(wallet_address, crypto_currency)
+
+            totp = pyotp.TOTP(user.otp_secret)
+            if not totp.verify(code):
+                return custom_response(
+                    status="Error",
+                    message=f"Invalid OTP code!",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            PropFirmWalletTransaction.objects.create(
+                wallet=wallet,
+                requested_amount=amount,
+                disbursed_amount=amount,
+                type='debit' ,
+                status='pending',
+                payout_currency=crypto_currency,
+                payout_network=crypto_network,
+                payout_wallet_address=wallet_address
+            )
+
+            return custom_response(
+                status='success',
+                message='Success, The admin will approve this payout shortly.',
+                data={}
+            )
+        except Exception as err:
+            print("WITHDRAWAL REQUEST ERROR: ", str(err))
+            return custom_response(
+                status="Error",
+                message=str(err),
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )

@@ -998,8 +998,7 @@ class SubmitProofOfAddressView(APIView):
         return Response(data=[], status=status.HTTP_200_OK)
 
 
-class TwoFASetupView(generics.GenericAPIView):
-    
+class TwoFASetupView(APIView):
     def get(self, request):
         """Generate (or return existing) secret and QR code."""
         user = request.user

@@ -18,6 +18,15 @@ class NOWPaymentsService:
             return response.json()
         except requests.RequestException as e:
             return {'error': str(e)}
+        
+    def get_available_full_currencies(self):
+        """Get list of available cryptocurrencies"""
+        try:
+            response = requests.get(f"{self.base_url}/full-currencies", headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {'error': str(e)}
     
     def get_estimate(self, amount, currency_from='USD', currency_to='btc'):
         """Get estimated crypto amount for fiat amount"""
@@ -78,3 +87,28 @@ class NOWPaymentsService:
         ).hexdigest()
         
         return hmac.compare_digest(signature, expected_signature)
+    
+    def verify_wallet_address(self, address, currency):
+        try:
+            payload = {
+                "address": address,
+                "currency": currency,
+                "extra_id": None,
+            }
+            response = requests.post(f"{self.base_url}/payout", json=payload, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            return {'error': str(e)}
+
+    def create_payout(self, withdrawals, ipn_callback_url):
+        try:
+            payload = {
+                "ipn_callback_url": ipn_callback_url,
+                "withdrawals": withdrawals
+            }
+            response = requests.post(f"{self.base_url}/payout", json=payload, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {'error': str(e)}
