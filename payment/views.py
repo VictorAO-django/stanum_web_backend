@@ -716,9 +716,8 @@ class WalletFundingAPIView(APIView):
 @method_decorator(csrf_exempt, name="dispatch")
 class WalletFundingIPNAPIView(APIView):
     """Webhook for NOWPayments IPN"""
-
     authentication_classes = []
-    permission_classes = []
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         try:
@@ -782,5 +781,14 @@ class ConfirmTransactionSuccess(APIView):
         id = request.query_params.get('id', 0)
         trx = get_object_or_404(PropFirmWalletTransaction, id=id)
         if trx.status == 'completed':
-            return Response({"status": "completed"}, status=status.HTTP_200_OK)
-        return Response({'status': trx.status}, status=status.HTTP_400_BAD_REQUEST)
+            return custom_response(
+                status='success',
+                message='completed',
+                data={"status": "completed"}
+            )
+        return custom_response(
+            status='error',
+            message=trx.status,
+            data={"status": trx.status},
+            http_status=status.HTTP_400_BAD_REQUEST
+        )
