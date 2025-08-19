@@ -723,9 +723,9 @@ class WalletFundingIPNAPIView(APIView):
     def post(self, request):
         try:
             payload = request.data
-            logger.debug("Webhook received: %s", json.dumps(payload, indent=2))
+            print("Webhook received: %s", json.dumps(payload, indent=2))
         except Exception as e:
-            logger.error("Failed to parse webhook payload: %s", str(e))
+            print("Failed to parse webhook payload: %s", str(e))
             return Response({"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST)
 
         payment_id = payload.get("payment_id")
@@ -733,16 +733,16 @@ class WalletFundingIPNAPIView(APIView):
         pay_amount = payload.get("actually_paid")
 
         if not payment_id:
-            logger.warning("Webhook missing payment_id: %s", payload)
+            print("Webhook missing payment_id: %s", payload)
             return Response({"error": "Missing payment_id"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             transaction = PropFirmWalletTransaction.objects.get(payment_id=payment_id)
         except PropFirmWalletTransaction.DoesNotExist:
-            logger.error("Transaction not found for payment_id=%s", payment_id)
+            print("Transaction not found for payment_id=%s", payment_id)
             return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        logger.info("Transaction %s updated with status %s", payment_id, payment_status)
+        print("Transaction %s updated with status %s", payment_id, payment_status)
 
         if payment_status == "finished":
             self.handle_success(transaction)
@@ -763,11 +763,11 @@ class WalletFundingIPNAPIView(APIView):
         wallet.withdrawal_profit += transaction.price_amount
         wallet.save()
         Mailer(user.email).wallet_funding_success(transaction)
-        logger.info("Wallet %s credited with %s", wallet.id, transaction.price_amount)
+        print("Wallet %s credited with %s", wallet.id, transaction.price_amount)
     
     def handle_payment_failure(self, transaction:PropFirmWalletTransaction):
         """Handle failed payment - override this method for custom logic"""
         wallet = transaction.wallet
         user = wallet.user
         Mailer(user.email).wallet_funding_failed(transaction)
-        logger.info("Wallet %s funding failed with %s", wallet.id, transaction.price_amount)
+        print("Wallet %s funding failed with %s", wallet.id, transaction.price_amount)
