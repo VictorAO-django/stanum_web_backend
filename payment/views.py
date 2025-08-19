@@ -720,11 +720,14 @@ class WalletFundingIPNAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        # Always capture raw body for debugging
         try:
-            payload = request.data
-            print("Webhook received: %s", json.dumps(payload, indent=2))
+            raw_body = request.body.decode("utf-8")
+            print(f"Raw webhook body: {raw_body}")
+            payload = request.data or json.loads(raw_body)
+            print(f"Webhook received:\n{json.dumps(payload, indent=2)}")
         except Exception as e:
-            print("Failed to parse webhook payload: %s", str(e))
+            print(f"Failed to parse webhook payload: {str(e)}")
             return Response({"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST)
 
         payment_id = payload.get("payment_id")
@@ -732,26 +735,22 @@ class WalletFundingIPNAPIView(APIView):
         pay_amount = payload.get("actually_paid")
 
         if not payment_id:
-            print("Webhook missing payment_id: %s", payload)
+            print(f"Webhook missing payment_id: {payload}")
             return Response({"error": "Missing payment_id"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             transaction = PropFirmWalletTransaction.objects.get(payment_id=payment_id)
         except PropFirmWalletTransaction.DoesNotExist:
-            print("Transaction not found for payment_id=%s", payment_id)
+            print(f"Transaction not found for payment_id={payment_id}")
             return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        print("Transaction %s updated with status %s", payment_id, payment_status)
+        print(f"Transaction {payment_id} updated with status {payment_status}")
 
         if payment_status == "finished":
             self.handle_success(transaction)
-        
-        elif payment_status == 'failed':
-            # Payment failed
+        elif payment_status == "failed":
             self.handle_payment_failure(transaction)
-
-        elif payment_status == 'expired':
-            # Payment expired
+        elif payment_status == "expired":
             self.handle_payment_expired(transaction)
 
         return Response({"message": "IPN processed"}, status=status.HTTP_200_OK)
@@ -761,20 +760,25 @@ class WalletFundingIPNAPIView(APIView):
         user = wallet.user
         wallet.withdrawal_profit += transaction.price_amount
         wallet.save()
-        transaction.status = 'completed'
+        transaction.status = "completed"
         transaction.save()
         Mailer(user.email).wallet_funding_success(transaction)
-        print("Wallet %s credited with %s", wallet.id, transaction.price_amount)
+        print(f"Wallet {wallet.id} credited with {transaction.price_amount}")
     
-    def handle_payment_failure(self, transaction:PropFirmWalletTransaction):
-        """Handle failed payment - override this method for custom logic"""
+    def handle_payment_failure(self, transaction: PropFirmWalletTransaction):
         wallet = transaction.wallet
         user = wallet.user
-        transaction.status = 'failed'
+        transaction.status = "failed"
         transaction.save()
         Mailer(user.email).wallet_funding_failed(transaction)
-        print("Wallet %s funding failed with %s", wallet.id, transaction.price_amount)
-
+        print(f"Wallet {wallet.id} funding failed with {transaction.price_amount}")
+    
+    def handle_payment_expired(self, transaction: PropFirmWalletTransaction):
+        wallet = transaction.wallet
+        user = wallet.user
+        transaction.status = "expired"
+        transaction.save()
+        print(f"Wallet {wallet.id} funding expired for {transaction.price_amount}")
 
 class ConfirmTransactionSuccess(APIView):
     def get(self, request, *args, **kwargs):
