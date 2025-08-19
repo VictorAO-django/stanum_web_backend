@@ -11202,3 +11202,11 @@ AttributeError: 'PropFirmWalletTransaction' object has no attribute 'requested_a
 ERROR 2025-08-19 11:22:39,937 runserver 11992 12128 [35;1mHTTP GET /admin/payment/propfirmwallettransaction/ 500 [5.62, 127.0.0.1:59893][0m
 INFO 2025-08-19 11:22:58,271 autoreload 11992 9488 C:\Users\user\Documents\Project\stanum_web\payment\models.py changed, reloading.
 INFO 2025-08-19 11:23:00,837 autoreload 11140 20864 Watching for file changes with StatReloader
+INFO 2025-08-19 11:23:15,800 runserver 11140 12272 [mHTTP GET /admin/payment/propfirmwallettransaction/ 200 [2.80, 127.0.0.1:59923][0m
+INFO 2025-08-19 11:23:17,529 runserver 11140 12272 [mHTTP GET /admin/jsi18n/ 200 [1.71, 127.0.0.1:59923][0m
+INFO 2025-08-19 11:23:30,968 runserver 11140 12272 [mHTTP GET /admin/payment/propfirmwallettransaction/27/change/ 200 [4.77, 127.0.0.1:59923][0m
+INFO 2025-08-19 11:23:32,926 runserver 11140 12272 [mHTTP GET /admin/jsi18n/ 200 [1.91, 127.0.0.1:59923][0m
+INFO 2025-08-19 11:23:43,325 runserver 11140 12272 [mHTTP GET /admin/payment/propfirmwallettransaction/ 200 [2.75, 127.0.0.1:59923][0m
+INFO 2025-08-19 11:24:17,276 autoreload 11140 20864 C:\Users\user\Documents\Project\stanum_web\payment\urls.py changed, reloading.
+INFO 2025-08-19 11:24:20,868 autoreload 4808 20644 Watching for file changes with StatReloader
+INFO 2025-08-19 11:30:59,728 autoreload 4808 20644 C:\Users\user\Documents\Project\stanum_web\stanum_web\settings.py changed, reloading.

@@ -241,6 +241,8 @@ CELERY_TIMEZONE = TIME_ZONE
 
 
 # Logging Configuration
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -258,19 +260,19 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'logs/django.log',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
             'formatter': 'verbose',
         },
         'trading_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'logs/trading.log',
+            'filename': os.path.join(BASE_DIR, 'logs', 'trading.log'),
             'formatter': 'verbose',
         },
         "webhook_file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": "logs/webhook.log",
+            "filename": os.path.join(BASE_DIR, "logs", "webhook.log"),
             'formatter': 'verbose',
         },
         'console': {
