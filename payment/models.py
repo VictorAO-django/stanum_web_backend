@@ -95,6 +95,9 @@ class PropFirmWalletTransaction(models.Model):
         ("approved", "Approved"),
         ("rejected", "Rejected"),
         ("disbursed", "Disbursed"),
+        #For credit
+        ('failed', 'Failed'),
+        ("completed", "Completed"),
     ]
 
     CRYPTO_NETWORK_CHOICES = [

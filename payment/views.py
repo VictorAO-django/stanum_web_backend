@@ -676,7 +676,7 @@ class WalletFundingAPIView(APIView):
             
             # Create payment with NOWPayments
             service = NOWPaymentsService()
-            ipn_url = request.build_absolute_uri('/api/v1/payments/wallet/fund/ipn')
+            ipn_url = request.build_absolute_uri('/api/v1/payment/wallet/fund/ipn')
             
             result = service.create_payment(
                 price_amount=serializer.validated_data['amount'],
@@ -762,6 +762,8 @@ class WalletFundingIPNAPIView(APIView):
         user = wallet.user
         wallet.withdrawal_profit += transaction.price_amount
         wallet.save()
+        transaction.status = 'completed'
+        transaction.save()
         Mailer(user.email).wallet_funding_success(transaction)
         print("Wallet %s credited with %s", wallet.id, transaction.price_amount)
     
@@ -769,5 +771,16 @@ class WalletFundingIPNAPIView(APIView):
         """Handle failed payment - override this method for custom logic"""
         wallet = transaction.wallet
         user = wallet.user
+        transaction.status = 'failed'
+        transaction.save()
         Mailer(user.email).wallet_funding_failed(transaction)
         print("Wallet %s funding failed with %s", wallet.id, transaction.price_amount)
+
+
+class ConfirmTransactionSuccess(APIView):
+    def get(self, request, *args, **kwargs):
+        id = request.query_params.get('id', 0)
+        trx = get_object_or_404(PropFirmWalletTransaction, id=id)
+        if trx.status == 'completed':
+            return Response({"status": "completed"}, status=status.HTTP_200_OK)
+        return Response({'status': trx.status}, status=status.HTTP_400_BAD_REQUEST)
