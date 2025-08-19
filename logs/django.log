@@ -11210,3 +11210,7 @@ INFO 2025-08-19 11:23:43,325 runserver 11140 12272 [mHTTP GET /admin/payment/pr
 INFO 2025-08-19 11:24:17,276 autoreload 11140 20864 C:\Users\user\Documents\Project\stanum_web\payment\urls.py changed, reloading.
 INFO 2025-08-19 11:24:20,868 autoreload 4808 20644 Watching for file changes with StatReloader
 INFO 2025-08-19 11:30:59,728 autoreload 4808 20644 C:\Users\user\Documents\Project\stanum_web\stanum_web\settings.py changed, reloading.
+INFO 2025-08-19 11:31:03,991 autoreload 11104 5652 Watching for file changes with StatReloader
+INFO 2025-08-19 11:32:48,448 autoreload 11104 5652 C:\Users\user\Documents\Project\stanum_web\stanum_web\settings.py changed, reloading.
+INFO 2025-08-19 11:32:52,516 autoreload 756 20396 Watching for file changes with StatReloader
+INFO 2025-08-19 11:32:58,103 autoreload 756 20396 C:\Users\user\Documents\Project\stanum_web\stanum_web\settings.py changed, reloading.
