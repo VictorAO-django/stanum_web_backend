@@ -1,4 +1,4 @@
-import json, uuid, random, pyotp
+import json, uuid, random, pyotp, time
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -29,6 +29,8 @@ from utils.pagination import *
 from utils.filters import *
 
 User = get_user_model()
+
+logger = logging.getLogger("webhook")
 
 class AvailableCurrenciesAPIView(APIView):
     """Get list of available cryptocurrencies"""
@@ -105,13 +107,15 @@ class PaymentCreateAPIView(APIView):
 
             # Create payment record
             order_id = f"STMCLG-{challenge.id}-{request.user.id}"
-            payment = Payment.objects.create(
+            payment, _ = Payment.objects.get_or_create(
                 user=request.user,
                 order_id=order_id,
-                order_description=serializer.validated_data['description'],
-                price_amount=serializer.validated_data['amount'],
-                price_currency=serializer.validated_data['price_currency'],
-                pay_currency=serializer.validated_data['currency']
+                defaults={
+                    'order_description': serializer.validated_data['description'],
+                    'price_amount': serializer.validated_data['amount'],
+                    'price_currency': serializer.validated_data['price_currency'],
+                    'pay_currency': serializer.validated_data['currency']
+                }
             )
             
             # Create payment with NOWPayments
@@ -526,7 +530,7 @@ class PropFirmWalletTransactionView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
-        queryset = PropFirmWalletTransaction.objects.filter(wallet=wallet)
+        queryset = PropFirmWalletTransaction.objects.filter(wallet=wallet).order_by('-id')
         return queryset
 
 
@@ -534,80 +538,236 @@ class WithdrawView(APIView):
     def post(self, request, *args, **kwargs):
         user = request.user
         payload = request.data
-        wallet = get_object_or_404(PropFirmWallet, user=user)
         service = NOWPaymentsService()
 
         try:
+            # ✅ Enforce 2FA
             if not user.is_2fa_enabled:
                 return custom_response(
                     status="Error",
-                    message=f"You need to activate 2FA.",
-                    data={},
-                    http_status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            code = payload.get('code', None)
-            amount = payload.get('amount', 0)
-            wallet_address = payload.get('address', None)
-            crypto_currency = payload.get('currency', None)
-            crypto_network = payload.get('network', None)
-
-            if Decimal(amount) < Decimal(50):
-                return custom_response(
-                    status="Error",
-                    message=f"You cannot withdraw less than $50",
-                    data={},
-                    http_status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if wallet.withdrawal_profit < Decimal(amount):
-                return custom_response(
-                    status="Error",
-                    message=f"Insufficient balance",
+                    message="You need to activate 2FA before making withdrawals.",
                     data={},
                     http_status=status.HTTP_400_BAD_REQUEST
                 )
 
+            code = payload.get("code")
+            currency_id = payload.get("currency_id")
+            amount = Decimal(payload.get("amount", 0))
+            wallet_address = payload.get("address")
+            crypto_currency = payload.get("currency")
+            crypto_network = payload.get("network")
+
+            # ✅ Input validation
             if not code:
                 return custom_response(
                     status="Error",
-                    message=f"OTP code required!",
+                    message="OTP code required!",
                     data={},
                     http_status=status.HTTP_400_BAD_REQUEST
                 )
-            
-            service.verify_wallet_address(wallet_address, crypto_currency)
 
+            if amount < Decimal("50"):
+                return custom_response(
+                    status="Error",
+                    message="You cannot withdraw less than $50.",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not wallet_address or not crypto_currency or not crypto_network:
+                return custom_response(
+                    status="Error",
+                    message="Currency, network, and wallet address are required.",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # ✅ Verify OTP
             totp = pyotp.TOTP(user.otp_secret)
             if not totp.verify(code):
                 return custom_response(
                     status="Error",
-                    message=f"Invalid OTP code!",
+                    message="Invalid OTP code!",
                     data={},
                     http_status=status.HTTP_400_BAD_REQUEST
                 )
-            
-            PropFirmWalletTransaction.objects.create(
-                wallet=wallet,
-                requested_amount=amount,
-                disbursed_amount=amount,
-                type='debit' ,
-                status='pending',
-                payout_currency=crypto_currency,
-                payout_network=crypto_network,
-                payout_wallet_address=wallet_address
-            )
+
+            # ✅ Verify wallet address format
+            service.verify_wallet_address(wallet_address, crypto_currency)
+
+            # ✅ Wrap in DB transaction to avoid race conditions
+            with transaction.atomic():
+                wallet = PropFirmWallet.objects.select_for_update().get(user=user)
+
+                if wallet.withdrawal_profit < amount:
+                    return custom_response(
+                        status="Error",
+                        message="Insufficient balance.",
+                        data={},
+                        http_status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # (Optional) Deduct immediately to block double spending
+                wallet.withdrawal_profit -= amount
+                wallet.pending_amount += amount
+                wallet.save()
+
+                # ✅ Create transaction as pending (disbursed_amount = 0)
+                PropFirmWalletTransaction.objects.create(
+                    wallet=wallet,
+                    requested_amount=amount,
+                    disbursed_amount=Decimal("0.00"),
+                    status="pending",
+                    type="debit",
+                    currency_id=currency_id,
+                    payout_currency=crypto_currency,
+                    payout_network=crypto_network,
+                    payout_wallet_address=wallet_address
+                )
 
             return custom_response(
-                status='success',
-                message='Success, The admin will approve this payout shortly.',
+                status="success",
+                message="Withdrawal request submitted. Admin will approve this payout shortly.",
                 data={}
             )
-        except Exception as err:
-            print("WITHDRAWAL REQUEST ERROR: ", str(err))
+
+        except PropFirmWallet.DoesNotExist:
             return custom_response(
                 status="Error",
-                message=str(err),
+                message="Wallet not found.",
+                data={},
+                http_status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as err:
+            logger.error(f"WITHDRAWAL REQUEST ERROR: {err}", exc_info=True)
+            return custom_response(
+                status="Error",
+                message="Something went wrong while processing your withdrawal.",
                 data={},
                 http_status=status.HTTP_400_BAD_REQUEST
             )
+        
+
+class WalletFundingAPIView(APIView):
+    """Create a new payment"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user=request.user
+        payload = request.data.copy()
+        if payload.get('description', '') == '':
+            payload['description'] = f"Stanum wallet funding"
+
+        wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
+        serializer = PropFirmWalletTransactionCreateSerializer(data=payload)
+        if serializer.is_valid():
+
+            # Create payment record
+            order_id = f"STMWFD-{request.user.id}-{int(time.time())}{random.randint(100, 999)}"
+            transaction = PropFirmWalletTransaction.objects.create(
+                wallet=wallet,
+                order_id=order_id,
+                type='credit',
+                order_description=serializer.validated_data['description'],
+                price_amount=serializer.validated_data['amount'],
+                price_currency=serializer.validated_data['price_currency'],
+                pay_currency=serializer.validated_data['currency']
+            )
+            
+            # Create payment with NOWPayments
+            service = NOWPaymentsService()
+            ipn_url = request.build_absolute_uri('/api/v1/payments/wallet/fund/ipn')
+            
+            result = service.create_payment(
+                price_amount=serializer.validated_data['amount'],
+                price_currency=serializer.validated_data['price_currency'],
+                pay_currency=serializer.validated_data['currency'],
+                order_id=order_id,
+                order_description=serializer.validated_data['description'],
+                ipn_callback_url=ipn_url
+            )
+            
+            if 'error' in result:
+                transaction.delete()  # Clean up failed payment
+                return Response(
+                    {'error': result['error']}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update payment record with NOWPayments response
+            transaction.payment_id = result['payment_id']
+            transaction.pay_amount = result.get('pay_amount')
+            transaction.pay_address = result.get('pay_address')
+            transaction.save()
+            
+            # Return created payment
+            response_serializer = PropFirmWalletTransactionSerializer(transaction)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        
+        return custom_response(
+            status="error",
+            message = str(next(iter(serializer.errors.values()))[0]),
+            data=serializer.errors,
+            http_status=status.HTTP_403_FORBIDDEN
+        )
+    
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class WalletFundingIPNAPIView(APIView):
+    """Webhook for NOWPayments IPN"""
+
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        try:
+            payload = request.data
+            logger.debug("Webhook received: %s", json.dumps(payload, indent=2))
+        except Exception as e:
+            logger.error("Failed to parse webhook payload: %s", str(e))
+            return Response({"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST)
+
+        payment_id = payload.get("payment_id")
+        payment_status = payload.get("payment_status")
+        pay_amount = payload.get("actually_paid")
+
+        if not payment_id:
+            logger.warning("Webhook missing payment_id: %s", payload)
+            return Response({"error": "Missing payment_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            transaction = PropFirmWalletTransaction.objects.get(payment_id=payment_id)
+        except PropFirmWalletTransaction.DoesNotExist:
+            logger.error("Transaction not found for payment_id=%s", payment_id)
+            return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        logger.info("Transaction %s updated with status %s", payment_id, payment_status)
+
+        if payment_status == "finished":
+            self.handle_success(transaction)
+        
+        elif payment_status == 'failed':
+            # Payment failed
+            self.handle_payment_failure(transaction)
+
+        elif payment_status == 'expired':
+            # Payment expired
+            self.handle_payment_expired(transaction)
+
+        return Response({"message": "IPN processed"}, status=status.HTTP_200_OK)
+    
+    def handle_success(self, transaction: PropFirmWalletTransaction):
+        wallet = transaction.wallet
+        user = wallet.user
+        wallet.withdrawal_profit += transaction.price_amount
+        wallet.save()
+        Mailer(user.email).wallet_funding_success(transaction)
+        logger.info("Wallet %s credited with %s", wallet.id, transaction.price_amount)
+    
+    def handle_payment_failure(self, transaction:PropFirmWalletTransaction):
+        """Handle failed payment - override this method for custom logic"""
+        wallet = transaction.wallet
+        user = wallet.user
+        Mailer(user.email).wallet_funding_failed(transaction)
+        logger.info("Wallet %s funding failed with %s", wallet.id, transaction.price_amount)

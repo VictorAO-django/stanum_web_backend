@@ -104,3 +104,15 @@ class Mailer:
         self.message = f"Your payment session of ${amount} for {challenge.name} has expired."
 
         self.send()
+
+    def wallet_funding_success(self, transaction: PropFirmWalletTransaction):
+        self.subject = "Wallet funding successful"
+        self.message = f"Your payment of ${transaction.price_amount} has been received."
+
+        self.send()
+
+    def wallet_funding_failed(self, transaction: PropFirmWalletTransaction):
+        self.subject = "Wallet funding failed"
+        self.message = f"Your payment session of ${transaction.price_amount} has expired."
+
+        self.send()

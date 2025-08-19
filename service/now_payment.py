@@ -89,17 +89,51 @@ class NOWPaymentsService:
         return hmac.compare_digest(signature, expected_signature)
     
     def verify_wallet_address(self, address, currency):
+        payload = {
+            "address": address,
+            "currency": currency.lower(),
+            "extra_id": None,
+        }
+
         try:
-            payload = {
-                "address": address,
-                "currency": currency,
-                "extra_id": None,
-            }
-            response = requests.post(f"{self.base_url}/payout", json=payload, headers=self.headers)
-            response.raise_for_status()
-            return response.json()
-        except Exception as e:
-            return {'error': str(e)}
+            response = requests.post(
+                f"{self.base_url}/payout/validate-address",
+                json=payload,
+                headers=self.headers,
+                timeout=15,
+            )
+
+            if response.status_code == 200:
+                # API spec: valid address returns plain "OK"
+                if response.text.strip().upper() == "OK":
+                    return {"success": True, "message": "Wallet address is valid"}
+                else:
+                    # unexpected body, treat as failure
+                    raise ValueError(
+                        f"Unexpected response body: {response.text.strip()}"
+                    )
+
+            else:
+                # Error response → JSON
+                try:
+                    data = response.json()
+                except Exception:
+                    raise ValueError(
+                        f"Wallet verification failed: Non-JSON error "
+                        f"(status {response.status_code}, body={response.text.strip()})"
+                    )
+
+                raise ValueError(data.get("message", "Wallet verification failed"))
+
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Wallet verification failed: {str(e)}")
+
+
+        except requests.exceptions.RequestException as e:
+            # network/connection errors, 5xx, etc
+            raise ValueError(f"Wallet verification failed: {str(e)}")
+
+
 
     def create_payout(self, withdrawals, ipn_callback_url):
         try:

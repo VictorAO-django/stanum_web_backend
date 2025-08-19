@@ -20,5 +20,7 @@ urlpatterns = [
 
     path('wallet', views.PropFirmWalletView.as_view()),
     path('wallet/transactions', views.PropFirmWalletTransactionView.as_view()),
-    path('wallet/withdraw', views.WithdrawView.as_view())
+    path('wallet/withdraw', views.WithdrawView.as_view()),
+    path('wallet/fund', views.WalletFundingAPIView.as_view()),
+    path('wallet/fund/ipn', views.WalletFundingAPIView.as_view()),
 ]

@@ -74,11 +74,23 @@ class PropFirmWalletSerializer(serializers.ModelSerializer):
         model = PropFirmWallet
         fields = ['id', 'wallet_id', 'withdrawal_profit', 'pending_amount', 'disbursed_amount']
 
+class PropFirmWalletTransactionCreateSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=20, decimal_places=2, min_value=0.01)
+    currency = serializers.CharField(max_length=10)
+    description = serializers.CharField(max_length=500, required=False, default='Payment')
+    price_currency = serializers.CharField(max_length=10, default='USD')
 
 class PropFirmWalletTransactionSerializer(serializers.ModelSerializer):
+    qr_code_url = serializers.SerializerMethodField()
     class Meta:
         model = PropFirmWalletTransaction
         fields = [
-            'id', 'transaction_id', 'requested_amount', 'disbursed_amount', 'type',
-            'payout_currency', 'payout_wallet_address', 'payout_network', 'status', 'created_at'
+            'id', 'transaction_id', 'pay_amount', 'disbursed_amount', 'type',
+            'pay_currency', 'pay_address', 'pay_network', 'qr_code_url', 'price_amount', 
+            'price_currency', 'payment_id', 'status', 'created_at'
         ]
+
+    def get_qr_code_url(self, obj):
+        if obj.pay_address:
+            return f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={obj.pay_address}"
+        return None

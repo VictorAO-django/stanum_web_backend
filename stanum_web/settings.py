@@ -241,51 +241,62 @@ CELERY_TIMEZONE = TIME_ZONE
 
 
 # Logging Configuration
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'formatters': {
-#         'verbose': {
-#             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-#             'style': '{',
-#         },
-#         'simple': {
-#             'format': '{levelname} {message}',
-#             'style': '{',
-#         },
-#     },
-#     'handlers': {
-#         'file': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': 'logs/django.log',
-#             'formatter': 'verbose',
-#         },
-#         'trading_file': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': 'logs/trading.log',
-#             'formatter': 'verbose',
-#         },
-#         'console': {
-#             'level': 'INFO',
-#             'class': 'logging.StreamHandler',
-#             'formatter': 'simple',
-#         },
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['file', 'console'],
-#             'level': 'INFO',
-#             'propagate': True,
-#         },
-#         'trading': {
-#             'handlers': ['trading_file', 'console'],
-#             'level': 'INFO',
-#             'propagate': False,
-#         },
-#     },
-# }
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/django.log',
+            'formatter': 'verbose',
+        },
+        'trading_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/trading.log',
+            'formatter': 'verbose',
+        },
+        "webhook_file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "logs/webhook.log",
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'trading': {
+            'handlers': ['trading_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'webhook': {
+            "handlers": ["webhook_file", "console"],
+            "level": "DEBUG",
+            "propagate": False,
+        }
+    },
+}
 
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True
