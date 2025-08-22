@@ -1,0 +1,39 @@
+2025-08-22 19:40:32,256 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-22 19:40:32,589 - __main__ - ERROR - Authentication error: Cannot connect to host 5.101.139.38:443 ssl:default [The specified network name is no longer available]
+2025-08-22 19:40:32,589 - __main__ - ERROR - Failed to authenticate with FinXSol
+2025-08-22 19:41:12,400 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-22 19:41:12,400 - __main__ - ERROR - Authentication error: 5.101.139.38:443/api/auth/start
+2025-08-22 19:41:12,400 - __main__ - ERROR - Failed to authenticate with FinXSol
+2025-08-22 19:48:59,368 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-22 19:48:59,714 - __main__ - ERROR - Authentication error: Cannot connect to host 5.101.139.38:443 ssl:default [The specified network name is no longer available]
+2025-08-22 19:48:59,714 - __main__ - ERROR - Failed to authenticate with FinXSol
+2025-08-22 19:53:01,020 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-22 19:53:01,337 - __main__ - ERROR - Authentication error: Cannot connect to host 5.101.139.38:443 ssl:default [The specified network name is no longer available]
+2025-08-22 19:53:01,337 - __main__ - ERROR - Failed to authenticate with FinXSol
+2025-08-22 19:53:16,664 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-22 19:53:16,994 - __main__ - ERROR - Authentication error: Cannot connect to host 5.101.139.38:443 ssl:default [The specified network name is no longer available]
+2025-08-22 19:53:16,995 - __main__ - ERROR - Failed to authenticate with FinXSol
+2025-08-22 19:53:44,527 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-22 19:53:44,527 - __main__ - ERROR - Authentication error: 5.101.139.38:443/api/auth/start
+2025-08-22 19:53:44,527 - __main__ - ERROR - Failed to authenticate with FinXSol
+2025-08-22 19:54:33,453 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-22 19:54:33,934 - __main__ - ERROR - Authentication error: Cannot connect to host 5.101.139.38:443 ssl:default [The specified network name is no longer available]
+2025-08-22 19:54:33,934 - __main__ - ERROR - Failed to authenticate with FinXSol
+2025-08-22 20:45:01,990 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-22 20:45:01,992 - __main__ - INFO - Searching for working connection...
+2025-08-22 20:45:01,993 - __main__ - INFO - Trying: http://5.101.139.38:443:443
+2025-08-22 20:45:01,993 - __main__ - INFO - Testing connection: http://5.101.139.38:443:443/api/auth/start
+2025-08-22 20:45:01,994 - __main__ - INFO - Trying: https://5.101.139.38:443:443
+2025-08-22 20:45:01,995 - __main__ - INFO - Testing connection: https://5.101.139.38:443:443/api/auth/start
+2025-08-22 20:45:01,997 - __main__ - INFO - Trying: http://5.101.139.38:443:80
+2025-08-22 20:45:01,998 - __main__ - INFO - Testing connection: http://5.101.139.38:443:80/api/auth/start
+2025-08-22 20:45:02,000 - __main__ - INFO - Trying: http://5.101.139.38:443:8080
+2025-08-22 20:45:02,001 - __main__ - INFO - Testing connection: http://5.101.139.38:443:8080/api/auth/start
+2025-08-22 20:45:02,002 - __main__ - INFO - Trying: https://5.101.139.38:443:8443
+2025-08-22 20:45:02,002 - __main__ - INFO - Testing connection: https://5.101.139.38:443:8443/api/auth/start
+2025-08-22 20:45:02,003 - __main__ - INFO - Trying: https://5.101.139.38:443:8080
+2025-08-22 20:45:02,004 - __main__ - INFO - Testing connection: https://5.101.139.38:443:8080/api/auth/start
+2025-08-22 20:45:02,007 - __main__ - ERROR - No working connection found
+2025-08-22 20:45:02,008 - __main__ - ERROR - Could not establish connection to server
+2025-08-22 20:45:02,009 - __main__ - WARNING - Failed to authenticate with FinXSol - continuing in offline mode
+2025-08-22 20:45:02,010 - __main__ - INFO - PropFirm Manager started successfully
