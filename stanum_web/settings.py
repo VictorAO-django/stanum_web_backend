@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     'trading',
     'challenge',
     'payment',
+    'superadmin',
 ]
 
 MIDDLEWARE = [

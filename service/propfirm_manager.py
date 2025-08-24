@@ -156,10 +156,10 @@ class FinXSolClient:
         connection_attempts = [
             f"http://{self.server_host}:443",   # Try HTTP first (common for MT)
             f"https://{self.server_host}:443",  # Then HTTPS
-            f"http://{self.server_host}:80", 
-            f"http://{self.server_host}:8080",
-            f"https://{self.server_host}:8443",
-            f"https://{self.server_host}:8080", 
+            # f"http://{self.server_host}:80", 
+            # f"http://{self.server_host}:8080",
+            # f"https://{self.server_host}:8443",
+            # f"https://{self.server_host}:8080", 
         ]
         
         logger.info("Searching for working connection...")

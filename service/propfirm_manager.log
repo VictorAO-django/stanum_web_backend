@@ -37,3 +37,17 @@
 2025-08-22 20:45:02,008 - __main__ - ERROR - Could not establish connection to server
 2025-08-22 20:45:02,009 - __main__ - WARNING - Failed to authenticate with FinXSol - continuing in offline mode
 2025-08-22 20:45:02,010 - __main__ - INFO - PropFirm Manager started successfully
+2025-08-22 20:46:03,508 - __main__ - INFO - Stopping PropFirm Manager...
+2025-08-22 20:46:03,512 - __main__ - INFO - PropFirm Manager stopped
+2025-08-23 12:04:07,872 - __main__ - INFO - Starting PropFirm Manager...
+2025-08-23 12:04:07,873 - __main__ - INFO - Searching for working connection...
+2025-08-23 12:04:07,874 - __main__ - INFO - Trying: http://5.101.139.38:443:443
+2025-08-23 12:04:07,874 - __main__ - INFO - Testing connection: http://5.101.139.38:443:443/api/auth/start
+2025-08-23 12:04:07,875 - __main__ - INFO - Trying: https://5.101.139.38:443:443
+2025-08-23 12:04:07,875 - __main__ - INFO - Testing connection: https://5.101.139.38:443:443/api/auth/start
+2025-08-23 12:04:07,875 - __main__ - ERROR - No working connection found
+2025-08-23 12:04:07,876 - __main__ - ERROR - Could not establish connection to server
+2025-08-23 12:04:07,876 - __main__ - WARNING - Failed to authenticate with FinXSol - continuing in offline mode
+2025-08-23 12:04:07,876 - __main__ - INFO - PropFirm Manager started successfully
+2025-08-23 12:30:32,549 - __main__ - INFO - Stopping PropFirm Manager...
+2025-08-23 12:30:32,555 - __main__ - INFO - PropFirm Manager stopped

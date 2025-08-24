@@ -248,7 +248,7 @@ class ReferalEarningTransaction(models.Model):
 
 
 class Address(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='address')
     home_address = models.TextField(blank=True, null=True)
     town = models.CharField(max_length=255, blank=True, null=True)
     state = models.CharField(max_length=255, blank=True, null=False)
@@ -285,7 +285,7 @@ class ProofOfIdentity(models.Model):
         ('rejected', 'Rejected'),
     ]
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='kyc_identity')
     document_type = models.ForeignKey(DocumentType, on_delete=models.PROTECT)
     document_number = models.CharField(max_length=100, blank=True, null=True)
     document_file_front = models.FileField(upload_to='static/kyc/identity/')
@@ -311,7 +311,7 @@ class ProofOfAddress(models.Model):
         ('home_address_2', "Home Address 2")
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='kyc_address')
     address_type = models.CharField(choices=ADDRESS, max_length=20)
     document_type = models.ForeignKey(DocumentType, on_delete=models.PROTECT)
     document_file = models.FileField(upload_to='static/kyc/address/')
