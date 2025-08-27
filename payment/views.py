@@ -31,7 +31,7 @@ from utils.permission import *
 from utils.pagination import *
 from utils.filters import *
 
-from manager.manager import MT5AccountService
+# from manager.manager import MT5AccountService
 
 User = get_user_model()
 
