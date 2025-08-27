@@ -1,10 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import (
-    TradingAccount, Trade, AccountActivity, 
-    DailyAccountStats, UserProfile
-)
+from .models import *
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -100,7 +97,51 @@ class TradingAccountSerializer(serializers.ModelSerializer):
             return obj.challenge.name
         return ""
 
+class MT5UserSerializer(serializers.ModelSerializer):
+    challenge_name = serializers.SerializerMethodField()
+    free_margin = serializers.SerializerMethodField()
+    net_profit = serializers.SerializerMethodField()
+    account_size = serializers.SerializerMethodField()
+    equity = serializers.SerializerMethodField()
+    class Meta:
+        model = MT5User
+        fields = [
+            'login', 'server', 'balance', 'account_type', 'account_status', 'password', 'created_at',
+            'free_margin', 'net_profit', 'account_size', 'equity', 'challenge_name'
+        ]
 
+    def get_challenge_name(self, obj):
+        if obj.challenge:
+            return obj.challenge.name
+        return ""
+    
+    def get_account_size(self, obj):
+        if obj.challenge:
+            return obj.challenge.account_size
+        return "0.0000"
+    
+    def get_free_margin(self, obj):
+        return "0.0000"
+    
+    def get_net_profit(self, obj):
+        return "0.0000"
+    
+    def get_equity(self, obj):
+        return "0.0000"
+    
+    def to_representation(self, instance):
+        representation =  super().to_representation(instance)
+        account = MT5Account.objects.filter(login=instance.login)
+        if account.exists():
+            account = account.first()
+            representation['free_margin'] = account.margin_free
+            representation['net_profit'] = account.profit
+            representation['equity'] = account.equity
+        return super().to_representation(instance)
+    
+    
+
+    
 class AccountCreateRequestSerializer(serializers.Serializer):
     """Serializer for MetaAPI account creation requests"""
     account_type = serializers.ChoiceField(choices=['challenge', 'funded'])

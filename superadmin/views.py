@@ -130,7 +130,7 @@ class LoginView(APIView):
 class UserListView(generics.ListAPIView):
     permission_classes=[permissions.IsAdminUser]
     serializer_class = UserSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.filter(is_deleted=False).order_by('-id')
     pagination_class = StandardResultsSetPagination
 
 class UserDetailView(generics.RetrieveAPIView):
@@ -173,6 +173,7 @@ class UserWalletView(generics.RetrieveAPIView):
         return obj
     
 class UserWalletTransactionView(generics.ListAPIView):
+    permission_classes=[permissions.IsAdminUser]
     serializer_class = UserWalletTransactionSerializer
     filterset_class = PropFirmWalletTransactionFilter
     filter_backends = [DjangoFilterBackend]
@@ -184,3 +185,100 @@ class UserWalletTransactionView(generics.ListAPIView):
         wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
         queryset = PropFirmWalletTransaction.objects.filter(wallet=wallet).order_by('-id')
         return queryset
+    
+class DeleteUserView(APIView):
+    permission_classes=[permissions.IsAdminUser]
+    def delete(self, request, id, *args, **kwargs):
+        user = get_object_or_404(User, id=id)
+        user.is_deleted = True
+        user.save()
+        return Response(status=status.HTTP_200_OK)
+    
+class PayoutsView(generics.ListAPIView):
+    permission_classes=[permissions.IsAdminUser]
+    serializer_class=UserWalletTransactionSerializer
+    queryset=PropFirmWalletTransaction.objects.filter(type='debit').exclude(pay_address="").order_by('-id')
+    filterset_class = PropFirmWalletTransactionFilter
+    filter_backends = [DjangoFilterBackend]
+    pagination_class = LargeResultsSetPagination
+
+
+class ApprovePayoutView(APIView):
+    permission_classes=[permissions.IsAdminUser]
+
+    def post(self, request, id, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                trx = PropFirmWalletTransaction.objects.select_for_update().get(id=id)
+
+                assert trx.type == 'debit', "Only a debit transaction can be approved"
+                assert trx.status == 'pending', "Payout already processed"
+
+                # Now mark it approved
+                trx.status = 'approved'
+                trx.save()
+
+            return custom_response(
+                status="success",
+                message="Transaction Processed.",
+                data={}
+            )
+
+        except PropFirmWalletTransaction.DoesNotExist:
+            return custom_response(
+                status="error",
+                message="Transaction not found",
+                data={},
+                http_status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as err:
+            return custom_response(
+                status="error",
+                message=str(err),
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+        
+
+class RejectPayoutView(APIView):
+    permission_classes=[permissions.IsAdminUser]
+
+    def post(self, request, id, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                trx = PropFirmWalletTransaction.objects.select_for_update().get(id=id)
+
+                assert trx.type == 'debit', "Only a debit transaction can be approved"
+                assert trx.status == 'pending', "Payout already processed"
+
+                # Now mark it approved
+                trx.status = 'rejected'
+                trx.save()
+
+            return custom_response(
+                status="success",
+                message="Rejection Processed.",
+                data={}
+            )
+
+        except PropFirmWalletTransaction.DoesNotExist:
+            return custom_response(
+                status="error",
+                message="Transaction not found",
+                data={},
+                http_status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as err:
+            return custom_response(
+                status="error",
+                message=str(err),
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+
+
+class TradingAccountListView(generics.ListAPIView):
+    permission_classes=[permissions.IsAdminUser]
+    serializer_class=TradingAccountSerializer
+    queryset=TradingAccount.objects.all()
+    pagination_class = LargeResultsSetPagination

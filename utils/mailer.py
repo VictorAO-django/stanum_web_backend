@@ -3,6 +3,7 @@ from django.core.mail import send_mail,get_connection, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils import timezone
+from django.conf import settings
 from rest_framework.exceptions import APIException
 from rest_framework import status
 from utils.helper import format_date
@@ -11,6 +12,7 @@ from utils.exception import *
 
 from challenge.models import *
 from payment.models import *
+from trading.models import *
 class Mailer:
     def __init__(self, email=None, service=None):
         self.sender_email = 'noreply@stanum.com' #default sender email
@@ -116,3 +118,12 @@ class Mailer:
         self.message = f"Your payment session of ${transaction.price_amount} has expired."
 
         self.send()
+
+    def challenge_entry(self, user:MT5User, challenge: PropFirmChallenge, password):
+        self.subject = f"Welcome to {settings.GLOBAL_SERVICE_NAME} Prop Challenge"
+        context = {
+            'user': user, 'challenge': challenge, 'firm_name': settings.GLOBAL_SERVICE_NAME,
+            'broker_name': settings.BROKER_NAME, 'server': settings.SERVER_NAME, 'password': password,
+        }
+        self.html_content = render_to_string('emails/challenge_entry.html', context)
+        self.send_with_template()

@@ -59,8 +59,3 @@ def custom_auth_token_pre_save(sender, instance, **kwargs):
         instance.access_expires_at = now + timedelta(minutes=get_setting('ACCESS_TOKEN_LIFESPAN_MINUTES', 15))
         instance.refresh_expires_at = now + timedelta(days=get_setting('REFRESH_TOKEN_LIFESPAN_DAYS', 1))
 
-
-@receiver(post_save, sender=User)
-def setup_address_after_signup(sender, instance, created, **kwargs):
-    if created:  
-        Address.objects.create(user=instance)

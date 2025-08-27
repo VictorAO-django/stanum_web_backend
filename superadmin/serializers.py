@@ -2,6 +2,7 @@ from rest_framework import serializers
 from account.models import *
 from challenge.models import *
 from payment.models import *
+from trading.models import *
 
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
@@ -53,7 +54,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields=[
-            'id', 'full_name', 'email', 'date_of_birth', 'phone_number  ', 'country', 'address'
+            'id', 'full_name', 'email', 'date_of_birth', 'phone_number', 'country', 'address'
         ]
 
 class UserWalletSerializer(serializers.ModelSerializer):
@@ -64,15 +65,29 @@ class UserWalletSerializer(serializers.ModelSerializer):
 
 class UserWalletTransactionSerializer(serializers.ModelSerializer):
     qr_code_url = serializers.SerializerMethodField()
+    user = UserDetailSerializer(source='wallet.user', read_only=True)
     class Meta:
         model = PropFirmWalletTransaction
         fields = [
             'id', 'transaction_id', 'pay_amount', 'disbursed_amount', 'type',
             'pay_currency', 'pay_address', 'pay_network', 'qr_code_url', 'price_amount', 
-            'price_currency', 'payment_id', 'status', 'created_at'
+            'price_currency', 'payment_id', 'status', 'created_at', 'user'
         ]
 
     def get_qr_code_url(self, obj):
         if obj.pay_address:
             return f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={obj.pay_address}"
         return None
+    
+
+class TradingAccountSerializer(serializers.ModelSerializer):
+    challenge = ChallengeSerializer(read_only=True)
+    class Meta:
+        model = TradingAccount
+        fields = [
+            'id', 'user', 'challenge', 'metaapi_account_id', 'login', 'password', 'account_type', 'size', 'status', 'server',
+            'leverage', 'balance', 'equity', 'margin', 'free_margin', 'margin_level', 'risk_daily_loss_limit', 'risk_max_drawdown',
+            'risk_profit_target', 'max_daily_trades', 'disable_reason', 'disabled_at', 'completed_at',
+            'selected_date', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']

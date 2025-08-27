@@ -5,3 +5,5 @@
 *virtualenv/
 .pyc
 *.pyc
+*bases/
+*logs/

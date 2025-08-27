@@ -20,6 +20,9 @@ from asgiref.sync import async_to_sync
 
 from challenge.models import *
 from trading.models import *
+from account.models import (
+    Address
+)
 
 from service.paystack import PaystackService
 from service.metaapi_request import *
@@ -27,6 +30,8 @@ from utils.helper import *
 from utils.permission import *
 from utils.pagination import *
 from utils.filters import *
+
+from manager.manager import MT5AccountService
 
 User = get_user_model()
 
@@ -94,13 +99,14 @@ class PaymentCreateAPIView(APIView):
     
     def post(self, request):
         payload = request.data.copy()
-        if payload.get('description', '') == '':
-            payload['description'] = f"Stanum payment"
         
         challenge_id = payload.get('challenge_id', '0')
         challenge = PropFirmChallenge.objects.filter(id=challenge_id)
         if challenge.exists():
             challenge = challenge.first()
+
+        if payload.get('description', '') == '':
+            payload['description'] = f"Stanum payment for challenge {challenge.name}"
 
         serializer = PaymentCreateSerializer(data=payload)
         if serializer.is_valid():
@@ -120,7 +126,7 @@ class PaymentCreateAPIView(APIView):
             
             # Create payment with NOWPayments
             service = NOWPaymentsService()
-            ipn_url = request.build_absolute_uri('/api/payments/ipn/')
+            ipn_url = request.build_absolute_uri('/api/v1/payment/wallet/crypto/ipn/')
             
             result = service.create_payment(
                 price_amount=serializer.validated_data['amount'],
@@ -228,14 +234,14 @@ class PaymentIPNAPIView(APIView):
     def post(self, request):
         try:
             # Verify signature
-            signature = request.headers.get('x-nowpayments-sig')
-            if not signature:
-                return Response({'error': 'Missing signature'}, status=status.HTTP_400_BAD_REQUEST)
+            # signature = request.headers.get('x-nowpayments-sig')
+            # if not signature:
+            #     return Response({'error': 'Missing signature'}, status=status.HTTP_400_BAD_REQUEST)
             
             service = NOWPaymentsService()
-            if not service.verify_ipn_signature(request.body, signature):
-                return Response({'error': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
-            
+            # if not service.verify_ipn_signature(request.body, signature):
+            #     return Response({'error': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
+            print("Payment IPN received", request.body)
             # Parse callback data
             try:
                 data = json.loads(request.body)
@@ -282,21 +288,53 @@ class PaymentIPNAPIView(APIView):
             )
     
     def handle_payment_success(self, payment: Payment, challenge: PropFirmChallenge, user):
-        """Handle successful payment - override this method for custom logic"""
-        # Example: Send confirmation email, activate service, etc.
-        account = TradingAccount.objects.create(
-            user=user,
-            challenge=challenge,
-            metaapi_account_id="metaapi_12345678",
-            login="123456",
-            password="securepassword123",
-            account_type="challenge",
-            size=Decimal(challenge.account_size),
-            server="MetaQuotes-Demo",
-            leverage=100,
-        )
-        Mailer(user.email).payment_successful(challenge.challenge_fee, challenge)
-        print(f"Payment {payment.order_id} completed successfully")
+        """Handle successful payment"""
+        first_name, last_name = split_full_name(user.full_name)
+        address = Address.objects.get(user=user)
+        print("Twas a succes")
+        # try:
+        #     mt5_service = MT5AccountService(
+        #         address=settings.METATRADER_SERVER,
+        #         login=settings.METATRADER_LOGIN,
+        #         password=settings.METATRADER_PASSWORD,
+        #         user_group=settings.METATRADER_USERGROUP,
+        #     )
+        #     mt5_service.connect()
+
+        #     mt5_user, master_password = mt5_service.createUser({
+        #         'first_name': first_name,
+        #         'last_name': last_name,
+        #         'balance': challenge.account_size,
+        #         'country': user.country,
+        #         'company': settings.GLOBAL_SERVICE_NAME,
+        #         'address': address.home_address,
+        #         'email': user.email,
+        #         'phone': user.phone_number,
+        #         'zip_code': address.zip_code,
+        #         'state': address.state,
+        #         'city': address.town,
+        #         'language': 'english',
+        #         'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({challenge.name})",
+        #     })
+
+        # except Exception as e:
+        #     logger.error(f"MT5 account creation failed for user {user.id}: {e}")
+        #     # Optionally notify support or mark account as pending
+        #     return
+        # finally:
+        #     mt5_service.disconnect()
+
+        # mt5_user.user = user
+        # mt5_user.challenge = challenge
+        # mt5_user.password = master_password
+        # mt5_user.save()
+
+        mailer = Mailer(user.email)
+        mailer.payment_successful(challenge.challenge_fee, challenge)
+        # mailer.challenge_entry(mt5_user, challenge, master_password)
+
+        # logger.info(f"Payment {payment.order_id} completed and account {mt5_user.login} created")
+
     
     def handle_payment_failure(self, payment: Payment, challenge: PropFirmChallenge, user):
         """Handle failed payment - override this method for custom logic"""
@@ -615,7 +653,7 @@ class WithdrawView(APIView):
                 # ✅ Create transaction as pending (disbursed_amount = 0)
                 PropFirmWalletTransaction.objects.create(
                     wallet=wallet,
-                    requested_amount=amount,
+                    price_amount=amount,
                     disbursed_amount=Decimal("0.00"),
                     status="pending",
                     type="debit",

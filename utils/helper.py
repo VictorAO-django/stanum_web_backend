@@ -190,3 +190,23 @@ def get_browser_info(request):
         return f"{browser} {version}"
 
     return "Unknown Browser"
+
+
+def split_full_name(full_name: str) -> tuple[str, str]:
+    """
+    Split a full name into first_name and last_name.
+
+    Returns:
+        (first_name, last_name) as a tuple.
+        If only one name is provided, last_name will be empty.
+        If empty string is given, both will be empty.
+    """
+    if not full_name or not full_name.strip():
+        return ("", "")
+
+    parts = full_name.strip().split()
+
+    if len(parts) == 1:
+        return (parts[0], "")
+
+    return (parts[0], " ".join(parts[1:]))

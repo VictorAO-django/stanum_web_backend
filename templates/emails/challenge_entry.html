@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome to {{ firm_name }} Prop Challenge</title>
+</head>
+<body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color:#f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f4; padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#CD0111; padding:20px; text-align:center; color:#ffffff;">
+              <h1 style="margin:0; font-size:22px;">Welcome to {{ firm_name }}</h1>
+              <p style="margin:0; font-size:14px;">Your {{ challenge.name }} Challenge Account</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px; color:#333333; font-size:14px; line-height:1.6;">
+              <p>Hello <strong>{{ user.user.full_name }}</strong>,</p>
+              <p>We are excited to have you onboard the <strong>{{ challenge.name }}</strong> challenge. Below are your trading account details:</p>
+
+              <table width="100%" cellpadding="8" cellspacing="0" border="0" style="background-color:#f9f9f9; border:1px solid #e0e0e0; border-radius:6px; margin:20px 0;">
+                <tr>
+                  <td style="font-weight:bold; width:40%;">Broker:</td>
+                  <td>{{ broker_name }}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:bold;">Account Login:</td>
+                  <td>{{ user.login }}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:bold;">Password:</td>
+                  <td>{{ password }}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:bold;">Server:</td>
+                  <td>{{ server }}</td>
+                </tr>
+              </table>
+
+              <h3 style="margin-top:25px; font-size:16px; color:#0d1117;">📌 Challenge Rules</h3>
+              <ul style="margin:10px 0; padding-left:20px;">
+                <li>Account Size: <strong>${{ challenge.account_size }}</strong></li>
+                <li>Profit Target: <strong>{{ challenge.profit_target_percent }}%</strong></li>
+                <li>Max Daily Loss: <strong>{{ challenge.max_daily_loss_percent }}%</strong></li>
+                <li>Max Total Loss: <strong>{{ challenge.max_total_loss_percent }}%</strong></li>
+                <li>Minimum Trading Days: <strong>{{ challenge.min_trading_days }}</strong></li>
+                <li>Maximum Trading Days: <strong>{{ challenge.max_trading_days }}</strong></li>
+                {% if challenge.consistency_rule_percent %}
+                  <li>Consistency Rule: <strong>{{ challenge.consistency_rule_percent }}%</strong></li>
+                {% endif %}
+                <li>Weekend Holding: <strong>{% if weekend_holding %}Allowed{% else %}Not Allowed{% endif %}</strong></li>
+                <li>News Trading: <strong>{% if news_trading_allowed %}Allowed{% else %}Not Allowed{% endif %}</strong></li>
+              </ul>
+
+              <p style="margin-top:20px;">📈 Best of luck with your challenge — trade smart and disciplined. If you have any questions, reach out to us anytime.</p>
+
+              <p style="margin-top:30px; font-size:12px; color:#777;">— The {{ firm_name }} Team</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#CD0111; padding:15px; text-align:center; color:#fff; font-size:12px;">
+              ©2025 stanumcapital. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

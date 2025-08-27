@@ -27,6 +27,8 @@ elasticsearch-dsl==7.4.1
 gcloud==0.18.3
 gunicorn==21.2.0
 
+MT5Manager
+
 packaging==23.1
 phonenumberslite==8.13.20
 Pillow==10.0.0

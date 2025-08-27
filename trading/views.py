@@ -565,11 +565,11 @@ class MetaAPIServiceMixin:
 
 class TradingAccountView(generics.ListAPIView):
     permission_classes=[IsAuthenticated]
-    serializer_class = TradingAccountSerializer
+    serializer_class = MT5UserSerializer
 
     def get_queryset(self):
         user = self.request.user
-        q = TradingAccount.objects.filter(user=user).order_by('-selected_date')
+        q = MT5User.objects.filter(user=user).order_by('-selected_date')
         return q
     
 class SelectAccountView(APIView):
@@ -577,12 +577,12 @@ class SelectAccountView(APIView):
 
     def post(self, request, id):
         user = self.request.user
-        acc = get_object_or_404(TradingAccount, id=id, user=user)
+        acc = get_object_or_404(MT5User, id=id, user=user)
         acc.selected_date = timezone.now()
         acc.save()
 
-        q = TradingAccount.objects.filter(user=user).order_by('-selected_date')
-        data = TradingAccountSerializer(q, many=True).data
+        q = MT5User.objects.filter(user=user).order_by('-selected_date')
+        data = MT5UserSerializer(q, many=True).data
         return Response(data, status=status.HTTP_200_OK)
     
 
@@ -675,3 +675,4 @@ class AccountStatsView(APIView):
         }
 
         return Response(response_data)
+    
