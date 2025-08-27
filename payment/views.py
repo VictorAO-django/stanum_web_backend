@@ -126,7 +126,7 @@ class PaymentCreateAPIView(APIView):
             
             # Create payment with NOWPayments
             service = NOWPaymentsService()
-            ipn_url = request.build_absolute_uri('/api/v1/payment/wallet/crypto/ipn/')
+            ipn_url = request.build_absolute_uri('/api/v1/payment/crypto/ipn/')
             
             result = service.create_payment(
                 price_amount=serializer.validated_data['amount'],
