@@ -329,11 +329,17 @@ class PaymentIPNAPIView(APIView):
         # mt5_user.password = master_password
         # mt5_user.save()
 
-        mailer = Mailer(user.email)
-        mailer.payment_successful(challenge.challenge_fee, challenge)
-        # mailer.challenge_entry(mt5_user, challenge, master_password)
-
-        # logger.info(f"Payment {payment.order_id} completed and account {mt5_user.login} created")
+        try:
+            mailer = Mailer(user.email)
+            mailer.payment_successful(challenge.challenge_fee, challenge)
+            # mailer.challenge_entry(mt5_user, challenge, master_password)
+            referral = Referral.objects.filter(user=user)
+            if referral.exists():
+                referral=referral.first()
+                award_referral_reward(referral, challenge.challenge_fee)
+            # logger.info(f"Payment {payment.order_id} completed and account {mt5_user.login} created")
+        except Exception as err:
+            pass
 
     
     def handle_payment_failure(self, payment: Payment, challenge: PropFirmChallenge, user):

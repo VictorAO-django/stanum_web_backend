@@ -68,6 +68,7 @@ static3==0.7.0
 swagger-ui-bundle==0.0.9
 urllib3==1.26.16
 vine==5.1.0
+waitress
 wcwidth==0.2.12
 whitenoise==6.5.0
 metaapi-cloud-sdk

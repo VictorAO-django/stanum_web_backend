@@ -135,18 +135,18 @@ def get_selected_account(user) -> TradingAccount:
     return None
 
 
-def award_referral_reward(referral: Referral, amount: int | Decimal):
+def award_referral_reward(referral: Referral, amount: int | Decimal, description: str = None):
     """
     Awards a referral reward to the user who referred the given referral.user.
-    
+
     Only awards if:
     - referral has a referrer (referred_by is not None)
     - referral.reward_used is False
     """
     if not referral.referred_by or referral.reward_used:
         return  # No referrer or already rewarded
-    
-    # Ensure we're working with Decimal for precision
+
+    # Ensure Decimal for precision
     amount = Decimal(amount)
     percentage = Decimal(str(settings.REFERRAL_PROFIT_PERCENTAGE)) / Decimal("100")
     reward_amount = percentage * amount
@@ -160,10 +160,9 @@ def award_referral_reward(referral: Referral, amount: int | Decimal):
             user=referral.referred_by,
             transaction_type="credit",
             amount=reward_amount,
-            description=f"First deposit reward from {referral.user.full_name}"
+            description=description or f"Referral reward from {referral.user.full_name}"
         )
 
-        # Mark reward as used so it won't be awarded twice
         referral.reward_used = True
         referral.save(update_fields=["reward_used"])
 
