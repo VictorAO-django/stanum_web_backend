@@ -295,7 +295,7 @@ class PaymentIPNAPIView(APIView):
             account_data={
                 'first_name': first_name,
                 'last_name': last_name,
-                'balance': challenge.account_size,
+                'balance': float(challenge.account_size),
                 'country': user.country,
                 'company': settings.GLOBAL_SERVICE_NAME,
                 'address': address.home_address,
@@ -323,7 +323,7 @@ class PaymentIPNAPIView(APIView):
             print("❌ Failed to create account")
 
         # send_bridge_test_req(settings.BRIDGE_URL)
-        
+
         try:
             mailer = Mailer(user.email)
             mailer.payment_successful(challenge.challenge_fee, challenge)
