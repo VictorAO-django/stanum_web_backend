@@ -3,7 +3,7 @@ import django
 from django.core.wsgi import get_wsgi_application
 from waitress import serve
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'your_project.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'stanum_web.settings')
 django.setup()
 
 application = get_wsgi_application()
