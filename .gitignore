@@ -8,3 +8,4 @@
 *bases/
 *logs/
 *staticfiles/
+django_server.log
