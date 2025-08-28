@@ -290,38 +290,40 @@ class PaymentIPNAPIView(APIView):
         first_name, last_name = split_full_name(user.full_name)
         address = Address.objects.get(user=user)
         
-        # result = create_mt5_account(
-        #     base_url=settings.BRIDGE_URL,
-        #     account_data={
-        #         'first_name': first_name,
-        #         'last_name': last_name,
-        #         'balance': challenge.account_size,
-        #         'country': user.country,
-        #         'company': settings.GLOBAL_SERVICE_NAME,
-        #         'address': address.home_address,
-        #         'email': user.email,
-        #         'phone': user.phone_number,
-        #         'zip_code': address.zip_code,
-        #         'state': address.state,
-        #         'city': address.town,
-        #         'language': 'english',
-        #         'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({challenge.name})",
-        #         'challenge_name': challenge.name,
-        #     }
-        # )
+        result = create_mt5_account(
+            base_url=settings.BRIDGE_URL,
+            account_data={
+                'first_name': first_name,
+                'last_name': last_name,
+                'balance': challenge.account_size,
+                'country': user.country,
+                'company': settings.GLOBAL_SERVICE_NAME,
+                'address': address.home_address,
+                'email': user.email,
+                'phone': user.phone_number,
+                'zip_code': address.zip_code,
+                'state': address.state,
+                'city': address.town,
+                'language': 'english',
+                'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({challenge.name})",
+                'challenge_name': challenge.name,
+            }
+        )
 
-        # if result:
-        #     mt5_user_id, password = result
-        #     mt5_user = MT5User.objects.filter(id=mt5_user_id).first()
-        #     if mt5_user:
-        #         mt5_user.user = user
-        #         mt5_user.challenge = challenge
-        #         mt5_user.password = password
-        #         mt5_user.save()
-        #         print("✅ Account created:", mt5_user_id, password)
-        # else:
-        #     print("❌ Failed to create account")
-        send_bridge_test_req(settings.BRIDGE_URL)
+        if result:
+            mt5_user_id, password = result
+            mt5_user = MT5User.objects.filter(id=mt5_user_id).first()
+            if mt5_user:
+                mt5_user.user = user
+                mt5_user.challenge = challenge
+                mt5_user.password = password
+                mt5_user.save()
+                print("✅ Account created:", mt5_user_id, password)
+        else:
+            print("❌ Failed to create account")
+
+        # send_bridge_test_req(settings.BRIDGE_URL)
+        
         try:
             mailer = Mailer(user.email)
             mailer.payment_successful(challenge.challenge_fee, challenge)

@@ -76,6 +76,9 @@ class CreateAccountView(APIView):
 
 
 class TestView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    
     def post(self, request, *args, **kwargs):
         secret = request.headers.get("X-BRIDGE-SECRET")
         print("Test request received", secret)
