@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     'challenge',
     'payment',
     'superadmin',
+    'bridge',
 ]
 
 MIDDLEWARE = [
@@ -349,3 +350,6 @@ METATRADER_PASSWORD=os.getenv('METATRADER_PASSWORD')
 METATRADER_USERGROUP=os.getenv('METATRADER_USERGROUP')
 BROKER_NAME=os.getenv('BROKER_NAME')
 SERVER_NAME=os.getenv('SERVER_NAME')
+
+BRIDGE_URL=os.getenv('BRIDGE_URL')
+BRIDGE_SECRET=os.getenv('BRIDGE_SECRET')

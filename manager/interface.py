@@ -14,3 +14,5 @@ class NewAccountData(TypedDict):
     city: str
     language: str
     comment: str
+    challenge_name: str
+    bridge_secret: str

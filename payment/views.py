@@ -31,8 +31,6 @@ from utils.permission import *
 from utils.pagination import *
 from utils.filters import *
 
-from manager.manager import MT5AccountService
-
 User = get_user_model()
 
 logger = logging.getLogger("webhook")
@@ -291,17 +289,10 @@ class PaymentIPNAPIView(APIView):
         """Handle successful payment"""
         first_name, last_name = split_full_name(user.full_name)
         address = Address.objects.get(user=user)
-        print("Twas a succes")
-        # try:
-        #     mt5_service = MT5AccountService(
-        #         address=settings.METATRADER_SERVER,
-        #         login=settings.METATRADER_LOGIN,
-        #         password=settings.METATRADER_PASSWORD,
-        #         user_group=settings.METATRADER_USERGROUP,
-        #     )
-        #     mt5_service.connect()
-
-        #     mt5_user, master_password = mt5_service.createUser({
+        
+        # result = create_mt5_account(
+        #     base_url=settings.BRIDGE_URL,
+        #     account_data={
         #         'first_name': first_name,
         #         'last_name': last_name,
         #         'balance': challenge.account_size,
@@ -315,20 +306,22 @@ class PaymentIPNAPIView(APIView):
         #         'city': address.town,
         #         'language': 'english',
         #         'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({challenge.name})",
-        #     })
+        #         'challenge_name': challenge.name,
+        #     }
+        # )
 
-        # except Exception as e:
-        #     logger.error(f"MT5 account creation failed for user {user.id}: {e}")
-        #     # Optionally notify support or mark account as pending
-        #     return
-        # finally:
-        #     mt5_service.disconnect()
-
-        # mt5_user.user = user
-        # mt5_user.challenge = challenge
-        # mt5_user.password = master_password
-        # mt5_user.save()
-
+        # if result:
+        #     mt5_user_id, password = result
+        #     mt5_user = MT5User.objects.filter(id=mt5_user_id).first()
+        #     if mt5_user:
+        #         mt5_user.user = user
+        #         mt5_user.challenge = challenge
+        #         mt5_user.password = password
+        #         mt5_user.save()
+        #         print("✅ Account created:", mt5_user_id, password)
+        # else:
+        #     print("❌ Failed to create account")
+        send_bridge_test_req(settings.BRIDGE_URL)
         try:
             mailer = Mailer(user.email)
             mailer.payment_successful(challenge.challenge_fee, challenge)

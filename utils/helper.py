@@ -1,4 +1,4 @@
-import re
+import re, requests
 from decimal import Decimal
 from rest_framework.views import exception_handler
 from rest_framework.exceptions import ValidationError
@@ -209,3 +209,59 @@ def split_full_name(full_name: str) -> tuple[str, str]:
         return (parts[0], "")
 
     return (parts[0], " ".join(parts[1:]))
+
+
+def create_mt5_account(
+    base_url: str,
+    account_data: dict
+) -> tuple[str, str] | None:
+    """
+    Calls the CreateAccount API endpoint to create an MT5 account.
+
+    Args:
+        base_url (str): The base URL of your API (e.g. "https://yourdomain.com/api").
+        token (str): Authentication token (JWT or DRF token).
+        account_data (dict): Payload matching NewAccountData TypedDict.
+
+    Returns:
+        tuple: (mt5_user_id, password) if success
+        None: if failure
+    """
+    url = f"{base_url}/accounts/create"
+    headers = {
+        "X-BRIDGE-SECRET": settings.BRIDGE_SECRET,
+        "Content-Type": "application/json",
+    }
+
+    try:
+        response = requests.post(url, json=account_data, headers=headers)
+        response.raise_for_status()
+
+        data = response.json()
+        if data.get("status") == "success":
+            mt5_user = data["data"]["mt5_user"]
+            password = data["data"]["password"]
+            return mt5_user, password
+        else:
+            print("Error:", data.get("message"))
+            return None
+
+    except requests.RequestException as e:
+        print(f"Request failed: {e}")
+        return None
+    
+
+def send_bridge_test_req(base_url):
+    url = f"{base_url}/test"
+    headers = {
+        "X-BRIDGE-SECRET": settings.BRIDGE_SECRET,
+        "Content-Type": "application/json",
+    }
+    try:
+        response = requests.post(url, headers=headers)
+        response.raise_for_status()
+        print("Successfull req")
+        return
+    except requests.RequestException as e:
+        print(f"Request failed: {e}")
+        return None
