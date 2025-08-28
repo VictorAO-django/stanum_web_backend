@@ -7,3 +7,4 @@
 *.pyc
 *bases/
 *logs/
+*staticfiles/
