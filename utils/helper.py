@@ -227,7 +227,7 @@ def create_mt5_account(
         tuple: (mt5_user_id, password) if success
         None: if failure
     """
-    url = f"{base_url}/accounts/create"
+    url = f"{base_url}/account/create"
     headers = {
         "X-BRIDGE-SECRET": settings.BRIDGE_SECRET,
         "Content-Type": "application/json",
