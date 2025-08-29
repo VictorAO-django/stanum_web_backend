@@ -41,7 +41,7 @@ urlpatterns = [
     path('api/v1/challenge/', include('challenge.urls')),
     path('api/v1/payment/', include('payment.urls')),
     path('api/v1/admin/', include('superadmin.urls')),
-    # path('api/v1/bridge/', include('bridge.urls')),
+    path('api/v1/bridge/', include('bridge.urls')),
     #Documentation UI
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
