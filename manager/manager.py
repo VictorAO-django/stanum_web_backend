@@ -35,7 +35,7 @@ class MT5AccountService:
         user.State = data['state']
         user.City = data['city']
         user.Address = data['address']
-        user.Language = data['address']
+        user.Language = 0
         user.Comment = data['comment']
 
         master_password = self.gen_master_password()
@@ -61,7 +61,7 @@ class MT5AccountService:
             # user added successfully 
             print(f"User {user.Login} was added") 
             # deposit balance 
-            deal_id = self.manager.DealerBalance(user.Login, data.balance, MT5Manager.MTDeal.EnDealAction.DEAL_BALANCE, "Start deposit") 
+            deal_id = self.manager.DealerBalance(user.Login, float(data['balance']), MT5Manager.MTDeal.EnDealAction.DEAL_BALANCE, "Start deposit") 
             if deal_id is False: 
                 # depositing ended with error 
                 error = MT5Manager.LastError() 
@@ -101,7 +101,6 @@ class MT5AccountService:
 
             mt5_user = save_mt5_user(user)
             return (mt5_user, master_password)
-        
 
 
     def list_users(self) -> List[MT5Manager.MTUser]:
@@ -129,12 +128,16 @@ class MT5AccountService:
     
 
     def gen_master_password(self, length: int = 8) -> str:
-        """Generate a secure master password (full access)."""
         alphabet = string.ascii_letters + string.digits + string.punctuation
-        return ''.join(secrets.choice(alphabet) for _ in range(length))
+        # First char must be alphanumeric
+        first_char = secrets.choice(string.ascii_letters + string.digits)
+        rest = ''.join(secrets.choice(alphabet) for _ in range(length - 1))
+        return first_char + rest
 
     def gen_investor_password(self, length: int = 8) -> str:
-        """Generate a secure investor password (read-only)."""
-        alphabet = string.ascii_letters + string.digits  # simpler, no punctuation
-        return ''.join(secrets.choice(alphabet) for _ in range(length))
+        alphabet = string.ascii_letters + string.digits + string.punctuation
+        # First char must be alphanumeric
+        first_char = secrets.choice(string.ascii_letters + string.digits)
+        rest = ''.join(secrets.choice(alphabet) for _ in range(length - 1))
+        return first_char + rest
     
