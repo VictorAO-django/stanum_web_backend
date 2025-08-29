@@ -239,7 +239,7 @@ def create_mt5_account(
 
         data = response.json()
         if data.get("status") == "success":
-            mt5_user = data["data"]["mt5_user"]
+            mt5_user = data["data"]["mt5_user_login"]
             password = data["data"]["password"]
             return mt5_user, password
         else:
