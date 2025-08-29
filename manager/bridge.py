@@ -59,8 +59,8 @@ class MetaTraderBridge:
         if not self.manager.UserAccountSubscribe(AccountSink()):
             logger.error(f"AccountSubscribe failed: {MT5Manager.LastError()}")
 
-        if not self.manager.SummarySubscribe(SummarySink()):
-            logger.error(f"SummarySubscribe failed: {MT5Manager.LastError()}")
+        # if not self.manager.SummarySubscribe(SummarySink()):
+        #     logger.error(f"SummarySubscribe failed: {MT5Manager.LastError()}")
 
         # if not self.manager.DailySubscribe(DailySink()):
         #     logger.error(f"DailySubscribe failed: {MT5Manager.LastError()}")
