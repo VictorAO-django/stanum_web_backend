@@ -310,24 +310,26 @@ class PaymentIPNAPIView(APIView):
             }
         )
 
-        if result:
-            mt5_user_id, password = result
-            mt5_user = MT5User.objects.filter(id=mt5_user_id).first()
-            if mt5_user:
-                mt5_user.user = user
-                mt5_user.challenge = challenge
-                mt5_user.password = password
-                mt5_user.save()
-                print("✅ Account created:", mt5_user_id, password)
-        else:
-            print("❌ Failed to create account")
-
         # send_bridge_test_req(settings.BRIDGE_URL)
 
         try:
             mailer = Mailer(user.email)
             mailer.payment_successful(challenge.challenge_fee, challenge)
-            # mailer.challenge_entry(mt5_user, challenge, master_password)
+
+            if result:
+                mt5_user_login, password = result
+                mt5_user = MT5User.objects.filter(login=mt5_user_login).first()
+                if mt5_user:
+                    mt5_user.user = user
+                    mt5_user.challenge = challenge
+                    mt5_user.password = password
+                    mt5_user.save()
+                    mailer.challenge_entry(mt5_user, challenge, password)
+
+                    print("✅ Account created:", mt5_user_login, password)
+            else:
+                print("❌ Failed to create account")
+
             referral = Referral.objects.filter(user=user)
             if referral.exists():
                 referral=referral.first()

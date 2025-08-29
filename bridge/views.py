@@ -60,7 +60,7 @@ class CreateAccountView(APIView):
                 status='success',
                 message="Account successfully created",
                 data={
-                    'mt5_user': mt5_user.id,
+                    'mt5_user_login': mt5_user.login,
                     'password': master_password
                 }
             )
