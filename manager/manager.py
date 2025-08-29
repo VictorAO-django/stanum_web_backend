@@ -1,8 +1,19 @@
 import asyncio, os, dotenv, signal, logging, string, secrets, django, datetime, MT5Manager 
 from typing import List
 from .interface import NewAccountData
-from trading.models import MT5Account
+from trading.models import MT5Account, MT5User
 from .sinks.user import save_mt5_user
+
+LOGIN_START = 4000
+LOGIN_END = 4500
+
+def get_next_login():
+    used = set(MT5User.objects.values_list("login", flat=True))
+    for login in range(LOGIN_START, LOGIN_END + 1):
+        if login not in used:
+            return login
+    raise ValueError("No available logins in range 4000-4500")
+
 
 class MT5AccountService:
     def __init__(self, address, login, password, user_group):
@@ -23,6 +34,7 @@ class MT5AccountService:
         # create a user 
         user = MT5Manager.MTUser(self.manager) 
         # fill in the required fields: group, leverage, first and last name 
+        user.Login = get_next_login()
         user.Group = self.user_group 
         user.Leverage = 100 
         user.FirstName = data['first_name']
@@ -110,6 +122,9 @@ class MT5AccountService:
 
     def get_user(self, login)->MT5Manager.MTUser:
        return self.manager.UserGet(login)
+    
+    def delete_user(self, login)->MT5Manager.MTUser:
+        return self.manager.UserDelete(login)
     
     def deposit_balance(self, login, amount):
         deal_id = self.manager.DealerBalance(login, amount, MT5Manager.MTDeal.EnDealAction.DEAL_BALANCE, "Start deposit from stanum admin")
