@@ -19,6 +19,7 @@ class CreateAccountView(APIView):
         secret = request.headers.get("X-BRIDGE-SECRET")
         data: NewAccountData = request.data
         mt5_service = None
+        print("Data", data)
 
         # Validate secret
         if settings.BRIDGE_SECRET != secret:
@@ -53,6 +54,7 @@ class CreateAccountView(APIView):
                 'language': 'english',
                 'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({data['challenge_name']})",
             })
+            print(f"({mt5_user.id})password", master_password)
 
             return custom_response(
                 status='success',
@@ -64,6 +66,7 @@ class CreateAccountView(APIView):
             )
 
         except Exception as e:
+            print(f"MT5 account creation failed for user: {e}")
             return custom_response(
                 status='error',
                 message=f"MT5 account creation failed for user: {e}",
@@ -78,7 +81,7 @@ class CreateAccountView(APIView):
 class TestView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
-    
+
     def post(self, request, *args, **kwargs):
         secret = request.headers.get("X-BRIDGE-SECRET")
         print("Test request received", secret)

@@ -7,7 +7,7 @@ from .sinks.user import save_mt5_user
 class MT5AccountService:
     def __init__(self, address, login, password, user_group):
         self.address = address
-        self.login = login
+        self.login = int(login)
         self.password = password
         self.user_group = user_group
         self.manager = MT5Manager.ManagerAPI()
