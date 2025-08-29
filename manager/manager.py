@@ -25,18 +25,18 @@ class MT5AccountService:
         # fill in the required fields: group, leverage, first and last name 
         user.Group = self.user_group 
         user.Leverage = 100 
-        user.FirstName = data.first_name
-        user.LastName = data.last_name
-        user.Country = data.country
-        user.Company = data.company
-        user.EMail = data.email
-        user.Phone = data.phone
-        user.ZIPCode = data.zip_code
-        user.State = data.state
-        user.City = data.city
-        user.Address = data.address
-        user.Language = data.language
-        user.Comment = data.comment
+        user.FirstName = data['first_name']
+        user.LastName = data['last_name']
+        user.Country = data['country']
+        user.Company = data['company']
+        user.EMail = data['email']
+        user.Phone = data['phone']
+        user.ZIPCode = data["zip_code"]
+        user.State = data['state']
+        user.City = data['city']
+        user.Address = data['address']
+        user.Language = data['address']
+        user.Comment = data['comment']
 
         master_password = self.gen_master_password()
         investor_password = self.gen_investor_password()
