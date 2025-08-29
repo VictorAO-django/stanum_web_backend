@@ -56,7 +56,7 @@ class CreateAccountView(APIView):
             #     'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({data['challenge_name']})",
             # })
             mt5_user = MT5User.objects.get(login=4002)
-            master_password='syusoas'
+            master_password='X9p!wT2@jK7z'
             print(f"({mt5_user.login})password", master_password)
 
             return custom_response(
