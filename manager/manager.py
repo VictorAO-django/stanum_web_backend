@@ -14,7 +14,7 @@ class MT5AccountService:
         pass
     
     def connect(self):
-        return self.manager.Connect( self.address, self.login, self.password, MT5Manager.ManagerAPI.EnPumpModes.PUMP_MODE_USERS)
+        return self.manager.Connect(self.address, self.login, self.password, MT5Manager.ManagerAPI.EnPumpModes.PUMP_MODE_USERS)
 
     def disconnect(self):
         return self.manager.Disconnect()
@@ -57,6 +57,8 @@ class MT5AccountService:
             # another error 
             else: 
                 print(f"User was not added: {MT5Manager.LastError()}") 
+            # >>> ensure a consistent return on failure
+            return (None, None)
         else: 
             # user added successfully 
             print(f"User {user.Login} was added") 
@@ -102,7 +104,6 @@ class MT5AccountService:
             mt5_user = save_mt5_user(user)
             return (mt5_user, master_password)
 
-
     def list_users(self) -> List[MT5Manager.MTUser]:
         users = self.manager.UserGetByGroup(self.user_group)  
         return users  
@@ -111,7 +112,7 @@ class MT5AccountService:
        return self.manager.UserGet(login)
     
     def deposit_balance(self, login, amount):
-        deal_id = self.manager.DealerBalance(login, amount,MT5Manager.MTDeal.EnDealAction.DEAL_BALANCE,"Start deposit from stanum admin")
+        deal_id = self.manager.DealerBalance(login, amount, MT5Manager.MTDeal.EnDealAction.DEAL_BALANCE, "Start deposit from stanum admin")
         if deal_id is False: 
             # depositing ended with error 
             error = MT5Manager.LastError() 
@@ -120,24 +121,36 @@ class MT5AccountService:
                 return (False, "Money limit") 
             # insufficient money on the account 
             elif error[1] == MT5Manager.EnMTAPIRetcode.MT_RET_REQUEST_NO_MONEY: 
-                return(False, "Not enough money") 
+                return (False, "Not enough money") 
             # another error 
             else: 
                 return (False, f"Balance operation failed {MT5Manager.LastError()}")
         return (True, "success")
     
-
     def gen_master_password(self, length: int = 8) -> str:
-        alphabet = string.ascii_letters + string.digits + string.punctuation
-        # First char must be alphanumeric
-        first_char = secrets.choice(string.ascii_letters + string.digits)
-        rest = ''.join(secrets.choice(alphabet) for _ in range(length - 1))
-        return first_char + rest
+        # MT5-safe: at least one digit, one upper, one lower, one special (safe set), rest mixed
+        specials = "!@#$%^&*"
+        alphabet = string.ascii_letters + string.digits + specials
+        password = [
+            secrets.choice(string.digits),
+            secrets.choice(string.ascii_uppercase),
+            secrets.choice(string.ascii_lowercase),
+            secrets.choice(specials),
+        ]
+        password += [secrets.choice(alphabet) for _ in range(length - len(password))]
+        secrets.SystemRandom().shuffle(password)
+        return ''.join(password)
 
     def gen_investor_password(self, length: int = 8) -> str:
-        alphabet = string.ascii_letters + string.digits + string.punctuation
-        # First char must be alphanumeric
-        first_char = secrets.choice(string.ascii_letters + string.digits)
-        rest = ''.join(secrets.choice(alphabet) for _ in range(length - 1))
-        return first_char + rest
-    
+        # Same rules; you can simplify to alphanumerics if you prefer
+        specials = "!@#$%^&*"
+        alphabet = string.ascii_letters + string.digits + specials
+        password = [
+            secrets.choice(string.digits),
+            secrets.choice(string.ascii_uppercase),
+            secrets.choice(string.ascii_lowercase),
+            secrets.choice(specials),
+        ]
+        password += [secrets.choice(alphabet) for _ in range(length - len(password))]
+        secrets.SystemRandom().shuffle(password)
+        return ''.join(password)
