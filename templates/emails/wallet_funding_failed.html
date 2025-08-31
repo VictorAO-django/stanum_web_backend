@@ -34,11 +34,15 @@
                   </tr>
                   <tr>
                     <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Attempted Amount</td>
-                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.price_amount }} {{ transaction.price_currency }}</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.price_amount|floatformat:2 }} {{ transaction.price_currency }}</td>
                   </tr>
                   <tr>
                     <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Currency</td>
-                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.pay_currency }} ({{ transaction.pay_network }})</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.pay_currency }} 
+                        {% if transaction.pay_network%}
+                          ({{ transaction.pay_network }} )
+                        {% endif %}
+                    </td>
                   </tr>
                   <tr>
                     <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Status</td>
