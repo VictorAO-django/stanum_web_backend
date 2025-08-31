@@ -575,9 +575,9 @@ class TradingAccountView(generics.ListAPIView):
 class SelectAccountView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, id):
+    def post(self, request, login):
         user = self.request.user
-        acc = get_object_or_404(MT5User, id=id, user=user)
+        acc = get_object_or_404(MT5User, login=login, user=user)
         acc.selected_date = timezone.now()
         acc.save()
 
@@ -589,10 +589,10 @@ class SelectAccountView(APIView):
 class AccountStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, account_id):
+    def get(self, request, login):
         user = request.user
         try:
-            account = TradingAccount.objects.get(id=account_id, user=user)
+            account = TradingAccount.objects.get(id=login, user=user)
         except TradingAccount.DoesNotExist:
             return Response({"error": "Account not found."}, status=404)
 

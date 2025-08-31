@@ -322,7 +322,7 @@ class PaymentIPNAPIView(APIView):
                 if mt5_user:
                     mt5_user.user = user
                     mt5_user.challenge = challenge
-                    mt5_user.password = password
+                    mt5_user.password = encrypt_password(password)
                     mt5_user.save()
                     mailer.challenge_entry(mt5_user, challenge, password)
 
@@ -763,13 +763,10 @@ class WalletFundingIPNAPIView(APIView):
     def post(self, request):
         # Always capture raw body for debugging
         try:
-            raw_body = request.body.decode("utf-8")
-            print(f"Raw webhook body: {raw_body}")
-            payload = request.data or json.loads(raw_body)
+            payload = json.loads(request.body)
             print(f"Webhook received:\n{json.dumps(payload, indent=2)}")
-        except Exception as e:
-            print(f"Failed to parse webhook payload: {str(e)}")
-            return Response({"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST)
+        except json.JSONDecodeError:
+            return Response({'error': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
         payment_id = payload.get("payment_id")
         payment_status = payload.get("payment_status")

@@ -2,6 +2,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import *
+from utils.helper import decrypt_password
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -103,6 +104,7 @@ class MT5UserSerializer(serializers.ModelSerializer):
     net_profit = serializers.SerializerMethodField()
     account_size = serializers.SerializerMethodField()
     equity = serializers.SerializerMethodField()
+    password = serializers.SerializerMethodField()
     class Meta:
         model = MT5User
         fields = [
@@ -110,6 +112,11 @@ class MT5UserSerializer(serializers.ModelSerializer):
             'free_margin', 'net_profit', 'account_size', 'equity', 'challenge_name'
         ]
 
+    def get_password(self, obj):
+        if obj.password:
+            return decrypt_password(obj.password)
+        return ""
+    
     def get_challenge_name(self, obj):
         if obj.challenge:
             return obj.challenge.name

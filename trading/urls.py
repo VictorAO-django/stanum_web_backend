@@ -6,7 +6,7 @@ from .views import *
 urlpatterns = [
     # ViewSet URLs
     path('accounts', TradingAccountView.as_view()),
-    path('account/select/<int:id>', SelectAccountView.as_view()),
-    path('accounts/<int:account_id>/stats', AccountStatsView.as_view(), name='account-stats'),
+    path('account/select/<str:login>', SelectAccountView.as_view()),
+    path('accounts/<str:login>/stats', AccountStatsView.as_view()),
 
 ]

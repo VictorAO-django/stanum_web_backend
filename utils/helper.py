@@ -1,4 +1,5 @@
 import re, requests
+from cryptography.fernet import Fernet
 from decimal import Decimal
 from rest_framework.views import exception_handler
 from rest_framework.exceptions import ValidationError
@@ -265,3 +266,14 @@ def send_bridge_test_req(base_url):
     except requests.RequestException as e:
         print(f"Request failed: {e}")
         return None
+
+# For encrypting trading passwords (if needed)
+def encrypt_password(password):
+    key = settings.MT5ACCOUNT_PASSWORD_KEY  # Store securely
+    f = Fernet(key)
+    return f.encrypt(password.encode()).decode()
+
+def decrypt_password(encrypted_password):
+    key = settings.MT5ACCOUNT_PASSWORD_KEY
+    f = Fernet(key)
+    return f.decrypt(encrypted_password.encode()).decode()
