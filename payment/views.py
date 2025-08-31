@@ -661,9 +661,9 @@ class WithdrawView(APIView):
                     status="pending",
                     type="debit",
                     currency_id=currency_id,
-                    payout_currency=crypto_currency,
-                    payout_network=crypto_network,
-                    payout_wallet_address=wallet_address
+                    pay_currency=crypto_currency,
+                    pay_network=crypto_network,
+                    pay_address=wallet_address
                 )
 
             return custom_response(
