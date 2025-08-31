@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Wallet Funding Failed</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f4; font-family: Arial, sans-serif;">
+    <table align="center" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4; padding:20px 0;">
+      <tr>
+        <td>
+          <!-- Main container -->
+          <table align="center" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+            <!-- Header -->
+            <tr>
+              <td align="center" style="background-color:#b91c1c; padding:20px;">
+                <h1 style="margin:0; font-size:22px; color:#ffffff;">Wallet Funding Failed ❌</h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:30px; color:#333333; font-size:15px; line-height:22px;">
+                <p style="margin:0 0 15px;">Hello <strong>{{ transaction.wallet.user.full_name }}</strong>,</p>
+
+                <p style="margin:0 0 15px;">
+                  Unfortunately, your recent attempt to fund your wallet was not successful. Please find the transaction details below:
+                </p>
+
+                <!-- Transaction details -->
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin:20px 0; border-collapse:collapse;">
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Transaction ID</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.transaction_id }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Attempted Amount</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.price_amount }} {{ transaction.price_currency }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Currency</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.pay_currency }} ({{ transaction.pay_network }})</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Status</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb; color:#b91c1c; font-weight:bold;">Failed</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Date</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.created_at|date:"F j, Y, g:i A T" }}</td>
+                  </tr>
+                  <!-- {% if transaction.note %}
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Reason</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.note }}</td>
+                  </tr>
+                  {% endif %} -->
+                </table>
+
+                <p style="margin:0 0 15px;">
+                  You may try again or contact our support team for assistance if the issue persists.
+                </p>
+
+                <!-- Button -->
+                <p style="text-align:center; margin:30px 0;">
+                  <a href="mailto:support@stanumcapital.com" style="background-color:#b91c1c; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:5px; font-size:15px; display:inline-block;">
+                    Contact Support
+                  </a>
+                </p>
+
+                <p style="margin:0 0 10px;">We’re here to help you resolve this quickly.</p>
+                <p style="margin:0;">– The Prop Firm Team</p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center" style="background-color:#f1f5f9; padding:15px; font-size:12px; color:#6b7280;">
+                {{current_year}} {{company_name}} Prop Firm. All rights reserved.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

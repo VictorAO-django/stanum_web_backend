@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Wallet Funding Successful</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f4; font-family: Arial, sans-serif;">
+    <table align="center" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4; padding:20px 0;">
+      <tr>
+        <td>
+          <!-- Main container -->
+          <table align="center" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+            <!-- Header -->
+            <tr>
+              <td align="center" style="background-color:#1E293B; padding:20px;">
+                <h1 style="margin:0; font-size:22px; color:#ffffff;">Wallet Funding Successful 🎉</h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:30px; color:#333333; font-size:15px; line-height:22px;">
+                <p style="margin:0 0 15px;">Hello <strong>{{ transaction.wallet.user.user.full_name }}</strong>,</p>
+
+                <p style="margin:0 0 15px;">
+                  Your wallet has been successfully funded. Below are the details of your transaction:
+                </p>
+
+                <!-- Transaction details -->
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin:20px 0; border-collapse:collapse;">
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Transaction ID</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.transaction_id }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Amount Funded</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.price_amount }} {{ transaction.price_currency }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Currency</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.pay_currency }} ({{ transaction.pay_network }})</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Status</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb; color:green; font-weight:bold;">Completed</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px; border:1px solid #e5e7eb; font-weight:bold;">Date</td>
+                    <td style="padding:8px; border:1px solid #e5e7eb;">{{ transaction.created_at|date:"F j, Y, g:i A T" }}</td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 15px;">
+                  You can log in to your account dashboard to view your updated balance and full transaction history.
+                </p>
+
+                <p style="margin:0 0 10px;">Thank you for funding your wallet with us!</p>
+                <p style="margin:0;">– The Prop Firm Team</p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center" style="background-color:#f1f5f9; padding:15px; font-size:12px; color:#6b7280;">
+                {{current_year}} {{company_name}} Prop Firm. All rights reserved.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

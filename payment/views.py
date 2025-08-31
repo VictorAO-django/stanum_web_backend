@@ -798,6 +798,7 @@ class WalletFundingIPNAPIView(APIView):
         user = wallet.user
         wallet.withdrawal_profit += transaction.price_amount
         wallet.save()
+        transaction.updated_at = timezone.now()
         transaction.status = "completed"
         transaction.save()
         Mailer(user.email).wallet_funding_success(transaction)
@@ -806,6 +807,7 @@ class WalletFundingIPNAPIView(APIView):
     def handle_payment_failure(self, transaction: PropFirmWalletTransaction):
         wallet = transaction.wallet
         user = wallet.user
+        transaction.updated_at = timezone.now()
         transaction.status = "failed"
         transaction.save()
         Mailer(user.email).wallet_funding_failed(transaction)
@@ -814,6 +816,7 @@ class WalletFundingIPNAPIView(APIView):
     def handle_payment_expired(self, transaction: PropFirmWalletTransaction):
         wallet = transaction.wallet
         user = wallet.user
+        transaction.updated_at = timezone.now()
         transaction.status = "expired"
         transaction.save()
         print(f"Wallet {wallet.id} funding expired for {transaction.price_amount}")

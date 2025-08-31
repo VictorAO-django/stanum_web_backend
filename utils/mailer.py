@@ -84,7 +84,10 @@ class Mailer:
         # Subject of the OTP email
         self.subject = f"{event}: Your One-Time Password (OTP)"
 
-        context = {'otp_code': otp_code, 'expiry_time': expiry_time, 'date': format_date(timezone.now())}
+        context = {
+            'otp_code': otp_code, 'expiry_time': expiry_time, 'date': format_date(timezone.now()), 
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
             
         self.html_content = render_to_string('emails/otp.html', context)
         self.send_with_template()
@@ -109,21 +112,28 @@ class Mailer:
 
     def wallet_funding_success(self, transaction: PropFirmWalletTransaction):
         self.subject = "Wallet funding successful"
-        self.message = f"Your payment of ${transaction.price_amount} has been received."
-
-        self.send()
+        context = {
+            'transaction': transaction,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
+        self.html_content = render_to_string('emails/wallet_funding_success.html', context)
+        self.send_with_template()
 
     def wallet_funding_failed(self, transaction: PropFirmWalletTransaction):
         self.subject = "Wallet funding failed"
-        self.message = f"Your payment session of ${transaction.price_amount} has expired."
-
-        self.send()
+        context = {
+            'transaction': transaction,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
+        self.html_content = render_to_string('emails/wallet_funding_failed.html', context)
+        self.send_with_template()
 
     def challenge_entry(self, user:MT5User, challenge: PropFirmChallenge, password):
         self.subject = f"Welcome to {settings.GLOBAL_SERVICE_NAME} Prop Challenge"
         context = {
             'user': user, 'challenge': challenge, 'firm_name': settings.GLOBAL_SERVICE_NAME,
             'broker_name': settings.BROKER_NAME, 'server': settings.SERVER_NAME, 'password': password,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
         }
         self.html_content = render_to_string('emails/challenge_entry.html', context)
         self.send_with_template()

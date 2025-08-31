@@ -41,6 +41,7 @@ AUTH_USER_MODEL = "account.User"
 
 FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://127.0.0.1:5173/')
 METAAPI_TOKEN =os.getenv('METAAPI_TOKEN')
+CURRENT_YEAR=os.getenv('CURRENT_YEAR', '2025')
 GLOBAL_SERVICE_NAME = os.getenv("GLOBAL_SERVICE_NAME", 'Stanumcapital')
 
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
