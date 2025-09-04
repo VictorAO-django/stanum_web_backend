@@ -3,6 +3,7 @@ from django.db import models
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class PropFirmChallenge(models.Model):
     CHALLENGE_TYPES = [
         ('one_step', 'One Step'),
@@ -25,13 +26,19 @@ class PropFirmChallenge(models.Model):
         ('all', 'All Instruments'),
     ]
     
+    CHALLENGE_CLASS = [
+        ('challenge', 'Challenge'),
+        ('skill_check', 'Skill check')
+    ]
+
     # Basic Info
     name = models.CharField(max_length=200)
     firm_name = models.CharField(max_length=100)
     description = models.TextField()
     challenge_type = models.CharField(max_length=20, choices=CHALLENGE_TYPES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    
+    challenge_class = models.CharField(max_length=255, choices=CHALLENGE_CLASS, default='challenge')
+
     # Financial Details
     account_size = models.DecimalField(max_digits=12, decimal_places=2)
     challenge_fee = models.DecimalField(max_digits=10, decimal_places=2)
@@ -44,7 +51,13 @@ class PropFirmChallenge(models.Model):
     profit_target_percent = models.DecimalField(max_digits=5, decimal_places=2)
     min_trading_days = models.IntegerField()
     max_trading_days = models.IntegerField(null=True, blank=True)
+    additional_trading_days = models.IntegerField(null=True, blank=True)
     
+    #TwoStep Configs
+    phase_2_profit_target_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    phase_2_min_trading_days = models.IntegerField(null=True, blank=True)
+    phase_2_max_trading_days = models.IntegerField(null=True, blank=True)
+
     # Additional Rules
     consistency_rule_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     weekend_holding = models.BooleanField(default=True)
@@ -60,6 +73,31 @@ class PropFirmChallenge(models.Model):
     max_participants = models.IntegerField(null=True, blank=True)
     current_participants = models.IntegerField(default=0)
     
+    # HFT Detection
+    max_trades_per_minute = models.IntegerField(default=5)  # to detect HFT
+    max_trades_per_hour = models.IntegerField(default=100)
+    min_trade_duration_seconds = models.IntegerField(default=30)  # prevent scalping abuse
+
+    # Prohibited Strategies
+    grid_trading_allowed = models.BooleanField(default=False)
+    martingale_allowed = models.BooleanField(default=False)
+    hedging_within_account_allowed = models.BooleanField(default=True)
+    cross_account_hedging_allowed = models.BooleanField(default=False)
+
+    # Arbitrage Detection
+    statistical_arbitrage_allowed = models.BooleanField(default=False)
+    latency_arbitrage_allowed = models.BooleanField(default=False)
+    market_making_allowed = models.BooleanField(default=False)
+
+    # Position Rules
+    max_risk_per_trade_percent = models.DecimalField(max_digits=5, decimal_places=2, default=3.00)
+    max_orders_per_symbol = models.IntegerField(default=2)
+    overall_risk_limit_percent = models.DecimalField(max_digits=5, decimal_places=2, default=10.00)
+
+    # Flexibility Rules
+    stop_loss_required = models.BooleanField(default=False)
+    max_inactive_days_percent = models.DecimalField(max_digits=5, decimal_places=2, default=30.00)
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

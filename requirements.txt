@@ -24,6 +24,7 @@ drf-writable-nested
 drf-yasg==1.21.7
 elasticsearch==7.17.9
 elasticsearch-dsl==7.4.1
+flower
 gcloud==0.18.3
 gunicorn==21.2.0
 

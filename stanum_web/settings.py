@@ -236,13 +236,17 @@ CUSTOM_AUTH = {
 }
 
 # Celery Configuration (for background tasks)
-CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+# CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+# CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+#CELERY CONFIGURATION
+CELERY_BROKER_URL = 'pyamqp://guest:guest@localhost//'
+CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_WORKER_POOL = 'prefork'
 
 # Logging Configuration
 # LOGGING = {

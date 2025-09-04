@@ -1,4 +1,5 @@
 import re, requests
+from django.db.models import Avg
 from cryptography.fernet import Fernet
 from decimal import Decimal
 from rest_framework.views import exception_handler
@@ -10,7 +11,7 @@ from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
-from trading.models import TradingAccount
+from trading.models import MT5User, MT5Deal
 from account.models import Referral, ReferralEarning, ReferalEarningTransaction
 
 User = get_user_model()
@@ -129,8 +130,8 @@ def format_date(date):
     return f"{day}{suffix} of {month} {year}"
 
 
-def get_selected_account(user) -> TradingAccount:
-    q = TradingAccount.objects.filter(user=user).order_by('-selected_date')
+def get_selected_account(user) -> MT5User:
+    q = MT5User.objects.filter(user=user).order_by('-selected_date')
     if q.exists():
         return q.first()
     return None
@@ -277,3 +278,29 @@ def decrypt_password(encrypted_password):
     key = settings.MT5ACCOUNT_PASSWORD_KEY
     f = Fernet(key)
     return f.decrypt(encrypted_password.encode()).decode()
+
+
+def average_winning_trade(login=None):
+    qs = MT5Deal.objects.filter(
+        deleted=False,
+        entry=1,           # only closing deals
+        profit__gt=0       # winning trades
+    )
+    if login:
+        qs = qs.filter(login=login)
+
+    avg_win = qs.aggregate(avg=Avg("profit"))["avg"]
+    return avg_win or 0
+
+
+def average_losing_trade(login=None):
+    qs = MT5Deal.objects.filter(
+        deleted=False,
+        entry=1,
+        profit__lt=0
+    )
+    if login:
+        qs = qs.filter(login=login)
+
+    avg_loss = qs.aggregate(avg=Avg("profit"))["avg"]
+    return avg_loss or 0

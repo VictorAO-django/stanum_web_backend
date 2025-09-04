@@ -5,13 +5,13 @@ from .models import MT5Account
 from .evaluator import ChallengeRulesEvaluator
 from .models import MT5Account
 
-@receiver(post_save, sender=MT5Account)
-def evaluate_account(sender, instance, created, **kwargs):
-    challenge_account = instance
-    evaluator = ChallengeRulesEvaluator(challenge_account)
+# @receiver(post_save, sender=MT5Account)
+# def evaluate_account(sender, instance, created, **kwargs):
+#     challenge_account = instance
+#     evaluator = ChallengeRulesEvaluator(challenge_account)
 
-    ok, reason = evaluator.check_total_drawdown(instance.equity)
-    if not ok:
-        challenge_account.status = "failed"
-        challenge_account.fail_reason = reason
-        challenge_account.save()
+#     ok, reason = evaluator.check_total_drawdown(instance.equity)
+#     if not ok:
+#         challenge_account.status = "failed"
+#         challenge_account.fail_reason = reason
+#         challenge_account.save()

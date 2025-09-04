@@ -9,6 +9,19 @@ class NOWPaymentsService:
             'x-api-key': self.api_key,
             'Content-Type': 'application/json'
         }
+        self.bearer_token = None
+        
+    def auth(self,):
+        try:
+            payload =  {
+                'email': settings.NOWPAYMENT_EMAIL,
+                'password': settings.NOWPAYMENT_PASSWORD,
+            }
+            response = requests.get(f"{self.base_url}/auth", json=payload, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {'error': str(e)}
     
     def get_available_currencies(self):
         """Get list of available cryptocurrencies"""
@@ -135,14 +148,16 @@ class NOWPaymentsService:
 
 
 
-    def create_payout(self, withdrawals, ipn_callback_url):
+    def create_payout(self, withdrawals, ipn_callback_url, description):
         try:
             payload = {
                 "ipn_callback_url": ipn_callback_url,
-                "withdrawals": withdrawals
+                "withdrawals": withdrawals,
+                'description': description,
             }
             response = requests.post(f"{self.base_url}/payout", json=payload, headers=self.headers)
             response.raise_for_status()
+            print(response.json())
             return response.json()
         except requests.RequestException as e:
             return {'error': str(e)}

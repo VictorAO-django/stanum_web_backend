@@ -1,6 +1,7 @@
 import MT5Manager
 from trading.models import MT5User, MT5Deal, MT5Position, MT5UserLoginHistory
 from datetime import datetime
+from utils.helper import encrypt_password
 
 def save_mt5_user(user_obj: MT5Manager.MTUser):
     """
@@ -116,7 +117,7 @@ class UserSink:
         print("User added", user.Login)
         save_mt5_user(user)
 
-    def OnUserAdd(self, user:MT5Manager.MTUser):
+    def OnUserUpdate(self, user:MT5Manager.MTUser):
         print("User updated", user.Login)
         save_mt5_user(user)
 
@@ -141,3 +142,14 @@ class UserSink:
             MT5UserLoginHistory.objects.create(mt_user=mt_user, action='logout', ip=ip, type=type)
         except Exception as err:
             pass
+
+    def OnUserChangePassword(user:MT5Manager.MTUser, type:MT5Manager.MTUser.EnUsersPasswords, passowrd):
+        try:
+            if type == MT5Manager.MTUser.EnUsersPasswords.USER_PASS_API:
+                mt5_user = MT5User.objects.get(login=user.Login)
+                mt5_user.password = encrypt_password(passowrd)
+                mt5_user.save(update_fields=["password"])
+        except MT5User.DoesNotExist:
+            print(f"Local user not found for MT5 login {user.Login}")
+        except Exception as e:
+            print(f"Error updating password for {user.Login}: {e}")

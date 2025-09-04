@@ -35,6 +35,7 @@ from utils.helper import *
 from utils.otp import *
 from utils.filters import *
 from utils.pagination import *
+from service.now_payment import NOWPaymentsService
 
 from challenge.models import *
 
@@ -144,11 +145,16 @@ class ChallengeListView(generics.ListAPIView):
     serializer_class = ChallengeSerializer
     queryset = PropFirmChallenge.objects.all()
     pagination_class = StandardResultsSetPagination
+    filterset_class = PropFirmChallengeFilter
+    filter_backends = [DjangoFilterBackend]
     
 class ChallengeCreateView(generics.CreateAPIView):
     permission_classes=[permissions.IsAdminUser]
     serializer_class=ChallengeSerializer
     queryset=PropFirmChallenge.objects.all()
+    def post(self, request, *args, **kwargs):
+        print("hahah")
+        return super().post(request, *args, **kwargs)
 
 class ChallengeDetailView(generics.RetrieveUpdateAPIView):
     permission_classes=[permissions.IsAdminUser]
@@ -207,14 +213,28 @@ class ApprovePayoutView(APIView):
     permission_classes=[permissions.IsAdminUser]
 
     def post(self, request, id, *args, **kwargs):
+        service = NOWPaymentsService()
         try:
             with transaction.atomic():
                 trx = PropFirmWalletTransaction.objects.select_for_update().get(id=id)
 
                 assert trx.type == 'debit', "Only a debit transaction can be approved"
                 assert trx.status == 'pending', "Payout already processed"
-
+                withdrawals = [{
+                    'address': trx.pay_address,
+                    'currency': trx.pay_currency,
+                    'amount': float(trx.price_amount),
+                    'ipn_callback_url':  request.build_absolute_uri(f'/api/v1/admin/payouts/{trx.id}/ipn')
+                }]
+                # result = service.create_payout(
+                #     withdrawals,
+                #     '',
+                #     f'Withdrawal ${trx.transaction_id} for user {trx.wallet.user.email} approved by {request.user.email}'
+                # )
+                # print(result)
+                
                 # Now mark it approved
+                # trx.payment_id = 
                 trx.status = 'approved'
                 trx.save()
 
@@ -275,10 +295,3 @@ class RejectPayoutView(APIView):
                 data={},
                 http_status=status.HTTP_403_FORBIDDEN
             )
-
-
-class TradingAccountListView(generics.ListAPIView):
-    permission_classes=[permissions.IsAdminUser]
-    serializer_class=TradingAccountSerializer
-    queryset=TradingAccount.objects.all()
-    pagination_class = LargeResultsSetPagination

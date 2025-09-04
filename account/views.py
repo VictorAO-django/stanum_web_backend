@@ -1074,3 +1074,10 @@ class TwoFASetupView(APIView):
             message="2FA enabled successfully",
             data={}
         )
+
+
+class HelpCenterView(generics.CreateAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    serializer_class=HelpCenterSerializer
+    models = HelpCenter.objects.all()

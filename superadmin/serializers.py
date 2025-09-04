@@ -19,10 +19,15 @@ class ChallengeSerializer(serializers.ModelSerializer):
         model=PropFirmChallenge
         fields = [
             "id", "name", "firm_name", "description", "challenge_type", "status", "account_size", "challenge_fee", 
-            "refundable_fee", "profit_split_percent", "max_daily_loss_percent", "max_total_loss_percent", 
-            "profit_target_percent", "min_trading_days", "max_trading_days", "consistency_rule_percent", 
-            "weekend_holding", "news_trading_allowed", "ea_allowed", "copy_trading_allowed", "allowed_instruments", 
-            "duration_days", "max_participants", "current_participants", "created_at", "updated_at"
+            "refundable_fee", "profit_split_percent", "max_daily_loss_percent", "max_total_loss_percent", "challenge_class",
+            "profit_target_percent", "min_trading_days", "max_trading_days", "additional_trading_days", "max_trades_per_minute", "max_trades_per_hour", 
+            "consistency_rule_percent", "cross_account_hedging_allowed", "hedging_within_account_allowed", "martingale_allowed",
+            "grid_trading_allowed", "statistical_arbitrage_allowed", "market_making_allowed", "latency_arbitrage_allowed",
+            "overall_risk_limit_percent", "max_orders_per_symbol", "max_risk_per_trade_percent","weekend_holding", 
+            "news_trading_allowed", "ea_allowed", "copy_trading_allowed", "allowed_instruments", "duration_days", 
+            "max_participants", "current_participants", "created_at", "updated_at", 
+            
+            "phase_2_profit_target_percent", "phase_2_min_trading_days", "phase_2_max_trading_days"
         ]
 
 class HomeAddressSerializer(serializers.ModelSerializer):
@@ -79,15 +84,3 @@ class UserWalletTransactionSerializer(serializers.ModelSerializer):
             return f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={obj.pay_address}"
         return None
     
-
-class TradingAccountSerializer(serializers.ModelSerializer):
-    challenge = ChallengeSerializer(read_only=True)
-    class Meta:
-        model = TradingAccount
-        fields = [
-            'id', 'user', 'challenge', 'metaapi_account_id', 'login', 'password', 'account_type', 'size', 'status', 'server',
-            'leverage', 'balance', 'equity', 'margin', 'free_margin', 'margin_level', 'risk_daily_loss_limit', 'risk_max_drawdown',
-            'risk_profit_target', 'max_daily_trades', 'disable_reason', 'disabled_at', 'completed_at',
-            'selected_date', 'created_at', 'updated_at',
-        ]
-        read_only_fields = ['created_at', 'updated_at']

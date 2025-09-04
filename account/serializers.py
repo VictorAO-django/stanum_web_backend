@@ -127,3 +127,10 @@ class ProofOfAddressSerializer(serializers.ModelSerializer):
         model = ProofOfAddress
         fields = ['id', 'address_type', 'document_type', 'document_file', 'status', 'submitted_at']
         read_only_fields = ['status', 'submitted_at']
+
+
+class HelpCenterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HelpCenter
+        fields = '__all__'
+        read_only_fields = ['id', 'timestamp']

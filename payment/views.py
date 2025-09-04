@@ -289,13 +289,17 @@ class PaymentIPNAPIView(APIView):
         """Handle successful payment"""
         first_name, last_name = split_full_name(user.full_name)
         address = Address.objects.get(user=user)
-        
+
+        balance = float(challenge.account_size)
+        if challenge.challenge_class == 'skill_check':
+            balance = float(challenge.account_size - (challenge.account_size * 0.1)) 
+
         result = create_mt5_account(
             base_url=settings.BRIDGE_URL,
             account_data={
                 'first_name': first_name,
                 'last_name': last_name,
-                'balance': float(challenge.account_size),
+                'balance': balance,
                 'country': user.country,
                 'company': settings.GLOBAL_SERVICE_NAME,
                 'address': address.home_address,
@@ -513,27 +517,6 @@ class PaystackWebhookView(APIView):
                         idx = str(random.randint(100000, 999999))
                         transaction.status = 'success'
                         
-                        index = TradingAccount.objects.all().count() + 1
-                        mt5_account = async_to_sync(create_account)(
-                            type='challenge',
-                            index=index,
-                            login='1234567',
-                            password='abc123',
-                            platform=platform
-                        )
-
-                        account = TradingAccount.objects.create(
-                            user=user,
-                            challenge=challenge,
-                            metaapi_account_id=mt5_account.id,
-                            login=idx,
-                            password="securepassword123",
-                            account_type="challenge",
-                            size=Decimal(challenge.account_size),
-                            server="MetaQuotes-Demo",
-                            leverage=100,
-                        )
-
                         award_referral_reward(user.referral_profile, transaction.amount)
 
                         Mailer(user.email).payment_successful(challenge.challenge_fee, challenge)
@@ -635,7 +618,11 @@ class WithdrawView(APIView):
 
             # ✅ Verify wallet address format
             service.verify_wallet_address(wallet_address, crypto_currency)
-
+            estimate = service.get_estimate(
+                amount=amount,
+                currency_from='USD',
+                currency_to=crypto_currency
+            )
             # ✅ Wrap in DB transaction to avoid race conditions
             with transaction.atomic():
                 wallet = PropFirmWallet.objects.select_for_update().get(user=user)
@@ -657,6 +644,7 @@ class WithdrawView(APIView):
                 PropFirmWalletTransaction.objects.create(
                     wallet=wallet,
                     price_amount=amount,
+                    pay_amount = estimate.get('estimated_amount', 0),
                     disbursed_amount=Decimal("0.00"),
                     status="pending",
                     type="debit",

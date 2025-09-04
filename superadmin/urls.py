@@ -27,12 +27,12 @@ urlpatterns = [
     path('users/<str:id>/wallet/transactions', UserWalletTransactionView.as_view()),
 
     path('challenges', ChallengeListView.as_view()),
-    path('challenges/<str:id>', ChallengeDetailView.as_view()),
-    path('challenges/create', ChallengeCreateView.as_view()),
+    path('challenges/create/', ChallengeCreateView.as_view()),
+    path('challenges/<str:id>/', ChallengeDetailView.as_view()),
 
     path('payouts', PayoutsView.as_view()),
     path('payouts/<str:id>/accept', ApprovePayoutView.as_view()),
+    path('payouts/<str:id>/ipn', ApprovePayoutView.as_view()),
     path('payouts/<str:id>/reject', RejectPayoutView.as_view()),
     
-    path('accounts', TradingAccountListView.as_view()),
 ]

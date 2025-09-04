@@ -43,4 +43,6 @@ urlpatterns = [
     path('kyc/address', SubmitProofOfAddressView.as_view()),
 
     path('2fa/setup', TwoFASetupView.as_view()),
+
+    path('help', HelpCenterView.as_view()),
 ]

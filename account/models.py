@@ -322,3 +322,14 @@ class ProofOfAddress(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.document_type}"
+    
+
+class HelpCenter(models.Model):
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField()
+    message = models.TextField()
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.full_name}-{self.email}"

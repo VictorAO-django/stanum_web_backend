@@ -4,6 +4,7 @@ import django_filters
 from django.db.models import Q
 
 from payment.models import *
+from challenge.models import *
 
 class PropFirmWalletTransactionFilter(django_filters.FilterSet):
     # Date filters
@@ -42,3 +43,10 @@ class PropFirmWalletTransactionFilter(django_filters.FilterSet):
             "status",
             "type",
         ]
+
+
+class PropFirmChallengeFilter(django_filters.FilterSet):
+    challenge_class = django_filters.CharFilter(field_name='challenge_class', lookup_expr='iexact')
+    class Meta:
+        model =  PropFirmChallenge
+        fields = ['challenge_class']
