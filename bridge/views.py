@@ -32,31 +32,31 @@ class CreateAccountView(APIView):
             )
 
         try:
-            # mt5_service = MT5AccountService(
-            #     address=settings.METATRADER_SERVER,
-            #     login=settings.METATRADER_LOGIN,
-            #     password=settings.METATRADER_PASSWORD,
-            #     user_group=settings.METATRADER_USERGROUP,
-            # )
-            # mt5_service.connect()
+            mt5_service = MT5AccountService(
+                address=settings.METATRADER_SERVER,
+                login=settings.METATRADER_LOGIN,
+                password=settings.METATRADER_PASSWORD,
+                user_group=settings.METATRADER_USERGROUP,
+            )
+            mt5_service.connect()
 
-            # mt5_user, master_password = mt5_service.createUser({
-            #     'first_name': data["first_name"],
-            #     'last_name': data["last_name"],
-            #     'balance': data["balance"],
-            #     'country': data["country"],
-            #     'company': settings.GLOBAL_SERVICE_NAME,
-            #     'address': data["address"],
-            #     'email': data["email"],
-            #     'phone': data["phone"],
-            #     'zip_code': data["zip_code"],
-            #     'state': data["state"],
-            #     'city': data["city"],
-            #     'language': 'english',
-            #     'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({data['challenge_name']})",
-            # })
-            mt5_user = MT5User.objects.get(login=4002)
-            master_password='X9p!wT2@jK7z'
+            mt5_user, master_password = mt5_service.createUser({
+                'first_name': data["first_name"],
+                'last_name': data["last_name"],
+                'balance': data["balance"],
+                'country': data["country"],
+                'company': settings.GLOBAL_SERVICE_NAME,
+                'address': data["address"],
+                'email': data["email"],
+                'phone': data["phone"],
+                'zip_code': data["zip_code"],
+                'state': data["state"],
+                'city': data["city"],
+                'language': 'english',
+                'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({data['challenge_name']})",
+            })
+            # mt5_user = MT5User.objects.get(login=4002)
+            # master_password='X9p!wT2@jK7z'
             print(f"({mt5_user.login})password", master_password)
 
             return custom_response(
