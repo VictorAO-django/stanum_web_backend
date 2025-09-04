@@ -28,7 +28,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         # Ensure full_name has at least 2 parts
         full_name = data.get("full_name", "").strip()
         if len(full_name.split()) < 2:
-            raise serializers.ValidationError({"full_name": "Please enter both first and last name."})
+            raise serializers.ValidationError({"full_name": "Please enter both first and last name as Full name."})
 
         return data
 
