@@ -67,6 +67,7 @@ class AccountStatsView(generics.RetrieveAPIView):
 
     def get_object(self):
         login = self.kwargs.get('login', None)
+        print("LOGIN", login)
         if login and login.isdigit():
             return MT5Account.objects.get(login=login)
         return None

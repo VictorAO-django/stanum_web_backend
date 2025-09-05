@@ -43,16 +43,24 @@ class Command(BaseCommand):
                 )
                 if daily:
                     print(daily)
-                    print(f"✅ Got daily report for login={login} length={len(daily)}")
+                    print(f"Got daily report for login={login} length={len(daily)}")
                     for i in daily:
                         save_mt5_daily(i)  # <-- call your save function
                 else:
-                    print(f"⚠️ No daily report for login={login}")
+                    print(f"No daily report for login={login}")
         
         # Run every day at 00:15 UTC
-        scheduler.add_job(fetch_daily_reports, trigger="cron", hour=0, minute=15)
-        scheduler.start()
-        print("📅 APScheduler started.")
+        job = scheduler.add_job(
+            fetch_daily_reports, 
+            trigger="cron", 
+            hour=0, 
+            minute=15,
+            timezone="UTC"
+        )
+        scheduler.start
+        
+        print(f"Job scheduled. Next run at: {job.next_run_time}")
+        print("APScheduler started.")
 
         while True:
             try:

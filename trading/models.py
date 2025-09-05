@@ -8,6 +8,20 @@ from challenge.models import PropFirmChallenge
 
 User = get_user_model()
 
+class AccountEarnings(models.Model):
+    login = models.BigIntegerField(unique=True, db_index=True)
+    profit = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    pending = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    disbursed = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    paid = models.BooleanField(default=False)  # Could mean "already withdrawn"
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.login} - {self.amount} ({'Paid' if self.paid else 'Unpaid'})"
+
+    
 
 class MT5User(models.Model):
     ACCOUNT_TYPES = (

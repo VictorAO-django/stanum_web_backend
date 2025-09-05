@@ -1,6 +1,7 @@
 amqp
 asgiref==3.7.2
 atomicwrites==1.4.1
+apscheduler
 aiohttp
 celery==5.3.6
 

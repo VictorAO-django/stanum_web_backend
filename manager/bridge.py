@@ -38,6 +38,9 @@ class MetaTraderBridge:
         self.user_group = user_group
         self.manager = MT5Manager.ManagerAPI()
         
+        self.manager.GroupGet()
+        self.manager.GroupUpdate()
+        MT5Manager.MTConGroup.EnTradeFlags.TRADEFLAGS_EXPERTS
         # Violation tracking
         self.violation_counts = defaultdict(lambda: defaultdict(int))  # login -> severity -> count
         self.last_violation_check = defaultdict(datetime)  # login -> last check time

@@ -1,5 +1,5 @@
 import re, requests
-from django.db.models import Avg
+from django.db.models import Avg, Sum
 from cryptography.fernet import Fernet
 from decimal import Decimal
 from rest_framework.views import exception_handler
@@ -282,12 +282,11 @@ def decrypt_password(encrypted_password):
 
 def average_winning_trade(login=None):
     qs = MT5Deal.objects.filter(
+        login=login,
         deleted=False,
         entry=1,           # only closing deals
         profit__gt=0       # winning trades
     )
-    if login:
-        qs = qs.filter(login=login)
 
     avg_win = qs.aggregate(avg=Avg("profit"))["avg"]
     return avg_win or 0
@@ -295,12 +294,42 @@ def average_winning_trade(login=None):
 
 def average_losing_trade(login=None):
     qs = MT5Deal.objects.filter(
+        login=login,
         deleted=False,
         entry=1,
         profit__lt=0
     )
-    if login:
-        qs = qs.filter(login=login)
 
     avg_loss = qs.aggregate(avg=Avg("profit"))["avg"]
     return avg_loss or 0
+
+
+def calculate_profit_factor(login: int):
+    # exclude deleted deals
+    deals = MT5Deal.objects.filter(login=login, deleted=False)
+
+    gross_profit = deals.filter(profit__gt=0).aggregate(total=Sum("profit"))["total"] or 0
+    gross_loss = deals.filter(profit__lt=0).aggregate(total=Sum("profit"))["total"] or 0
+
+    gross_loss = abs(gross_loss)  # make it positive
+
+    if gross_loss == 0:  # prevent division by zero
+        return float('inf') if gross_profit > 0 else 0
+
+    return gross_profit / gross_loss
+
+
+def calculate_win_ratio(login=None):
+    qs = MT5Deal.objects.filter(
+        login=login,
+        deleted=False,
+        entry=1  # only closing deals
+    )
+
+    total_trades = qs.count()
+    winning_trades = qs.filter(profit__gt=0).count()
+
+    if total_trades == 0:
+        return 0  # avoid division by zero
+
+    return (winning_trades / total_trades) * 100

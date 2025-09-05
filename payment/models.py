@@ -18,6 +18,7 @@ class Payment(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    login = models.CharField(max_length=255, null=True)
     payment_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     order_id = models.CharField(max_length=100, unique=True)
     order_description = models.TextField()
