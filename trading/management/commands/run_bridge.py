@@ -57,8 +57,8 @@ class Command(BaseCommand):
             minute=15,
             timezone="UTC"
         )
-        scheduler.start
-        
+        scheduler.start()
+
         print(f"Job scheduled. Next run at: {job.next_run_time}")
         print("APScheduler started.")
 
