@@ -11,4 +11,6 @@ urlpatterns = [
     path('accounts/<str:login>/stats', AccountStatsView.as_view()),
     path('positions/<str:login>', PositionView.as_view()),
     path('daily-summary/<str:login>', DailySummaryView.as_view()),
+
+    path('accounts/<str:login>/earning', AccountEarningsView.as_view()),
 ]   

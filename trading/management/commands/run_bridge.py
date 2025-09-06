@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.conf import settings
-import time, logging
+import time, logging, pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta, timezone
 from manager.bridge import MetaTraderBridge
@@ -29,7 +29,7 @@ class Command(BaseCommand):
             today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
             yesterday_start = today_start - timedelta(days=1)
 
-            print(f"[Scheduler] Fetching dailies {yesterday_start} → {today_start}")
+            print(f"[Scheduler] Fetching dailies {yesterday_start} to {today_start}")
 
             logins = list(
                 MT5User.objects.filter(account_status='active')
@@ -49,13 +49,14 @@ class Command(BaseCommand):
                 else:
                     print(f"No daily report for login={login}")
         
+        local_tz = pytz.timezone('Africa/Lagos')
         # Run every day at 00:15 UTC
         job = scheduler.add_job(
             fetch_daily_reports, 
             trigger="cron", 
             hour=0, 
             minute=15,
-            timezone="UTC"
+            timezone=local_tz
         )
         scheduler.start()
 

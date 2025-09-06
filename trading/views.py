@@ -56,6 +56,8 @@ class PositionView(generics.ListAPIView):
 
     def get_queryset(self):
         login = self.kwargs.get('login', None)
+        user=self.request.user
+        get_object_or_404(MT5User, user=user, login=login)
         if login and login.isdigit():
             return MT5Position.objects.filter(login=login)
         return MT5Position.objects.none()
@@ -67,6 +69,8 @@ class AccountStatsView(generics.RetrieveAPIView):
 
     def get_object(self):
         login = self.kwargs.get('login', None)
+        user=self.request.user
+        get_object_or_404(MT5User, user=user, login=login)
         print("LOGIN", login)
         if login and login.isdigit():
             return MT5Account.objects.get(login=login)
@@ -78,6 +82,22 @@ class DailySummaryView(generics.ListAPIView):
 
     def get_queryset(self):
         login = self.kwargs.get('login', None)
+        user=self.request.user
+        get_object_or_404(MT5User, user=user, login=login)
         if login and login.isdigit():
             return MT5Daily.objects.filter(login=login)
         return MT5Daily.objects.none()
+    
+
+class AccountEarningsView(generics.RetrieveAPIView):
+    permission_classes=[IsAuthenticated]
+    serializer_class=AccountEarningsSerializer
+
+    def get_object(self):
+        login = self.kwargs.get('login', None)
+        user=self.request.user
+        get_object_or_404(MT5User, user=user, login=login)
+        print("LOGIN", login)
+        if login and login.isdigit():
+            return AccountEarnings.objects.get(login=login)
+        return None

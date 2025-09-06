@@ -18,7 +18,6 @@ class Payment(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    login = models.CharField(max_length=255, null=True)
     payment_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     order_id = models.CharField(max_length=100, unique=True)
     order_description = models.TextField()
@@ -116,6 +115,7 @@ class PropFirmWalletTransaction(models.Model):
     ]
 
     wallet = models.ForeignKey(PropFirmWallet, on_delete=models.CASCADE, related_name="transactions")
+    login = models.CharField(max_length=255, null=True)
     transaction_id = models.CharField(max_length=20, unique=True, editable=False)
     type = models.CharField(choices=TYPE_CHOICES, max_length=20)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")

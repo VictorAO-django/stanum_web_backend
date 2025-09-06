@@ -9,7 +9,7 @@ from django.conf import settings
 
 from utils.helper import *
 from manager.interface import NewAccountData
-from trading.models import MT5User
+from trading.models import MT5User, AccountEarnings
 
 
 class CreateAccountView(APIView):
@@ -59,6 +59,9 @@ class CreateAccountView(APIView):
             # master_password='X9p!wT2@jK7z'
             print(f"({mt5_user.login})password", master_password)
 
+            #Create Account Earning
+            AccountEarnings.objects.create(login=mt5_user.login)
+            
             return custom_response(
                 status='success',
                 message="Account successfully created",

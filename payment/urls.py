@@ -19,7 +19,7 @@ urlpatterns = [
     path('paystack/webhook', views.PaystackWebhookView.as_view(), name='paystack_webhook'),
 
     path('wallet', views.PropFirmWalletView.as_view()),
-    path('wallet/transactions', views.PropFirmWalletTransactionView.as_view()),
+    path('wallet/transactions/<str:login>', views.PropFirmWalletTransactionView.as_view()),
     path('wallet/withdraw', views.WithdrawView.as_view()),
     path('wallet/fund', views.WalletFundingAPIView.as_view()),
     path('wallet/fund/ipn', views.WalletFundingIPNAPIView.as_view()),

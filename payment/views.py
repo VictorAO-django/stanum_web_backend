@@ -552,9 +552,11 @@ class PropFirmWalletTransactionView(generics.ListAPIView):
     pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
+        login = self.kwargs.get('login')
         user = self.request.user
+        get_object_or_404(MT5User, user=user, login=login)
         wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
-        queryset = PropFirmWalletTransaction.objects.filter(wallet=wallet).order_by('-id')
+        queryset = PropFirmWalletTransaction.objects.filter(wallet=wallet, login=login).order_by('-id')
         return queryset
 
 
