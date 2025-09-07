@@ -328,6 +328,9 @@ class PaymentIPNAPIView(APIView):
                     mt5_user.challenge = challenge
                     mt5_user.password = encrypt_password(password)
                     mt5_user.save()
+                    #Create Account Earning
+                    target_profit_amount = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
+                    AccountEarnings.objects.create(login=mt5_user.login, target=target_profit_amount)
                     mailer.challenge_entry(mt5_user, challenge, password)
 
                     print("✅ Account created:", mt5_user_login, password)

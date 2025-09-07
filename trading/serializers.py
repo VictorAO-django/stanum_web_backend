@@ -129,4 +129,5 @@ class DailySummary(serializers.ModelSerializer):
 class AccountEarningsSerializer(serializers.ModelSerializer):
     class Meta:
         model=AccountEarnings
-        fields = ['login', 'profit', 'pending', 'disbursed', 'paid_all']
+        fields = ['login', 'profit', 'pending', 'disbursed', 'target', 'paid_all']
+

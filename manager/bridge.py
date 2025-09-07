@@ -15,6 +15,7 @@ from django.utils import timezone
 from collections import defaultdict
 from enum import Enum
 from typing import List, Dict
+from .account_manager import AccountManager
 
 dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
@@ -37,10 +38,8 @@ class MetaTraderBridge:
         self.password = password
         self.user_group = user_group
         self.manager = MT5Manager.ManagerAPI()
+        self.local_account_manager = AccountManager()
         
-        self.manager.GroupGet()
-        self.manager.GroupUpdate()
-        MT5Manager.MTConGroup.EnTradeFlags.TRADEFLAGS_EXPERTS
         # Violation tracking
         self.violation_counts = defaultdict(lambda: defaultdict(int))  # login -> severity -> count
         self.last_violation_check = defaultdict(datetime)  # login -> last check time
@@ -92,8 +91,8 @@ class MetaTraderBridge:
         if not self.manager.UserAccountSubscribe(AccountSink(self)):
             print(f"AccountSubscribe failed: {MT5Manager.LastError()}")
 
-        # if not self.manager.TickSubscribe(TickSink()):
-        #     print(f"TickSubscribe failed: {MT5Manager.LastError()}")
+        if not self.manager.TickSubscribe(TickSink()):
+            print(f"TickSubscribe failed: {MT5Manager.LastError()}")
 
         print("All sinks subscribed successfully")
 
@@ -106,6 +105,16 @@ class MetaTraderBridge:
     def get_account(self, login)->MT5Manager.MTAccount:
         return self.manager.UserAccountGet(login)
     
+    def challenge_passed(self, login):
+        self.local_account_manager.close_account(login, 'challenge_passed')
+        self._close_account(login)
+        print("Challenge Passed")
+
+    def challenge_failed(self, login):
+        self.local_account_manager.close_account(login, 'failed')
+        self._close_account(login)
+        print("Challenge Failed")
+
     def handle_violation(self, login: int, violations: List[str], violation_source: str = ""):
         """Handle rule violations with accumulation logic"""
         if not violations:
@@ -116,20 +125,6 @@ class MetaTraderBridge:
         print("Logging Violations")
         self._log_violation_accumulation(login, categorized_violations, violation_source)
 
-        # # Update violation counts
-        # for severity, violation_list in categorized_violations.items():
-        #     if violation_list:
-
-        #         self.violation_counts[login][severity] += len(violation_list)
-                
-        # # Check if account should be closed
-        # should_close = self._should_close_account(login, categorized_violations)
-        
-        # if should_close:
-        #     self._close_account(login, categorized_violations)
-        # else:
-        #     # Log violations but don't close
-        #     self._log_violation_accumulation(login, categorized_violations, violation_source)
 
     def _categorize_violations(self, violations: List[str]) -> Dict[ViolationSeverity, List[str]]:
         """Categorize violations by severity level"""
@@ -155,43 +150,10 @@ class MetaTraderBridge:
                 
         return categorized
 
-    def _should_close_account(self, login: int, categorized_violations: Dict[ViolationSeverity, List[str]]) -> bool:
-        """Determine if account should be closed based on violation accumulation"""
-        
-        # Any critical violation = immediate closure
-        if categorized_violations[ViolationSeverity.CRITICAL]:
-            return True
-            
-        # Check accumulated violations in time window
-        violation_window_start = timezone.now() - self.violation_window
-        
-        # Count violations from database within time window
-        db_violations = RuleViolationLog.objects.filter(
-            login=login,
-            timestamp__gte=violation_window_start
-        )
-        
-        severe_count = db_violations.filter(message__icontains="SEVERE").count()
-        warning_count = db_violations.filter(message__icontains="WARNING").count()
-        
-        # Add current violations to counts
-        severe_count += len(categorized_violations[ViolationSeverity.SEVERE])
-        warning_count += len(categorized_violations[ViolationSeverity.WARNING])
-        
-        # Check thresholds
-        if severe_count >= self.violation_thresholds[ViolationSeverity.SEVERE]:
-            return True
-            
-        if warning_count >= self.violation_thresholds[ViolationSeverity.WARNING]:
-            return True
-            
-        return False
-
-    def _close_account(self, login: int, categorized_violations: Dict[ViolationSeverity, List[str]]):
+    def _close_account(self, login: int):
         """Close/disable MT5 account due to rule violations"""
         try:
             print(f"Closing account {login} due to rule violations")
-            
             # 1. Get user info
             user_info = MT5Manager.MTUser()
             if not self.manager.UserGet(login, user_info):
@@ -202,15 +164,12 @@ class MetaTraderBridge:
             self._close_all_positions(login)
             
             # 3. Move to disabled group (assuming you have a disabled group)
-            user_info.Group = "\\Disabled\\"  # Adjust group name as needed
+            # user_info.Group = "\\Disabled\\"  # Adjust group name as needed
             user_info.Rights = 0  # Remove all rights
             
             if not self.manager.UserUpdate(user_info):
                 print(f"Failed to update user {login}: {MT5Manager.LastError()}")
                 return False
-                
-            # 4. Log closure action to database
-            self._log_account_closure(login, categorized_violations)
             
             print(f"Account {login} successfully closed and moved to disabled group")
             return True
@@ -219,60 +178,22 @@ class MetaTraderBridge:
             print(f"Error closing account {login}: {e}")
             return False
 
+    def _close_hedge_position(self, login, position_id, caused_position_id):
+        print("Close hedge")
+
     def _close_all_positions(self, login: int):
         """Close all open positions for an account"""
         try:
             # Get all open positions
-            positions = []
-            total = MT5Manager.MTUInt64()
-            
-            if self.manager.PositionGetPage(login, 0, 1000, total, positions):
-                for position in positions:
-                    # Create market order to close position
-                    order = MT5Manager.MTOrder()
-                    order.Login = login
-                    order.Symbol = position.Symbol
-                    order.Type = 1 if position.Action == 0 else 0  # Opposite action
-                    order.VolumeInitial = position.Volume
-                    order.PriceOrder = 0  # Market price
-                    order.Comment = "RULE_VIOLATION_CLOSURE"
-                    
-                    if not self.manager.OrderAdd(order):
-                        print(f"Failed to close position {position.Position}: {MT5Manager.LastError()}")
+            positions = self.manager.PositionGet(login)
+            for position in positions:
+                result = self.manager.PositionDelete(position)
+                if not result:
+                    print(f"Failed to close position {position.Position}")
                         
         except Exception as e:
             print(f"Error closing positions for {login}: {e}")
 
-    def _log_account_closure(self, login: int, categorized_violations: Dict[ViolationSeverity, List[str]]):
-        """Log account closure to database"""
-        try:
-            # Create closure log entry
-            all_violations = []
-            for severity, violation_list in categorized_violations.items():
-                for violation in violation_list:
-                    all_violations.append(f"{severity.value}: {violation}")
-                    
-            closure_message = f"ACCOUNT_CLOSED: {'; '.join(all_violations)}"
-            
-            RuleViolationLog.objects.create(
-                login=login,
-                violation_type="ACCOUNT_CLOSURE",
-                message=closure_message,
-                timestamp=timezone.now()
-            )
-            
-            # You might also want to update the challenge status
-            try:
-                user = MT5User.objects.get(login=str(login))
-                if user.challenge:
-                    user.challenge.status = 'FAILED'  # Assuming you have this status
-                    user.challenge.failed_reason = closure_message
-                    user.challenge.save()
-            except MT5User.DoesNotExist:
-                pass
-                
-        except Exception as e:
-            print(f"Failed to log account closure for {login}: {e}")
 
     def _log_violation_accumulation(self, login: int, categorized_violations: Dict[ViolationSeverity, List[str]], source: str):
         """Log violations that don't trigger closure yet"""
@@ -288,22 +209,3 @@ class MetaTraderBridge:
                     )
                 except Exception as e:
                     print(f"Failed to log violation: {e}")
-
-    def get_violation_summary(self, login: int) -> Dict:
-        """Get violation summary for an account"""
-        window_start = timezone.now() - self.violation_window
-        
-        violations = RuleViolationLog.objects.filter(
-            login=login,
-            timestamp__gte=window_start
-        )
-        
-        summary = {
-            'total_violations': violations.count(),
-            'critical': violations.filter(violation_message__icontains="CRITICAL").count(),
-            'severe': violations.filter(violation_message__icontains="SEVERE").count(),
-            'warning': violations.filter(violation_message__icontains="WARNING").count(),
-            'last_violation': violations.order_by('-timestamp').first()
-        }
-        
-        return summary

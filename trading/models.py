@@ -13,6 +13,7 @@ class AccountEarnings(models.Model):
     profit = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     pending = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     disbursed = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    target = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     paid_all = models.BooleanField(default=False)  # Could mean "already withdrawn"
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -162,8 +163,40 @@ class RuleViolationLog(models.Model):
         ]
 
 
-class MT5Account(models.Model):
+class AccountDrawdown(models.Model):
+    login = models.BigIntegerField(db_index=True)  # MT5 account login
+    date = models.DateField(db_index=True)  # The day of the drawdown
+    equity_high = models.DecimalField(max_digits=20, decimal_places=2, default=0)  # highest equity seen that day
+    equity_low = models.DecimalField(max_digits=20, decimal_places=2, default=0)   # lowest equity seen that day
+    drawdown_percent = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # (high - low) / high * 100
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("login", "date")  # one record per account per day
+
+    def __str__(self):
+        return f"{self.login} {self.date} DD: {self.drawdown_percent}%"
+
+
+class AccountTotalDrawdown(models.Model):
+    login = models.BigIntegerField(db_index=True, unique=True)  # MT5 account login
+
+    equity_peak = models.DecimalField(max_digits=20, decimal_places=2, default=0)  # all-time high equity
+    equity_low = models.DecimalField(max_digits=20, decimal_places=2, default=0)   # lowest equity since peak
+    drawdown_percent = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # (peak - low) / peak * 100
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.login} TOTAL-DD: {self.drawdown_percent}%"
+
+
+
+class MT5Account(models.Model):
+    mt5_user = models.ForeignKey(MT5User, on_delete=models.CASCADE)
     login = models.BigIntegerField(unique=True, db_index=True)
 
     currency_digits = models.IntegerField(default=0)
@@ -172,7 +205,9 @@ class MT5Account(models.Model):
     credit = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     margin = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    prev_margin = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     margin_free = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    prev_margin_free = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     margin_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     margin_leverage = models.IntegerField(default=0)
     margin_initial = models.DecimalField(max_digits=20, decimal_places=2, default=0)
@@ -183,6 +218,7 @@ class MT5Account(models.Model):
     commission = models.DecimalField(max_digits=20, decimal_places=2, default=0)  # deprecated but kept
     floating = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     equity = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    prev_equity = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     so_activation = models.IntegerField(default=0, null=True, blank=True)
     so_time = models.BigIntegerField(null=True, blank=True)
@@ -196,6 +232,8 @@ class MT5Account(models.Model):
     assets = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     liabilities = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
+    active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -204,7 +242,7 @@ class MT5Account(models.Model):
     
 
 class MT5AccountHistory(models.Model):
-    login = models.BigIntegerField(unique=True, db_index=True)
+    login = models.BigIntegerField()
 
     currency_digits = models.IntegerField(default=0)
 

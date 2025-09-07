@@ -1,7 +1,8 @@
 import MT5Manager
-from trading.models import MT5Deal, MT5Account, MT5AccountHistory, MT5User, MT5Order, MT5Position, MT5OrderHistory, RuleViolationLog
+from trading.models import AccountDrawdown, MT5Account, AccountTotalDrawdown, MT5User, MT5Order, MT5Position, MT5OrderHistory, RuleViolationLog, AccountEarnings
 from challenge.models import PropFirmChallenge
 from datetime import datetime, timedelta
+from django.utils.timezone import now
 from decimal import Decimal
 from django.db.models import Q, Count, Sum
 from django.utils import timezone
@@ -24,6 +25,10 @@ class RuleChecker:
             print(f"No challenge found for MT5 account {mt5_login}")
             return None
     
+    def get_challenge_config_with_acc(self, account:MT5Account):
+        """Get challenge config for an MT5 account"""
+        return account.mt5_user.challenge
+
     def check_position_rules(self, position: MT5Manager.MTPosition, account: MT5Manager.MTAccount) -> List[str]:
         """Check rules for a new deal"""
         print("Analysing position", position.Login)
@@ -55,16 +60,22 @@ class RuleChecker:
     def check_account_rules(self, account: MT5Account) -> List[str]:
         """Check account-level rules (drawdown, daily loss)"""
         violations = []
-        challenge = self.get_challenge_config(account.login)
+        challenge = self.get_challenge_config_with_acc(account)
         
         if not challenge:
             return violations
-            
-        # 1. Check drawdown limits
-        violations.extend(self._check_drawdown(account, challenge))
         
+        violations.extend(self._check_challenge_period(account, challenge))
+
+        # 1. Check drawdown limits
+        violations.extend(self._check_daily_drawdown(account, challenge))
+
         # 2. Check daily loss limits
-        # violations.extend(self._check_daily_loss(account, challenge))
+        violations.extend(self._check_total_drawdown(account, challenge))
+
+        violations.extend(self._check_max_days(account, challenge))
+
+        violations.extend(self._check_profit(account, challenge))
         
         return violations
     
@@ -235,59 +246,172 @@ class RuleChecker:
                     
         return violations
     
-    def _check_drawdown(self, account: MT5Account, challenge: PropFirmChallenge) -> List[str]:
-        """Check drawdown limits using database for equity peak"""
+    def _check_min_days(self, account: MT5Account, challenge: PropFirmChallenge) -> list[str]:
+        """Check if minimum trading days have been met."""
         violations = []
-        
-        # Get highest equity from account history or use initial balance
-        # You might want to track equity peaks in a separate field or table
-        # For now, using max of current equity and initial balance
-        equity_peak = max(float(account.equity), float(challenge.account_size))
-            
-        # Calculate trailing drawdown
-        current_equity = float(account.equity)
-        current_dd_percent = ((equity_peak - current_equity) / equity_peak) * 100
-        
-        max_dd = float(challenge.max_total_loss_percent)
-        
-        if current_dd_percent > max_dd:
-            violations.append(f"DRAWDOWN_EXCEEDED: {current_dd_percent:.2f}% (max: {max_dd}%)")
-        elif current_dd_percent > max_dd * 0.8:  # 80% warning threshold
-            violations.append(f"DRAWDOWN_WARNING: {current_dd_percent:.2f}% (limit: {max_dd}%)")
-            
+
+        min_days = challenge.min_trading_days or 0
+        account_created_at = account.mt5_user.created_at.date()
+        today = now().date()
+        days_elapsed = (today - account_created_at).days
+
+        if days_elapsed < min_days:
+            violations.append(
+                f"MIN DAYS NOT REACHED: {days_elapsed}/{min_days}"
+            )
+
         return violations
     
-    def _check_daily_loss(self, account: MT5Account, challenge: PropFirmChallenge) -> List[str]:
-        """Check daily loss limits using database"""
+    def _check_challenge_period(self, account: MT5Account, challenge: PropFirmChallenge):
+        """Check if challenge period has exceeded allocated days."""
         violations = []
-        
-        # Get today's starting equity (you'll need to implement daily equity tracking)
-        # This is a simplified version - you might want a separate DailyEquity model
-        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        
-        try:
-            # Get the first account record from today or use challenge starting balance
-            today_start_equity = MT5AccountHistory.objects.filter(
-                login=account.login,
-                updated_at__gte=today_start
-            ).order_by('updated_at').first()
-            
-            if today_start_equity:
-                starting_equity = float(today_start_equity.equity)
-            else:
-                starting_equity = float(challenge.account_size)
-                
-        except Exception:
-            starting_equity = float(challenge.account_size)
-        
+
+        # Allowed duration
+        max_days = challenge.max_trading_days
+        additional_days = challenge.additional_trading_days or 0
+        total_allowed_days = max_days + additional_days
+
+        # When the account started
+        account_created_at = account.mt5_user.created_at.date()
+        today = now().date()
+
+        # Days passed since creation
+        days_elapsed = (today - account_created_at).days
+
+        # Checks
+        if days_elapsed > total_allowed_days:
+            violations.append(
+                f"MAX DAYS EXCEEDED: {days_elapsed} > allowed {total_allowed_days}"
+            )
+        elif days_elapsed < challenge.min_trading_days:
+            violations.append(
+                f"MIN DAYS NOT REACHED: {days_elapsed}/{challenge.min_trading_days}"
+            )
+
+        return violations
+
+    def _check_max_days(self, account: MT5Account, challenge: PropFirmChallenge) -> list[str]:
+        """Check if account has exceeded max trading days (including extensions)."""
+        violations = []
+
+        max_days = challenge.max_trading_days or 0
+        additional_days = challenge.additional_trading_days or 0
+        total_allowed_days = max_days + additional_days
+
+        account_created_at = account.mt5_user.created_at.date()
+        today = now().date()
+        days_elapsed = (today - account_created_at).days
+
+        if days_elapsed > total_allowed_days:
+            violations.append(
+                f"MAX DAYS EXCEEDED: {days_elapsed} > allowed {total_allowed_days}"
+            )
+
+        return violations
+
+    def _check_daily_drawdown(self, account: MT5Account, challenge: PropFirmChallenge) -> list[str]:
+        """Check drawdown limits using tracked high-watermark equity."""
+        violations = []
+
+        # Get today's drawdown record
+        dd = AccountDrawdown.objects.filter(
+            login=account.Login,
+            date=now().date()
+        ).first()
+
+        if dd:
+            equity_peak = float(dd.equity_high)
+        else:
+            # fallback: initial balance or current equity if no record exists yet
+            equity_peak = max(float(account.equity), float(challenge.account_size))
+
         current_equity = float(account.equity)
-        daily_loss_percent = ((starting_equity - current_equity) / starting_equity) * 100
+
+        # Calculate drawdown %
+        if equity_peak > 0:
+            current_dd_percent = ((equity_peak - current_equity) / equity_peak) * 100
+        else:
+            current_dd_percent = 0
+
+        max_dd = float(challenge.max_total_loss_percent)
+
+        if current_dd_percent > max_dd:
+            violations.append(
+                f"DAILY_DRAWDOWN_EXCEEDED: {current_dd_percent:.2f}% (max: {max_dd}%)"
+            )
+        elif current_dd_percent > max_dd * 0.8:  # 80% warning threshold
+            violations.append(
+                f"DAILY_DRAWDOWN_WARNING: {current_dd_percent:.2f}% (limit: {max_dd}%)"
+            )
+
+        return violations
         
-        max_daily_loss = float(challenge.max_daily_loss_percent)
+    def _check_total_drawdown(account: MT5Account, challenge: PropFirmChallenge) -> List[str]:
+        """
+        Check overall drawdown using AccountTotalDrawdown model.
+        """
+        violations = []
+        current_equity = float(account.equity)
+
+        # 1. Get or create the total drawdown record
+        total_dd, _ = AccountTotalDrawdown.objects.get_or_create(
+            login=account.login,
+            defaults={
+                "equity_peak": float(challenge.account_size),
+                "equity_low": current_equity,
+                "drawdown_percent": 0,
+            },
+        )
+
+        # Update peak/low and recalc drawdown
+        if current_equity > total_dd.equity_peak:
+            total_dd.equity_peak = current_equity
+            total_dd.equity_low = current_equity
+        elif current_equity < total_dd.equity_low:
+            total_dd.equity_low = current_equity
+
+        if total_dd.equity_peak > 0:
+            total_dd.drawdown_percent = ((total_dd.equity_peak - total_dd.equity_low) / total_dd.equity_peak) * 100
+
+        total_dd.save()
+
+        # 2. Calculate allowed minimum equity
+        max_dd_percent = float(challenge.max_total_loss_percent)
+        min_allowed_equity = total_dd.equity_peak * (1 - max_dd_percent / 100)
+
+        # 3. Compare current equity to limits
+        if current_equity < min_allowed_equity:
+            violations.append(
+                f"TOTAL_DRAWDOWN_EXCEEDED: Equity {current_equity:.2f} < {min_allowed_equity:.2f} "
+                f"(limit {max_dd_percent}%)"
+            )
+        elif current_equity < min_allowed_equity * 1.1:  # optional 10% warning buffer
+            violations.append(
+                f"TOTAL_DRAWDOWN_WARNING: Equity {current_equity:.2f} close to limit {min_allowed_equity:.2f}"
+            )
+
+        return violations
+
+    
+    def _check_profit(self, account: MT5Account, challenge: PropFirmChallenge) -> bool:
+        """Check if account has reached the profit target."""
+        violations = []
+        current_profit = Decimal(account.profit)
+        target_profit_amount = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
+        print(f"CURRENT PROFIT: {current_profit}")
+        print(f"TARGET_PROFIT: {target_profit_amount}")
+        # Update or create earnings record
+        earning, created = AccountEarnings.objects.get_or_create(
+            login=account.login,
+            defaults={'profit': current_profit}
+        )
         
-        if daily_loss_percent > max_daily_loss:
-            violations.append(f"DAILY_LOSS_EXCEEDED: {daily_loss_percent:.2f}% (max: {max_daily_loss}%)")
-        elif daily_loss_percent > max_daily_loss * 0.8:  # 80% warning
-            violations.append(f"DAILY_LOSS_WARNING: {daily_loss_percent:.2f}% (limit: {max_daily_loss}%)")
-            
+        if not created:
+            earning.profit = current_profit
+            earning.save()
+        
+        # Check if profit target is reached
+        if current_profit < target_profit_amount:
+            violations.append(f"TARGET_PROFIT_NOT_REACHED: ${current_profit}/${target_profit_amount}")
+        
         return violations

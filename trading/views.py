@@ -1,8 +1,4 @@
 # views.py
-import asyncio
-import aiohttp
-import json
-import logging
 from decimal import Decimal
 from datetime import datetime, timedelta
 
@@ -101,3 +97,38 @@ class AccountEarningsView(generics.RetrieveAPIView):
         if login and login.isdigit():
             return AccountEarnings.objects.get(login=login)
         return None
+    
+
+class AccountPerformanceView(APIView):
+    def get(self, request, login):
+        # 12-day fixed window
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=5)
+
+        qs = MT5Daily.objects.filter(
+            login=login,
+            deleted=False,
+            datetime__date__gte=start_date,
+            datetime__date__lte=end_date
+        ).order_by("datetime")
+
+        records = {r.datetime.date(): r for r in qs}
+
+        data = []
+        for i in range(6):
+            day = start_date + timedelta(days=i)
+            if day in records:
+                r = records[day]
+                data.append({
+                    "date": day.isoformat(),
+                    "balance": float(r.balance),
+                    "profit": float(r.profit),
+                })
+            else:
+                data.append({
+                    "date": day.isoformat(),
+                    "balance": 0.0,
+                    "profit": 0.0,
+                })
+
+        return Response(data, status=status.HTTP_200_OK)

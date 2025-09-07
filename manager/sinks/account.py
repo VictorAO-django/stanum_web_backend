@@ -1,65 +1,14 @@
 import MT5Manager
-from trading.models import MT5Account, MT5AccountHistory
+from trading.models import MT5Account, MT5AccountHistory, MT5User
 from manager.rule_checker import RuleChecker
-from manager.helper import trigger_account_closure
+from manager.helper import trigger_account_closure, update_drawdown
 from django.utils import timezone
+from manager.account_manager import AccountManager
 
 rule_checker = RuleChecker()
-
-def _should_record_history(previous_equity: float, current_equity: float) -> bool:
-    """Determine if we should create a history record"""
-    if previous_equity == 0:
-        return True  # First record
-    # Calculate percentage change
-    equity_change_percent = abs(current_equity - previous_equity) / previous_equity * 100
-    # Record if >1% change or >$100 absolute change
-    return equity_change_percent >= 1.0 or abs(current_equity - previous_equity) >= 100
-
-def _create_account_history(account_obj: MT5Manager.MTAccount):
-    """Create historical account record"""
-    try:
-        MT5AccountHistory.objects.create(
-            login=account_obj.Login,
-            currency_digits=getattr(account_obj, "CurrencyDigits", 0),
-            balance=getattr(account_obj, "Balance", 0),
-            credit=getattr(account_obj, "Credit", 0),
-            margin=getattr(account_obj, "Margin", 0),
-            margin_free=getattr(account_obj, "MarginFree", 0),
-            margin_level=getattr(account_obj, "MarginLevel", 0),
-            margin_leverage=getattr(account_obj, "MarginLeverage", 0),
-            margin_initial=getattr(account_obj, "MarginInitial", 0),
-            margin_maintenance=getattr(account_obj, "MarginMaintenance", 0),
-            profit=getattr(account_obj, "Profit", 0),
-            storage=getattr(account_obj, "Storage", 0),
-            commission=getattr(account_obj, "Commission", 0),
-            floating=getattr(account_obj, "Floating", 0),
-            equity=getattr(account_obj, "Equity", 0),
-            so_activation=getattr(account_obj, "SOActivation", None),
-            so_time=getattr(account_obj, "SOTime", None),
-            so_level=getattr(account_obj, "SOLevel", 0),
-            so_equity=getattr(account_obj, "SOEquity", 0),
-            so_margin=getattr(account_obj, "SOMargin", 0),
-            blocked_commission=getattr(account_obj, "BlockedCommission", 0),
-            blocked_profit=getattr(account_obj, "BlockedProfit", 0),
-            assets=getattr(account_obj, "Assets", 0),
-            liabilities=getattr(account_obj, "Liabilities", 0),
-            # timestamp=timezone.now(),
-        )
-        print(f"Created history record for account {account_obj.Login}, equity: {account_obj.Equity}")
-    except Exception as e:
-        print(f"Failed to create account history for {account_obj.Login}: {e}")
-
+account_manager = AccountManager()
 
 def save_mt5_account(account_obj: MT5Manager.MTAccount):
-    """Save current account state and create history record if needed"""
-    # Get previous account state for comparison
-    try:
-        previous_account = MT5Account.objects.get(login=account_obj.Login)
-        previous_equity = float(previous_account.equity)
-    except MT5Account.DoesNotExist:
-        previous_account = None
-        previous_equity = 0
-    
     # Update current account state
     account, created = MT5Account.objects.update_or_create(
         login=account_obj.Login,
@@ -91,20 +40,8 @@ def save_mt5_account(account_obj: MT5Manager.MTAccount):
         )
     )
     
-    current_equity = float(account_obj.Equity)
-    
-    # Create history record if:
-    # 1. New account (created=True)
-    # 2. Significant equity change (>1% or >$100)
-    # 3. Critical events (margin call, stop out)
-    # should_create_history = (
-    #     created or 
-    #     _should_record_history(previous_equity, current_equity)
-    # )
-    
-    # if should_create_history:
-    #     _create_account_history(account_obj)
-    
+    account_manager.update_drawdown(account_obj.Login, account_obj.Equity)
+    account_manager.update_total_drawdown(account_obj.Login, account_obj.Equity, account.mt5_user.challenge.account_size)
     return account
 
 class AccountSink:

@@ -67,7 +67,8 @@ class PositionSink:
             account: MT5Manager.MTAccount = self.bridge.get_account(position.Login)
             if account:
                 print(f"Retrieved Account info for {position.Login}")
-                save_mt5_account(account)
+                acc = save_mt5_account(account)
+                
                 # Check trading rules
                 violations = self.rule_checker.check_position_rules(position, account)
                 # Handle position violations through bridge
