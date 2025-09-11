@@ -1,14 +1,14 @@
 from django.db import models
-
-from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class PropFirmChallenge(models.Model):
     CHALLENGE_TYPES = [
         ('one_step', 'One Step'),
         ('two_step', 'Two Step'),
-        ('instant', 'Instant Funding'),
+        ('instant', 'Funding'),
     ]
     
     STATUS_CHOICES = [
@@ -28,7 +28,9 @@ class PropFirmChallenge(models.Model):
     
     CHALLENGE_CLASS = [
         ('challenge', 'Challenge'),
-        ('skill_check', 'Skill check')
+        ('challenge_funding', 'Challenge Funding'),
+        ('skill_check', 'Skill check'),
+        ('skill_check_funding', 'Skill Check Funding'),
     ]
 
     # Basic Info
@@ -48,6 +50,7 @@ class PropFirmChallenge(models.Model):
     # Trading Rules
     max_daily_loss_percent = models.DecimalField(max_digits=5, decimal_places=2)
     max_total_loss_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    additional_phase_total_loss_percent = models.DecimalField(default=8.00, max_digits=5, decimal_places=2)
     profit_target_percent = models.DecimalField(max_digits=5, decimal_places=2)
     min_trading_days = models.IntegerField()
     max_trading_days = models.IntegerField(null=True, blank=True)
@@ -153,10 +156,18 @@ class PropFirmChallenge(models.Model):
 
 
 
-class ChallengeInstrument(models.Model):
-    challenge = models.ForeignKey(PropFirmChallenge, on_delete=models.CASCADE, related_name='instruments')
-    instrument = models.CharField(max_length=20, choices=PropFirmChallenge.INSTRUMENT_CHOICES)
-    
-    class Meta:
-        unique_together = ['challenge', 'instrument']
+class ChallengeCertificate(models.Model):
+    CHALLENGE_CLASS = [
+        ('challenge', 'Challenge'),
+        ('skill_check', 'Skill check')
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    challenge_class = models.CharField(max_length=255, choices=CHALLENGE_CLASS)
+    name = models.CharField(max_length=255)
+    account_size = models.BigIntegerField()
+    profit = models.DecimalField(max_digits=20, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.user.full_name} - {self.challenge_class}"
 # Create your models here.

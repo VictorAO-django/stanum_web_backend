@@ -115,28 +115,17 @@ class UserSink:
         self.rule_checker = RuleChecker()
 
     def update_user_account(self, login):
-        print("Reached here")
-        if self.bridge:
-            account: MT5Manager.MTAccount = self.bridge.get_account(login)
-            if account:
-                print(f"Retrieved Account info for {login}")
-                acc = save_mt5_account(account)
-
-                # Check trading rules
-                violations = self.rule_checker.check_account_rules(acc)
-                if len(violations) == 0:
-                    min_day_violation = self.rule_checker._check_min_days(acc, acc.mt5_user.challenge)
-                    if len(min_day_violation) == 0:
-                        #Passed challenge
-                        self.bridge.challenge_passed(acc.login)
-                        return 
-                    print(f"Waiting for min days: {min_day_violation}")
+        try:
+            if self.bridge:
+                account = self.bridge.get_account(login)
+                if account:
+                    print(f"Retrieved Account info for {login}")
+                    acc = save_mt5_account(account)
+                    self.bridge.update_memory_account(acc)
                 else:
-                    self.bridge.handle_violation(login, violations, "ACCOUNT")
-                    self.bridge.challenge_failed(login)
-            else:
-                print(f"Failed to get account info for {login}")
-        print("Reached here also")
+                    print(f"Failed to get account info for {login}")
+        except Exception as err:
+            print(f"Error when updating account {str(err)}")
 
     def OnUserDelete(self, user:MT5Manager.MTUser) -> None: 
         print(f"User with login: {user.Login} was deleted")
@@ -144,15 +133,12 @@ class UserSink:
     def OnUserAdd(self, user:MT5Manager.MTUser):
         print("User added", user.Login)
         save_mt5_user(user)
+        self.update_user_account(user.Login)
 
     def OnUserUpdate(self, user:MT5Manager.MTUser):
         print("User updated", user.Login)
         save_mt5_user(user)
-        self.update_user_account()
-
-    # def OnUserDelete(self, user:MT5Manager.MTUser):
-    #     print("User deleted", user.Login)
-    #     delete_user()
+        self.update_user_account(user.Login)
 
     # def OnUserClean(self, login):
     #     print("User deleted", login)

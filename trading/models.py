@@ -116,7 +116,6 @@ class MT5User(models.Model):
     limit_positions_value = models.FloatField(default=0.0)
 
     selected_date = models.DateTimeField(default=timezone.now, null=True, blank=True)
-
     # Meta
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -162,6 +161,20 @@ class RuleViolationLog(models.Model):
             models.Index(fields=['severity']),
         ]
 
+class AccountWatermarks(models.Model):
+    login = models.BigIntegerField(db_index=True, unique=True)
+    hwm_balance = models.DecimalField(max_digits=20, decimal_places=2)
+    hwm_equity = models.DecimalField(max_digits=20, decimal_places=2)
+    lwm_balance = models.DecimalField(max_digits=20, decimal_places=2)
+    lwm_equity = models.DecimalField(max_digits=20, decimal_places=2)
+    hwm_date = models.DateTimeField()  # When HWM was reached
+    lwm_date = models.DateTimeField()  # When LWM was reached
+    
+    # Calculate current drawdown from peaks
+    @property
+    def current_drawdown_from_hwm_balance(self):
+        current_balance = self.get_current_balance()  # Your method
+        return (self.hwm_balance - current_balance) / self.hwm_balance * 100
 
 class AccountDrawdown(models.Model):
     login = models.BigIntegerField(db_index=True)  # MT5 account login
@@ -196,7 +209,7 @@ class AccountTotalDrawdown(models.Model):
 
 
 class MT5Account(models.Model):
-    mt5_user = models.ForeignKey(MT5User, on_delete=models.CASCADE)
+    mt5_user = models.ForeignKey(MT5User, on_delete=models.CASCADE, null=True, related_name='accounts')
     login = models.BigIntegerField(unique=True, db_index=True)
 
     currency_digits = models.IntegerField(default=0)
@@ -234,6 +247,16 @@ class MT5Account(models.Model):
 
     active = models.BooleanField(default=True)
 
+    step = models.IntegerField(default=1)
+    phase_2_start_date = models.DateTimeField(null=True)
+    challenge_completed = models.BooleanField(default=False)
+    challenge_completion_date = models.BooleanField(null=True)
+    challenge_failed = models.BooleanField(default=False)
+    challenge_failure_date = models.BooleanField(null=True)
+    failure_reason = models.JSONField(null=True, blank=True)
+    
+    is_funded_eligible = models.BooleanField(default=False)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -654,3 +677,10 @@ class SymbolPrice(models.Model):
     ask = models.FloatField()
     last = models.FloatField(null=True, blank=True)
     updated_at = models.DateTimeField(default=timezone.now)
+
+
+class ChallengeLog(models.Model):
+    user = models.ForeignKey(MT5User, on_delete=models.CASCADE)
+    action = models.CharField(max_length=50)
+    details = models.TextField()
+    timestamp = models.DateTimeField()

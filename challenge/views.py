@@ -21,7 +21,7 @@ class PropFirmChallengeListView(generics.ListAPIView):
     authentication_classes = []
     permission_classes = [AllowAny]
     serializer_class = PropFirmChallengeSerializer
-    queryset = PropFirmChallenge.objects.all()
+    queryset = PropFirmChallenge.objects.exclude(challenge_class__in=['skill_check_funding', 'challenge_funding'])
     filterset_class = PropFirmChallengeFilter
     filter_backends = [DjangoFilterBackend]
 
@@ -29,7 +29,7 @@ class PropFirmChallengeDetailView(generics.RetrieveAPIView):
     authentication_classes = []
     permission_classes = [AllowAny]
     serializer_class = PropFirmChallengeSerializer
-    queryset = PropFirmChallenge.objects.all()
+    queryset = PropFirmChallenge.objects.exclude(challenge_class__in=['skill_check_funding', 'challenge_funding'])
     lookup_field = 'id'
 
 class BalanceListView(APIView):
@@ -48,4 +48,12 @@ class BalanceListView(APIView):
             'skill_check': skill_check,
             'challenge': challenge
         }, status=status.HTTP_200_OK)
-# Create your views here.
+
+
+class ChallengeCertificateView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class=ChallengeCertificateSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        return ChallengeCertificate.objects.filter(user=user)

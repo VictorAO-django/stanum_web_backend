@@ -4,11 +4,11 @@ from .sinks.position import PositionSink
 from .sinks.deal import DealSink
 from .sinks.user import UserSink
 from .sinks.order import OrderSink
-from .sinks.account import AccountSink
+from .sinks.account import AccountSink, save_mt5_account
 from .sinks.summary import SummarySink
 from .sinks.daily import DailySink
 from .sinks.tick import TickSink
-from trading.models import MT5User, RuleViolationLog
+from trading.models import MT5User, RuleViolationLog, MT5Position, MT5Account
 from challenge.models import PropFirmChallenge
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -16,20 +16,13 @@ from collections import defaultdict
 from enum import Enum
 from typing import List, Dict
 from .account_manager import AccountManager
+from .InMemoryPropMonitoring import InMemoryPropMonitoring
+
+from .logging_config import get_prop_logger
+logger = get_prop_logger('bridge')
 
 dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
-
-class ViolationSeverity(Enum):
-    WARNING = "WARNING"
-    SEVERE = "SEVERE"
-    CRITICAL = "CRITICAL"
-
-class AccountAction(Enum):
-    DISABLE_LOGIN = "DISABLE_LOGIN"
-    CLOSE_POSITIONS = "CLOSE_POSITIONS"
-    MOVE_TO_DISABLED_GROUP = "MOVE_TO_DISABLED_GROUP"
-    ACCOUNT_CLOSED = "ACCOUNT_CLOSED"
 
 class MetaTraderBridge:
     def __init__(self, address, login, password, user_group):
@@ -38,21 +31,7 @@ class MetaTraderBridge:
         self.password = password
         self.user_group = user_group
         self.manager = MT5Manager.ManagerAPI()
-        self.local_account_manager = AccountManager()
-        
-        # Violation tracking
-        self.violation_counts = defaultdict(lambda: defaultdict(int))  # login -> severity -> count
-        self.last_violation_check = defaultdict(datetime)  # login -> last check time
-        
-        # Violation thresholds for account actions
-        self.violation_thresholds = {
-            ViolationSeverity.WARNING: 10,    # 10 warnings in timeframe
-            ViolationSeverity.SEVERE: 3,      # 3 severe violations
-            ViolationSeverity.CRITICAL: 1     # 1 critical violation = immediate closure
-        }
-        
-        # Time window for violation accumulation (24 hours)
-        self.violation_window = timedelta(hours=24)
+        self.in_memory_monitor = InMemoryPropMonitoring(self)
 
     def connect(self):
         self._subscribe_sinks()
@@ -64,37 +43,37 @@ class MetaTraderBridge:
         )
 
         if not connected:
-            print(f"Failed to connect: {MT5Manager.LastError()}")
+            logger.debug(f"Failed to connect: {MT5Manager.LastError()}")
             return False
 
-        print("Connected to MT5 Manager API")
+        logger.info("Connected to MT5 Manager API")
         return True
 
     def disconnect(self):
-        print("Disconnecting from MT5...")
+        logger.info("Disconnecting from MT5...")
         return self.manager.Disconnect()
 
     def _subscribe_sinks(self):
         """Subscribe to all data sinks with bridge reference"""
-        if not self.manager.UserSubscribe(UserSink()):
-            print(f"UserSubscribe failed: {MT5Manager.LastError()}")
+        # if not self.manager.UserSubscribe(UserSink()):
+        #     logger.debug(f"UserSubscribe failed: {MT5Manager.LastError()}")
 
-        if not self.manager.PositionSubscribe(PositionSink(self)):
-            print(f"PositionSubscribe failed: {MT5Manager.LastError()}")
+        # if not self.manager.PositionSubscribe(PositionSink(self)):
+        #     logger.debug(f"PositionSubscribe failed: {MT5Manager.LastError()}")
 
-        if not self.manager.DealSubscribe(DealSink(self)):
-            print(f"DealSubscribe failed: {MT5Manager.LastError()}")
+        # if not self.manager.DealSubscribe(DealSink(self)):
+        #     logger.debug(f"DealSubscribe failed: {MT5Manager.LastError()}")
 
-        if not self.manager.OrderSubscribe(OrderSink()):
-            print(f"OrderSubscribe failed: {MT5Manager.LastError()}")
+        # if not self.manager.OrderSubscribe(OrderSink()):
+        #     logger.debug(f"OrderSubscribe failed: {MT5Manager.LastError()}")
 
-        if not self.manager.UserAccountSubscribe(AccountSink(self)):
-            print(f"AccountSubscribe failed: {MT5Manager.LastError()}")
+        # if not self.manager.UserAccountSubscribe(AccountSink(self)):
+        #     logger.debug(f"AccountSubscribe failed: {MT5Manager.LastError()}")
 
-        if not self.manager.TickSubscribe(TickSink()):
-            print(f"TickSubscribe failed: {MT5Manager.LastError()}")
+        # if not self.manager.TickSubscribe(TickSink(self)):
+        #     logger.debug(f"TickSubscribe failed: {MT5Manager.LastError()}")
 
-        print("All sinks subscribed successfully")
+        logger.info("All sinks subscribed successfully")
 
     def get_user(self, login)->MT5Manager.MTUser:
        return self.manager.UserGet(login)
@@ -105,82 +84,6 @@ class MetaTraderBridge:
     def get_account(self, login)->MT5Manager.MTAccount:
         return self.manager.UserAccountGet(login)
     
-    def challenge_passed(self, login):
-        self.local_account_manager.close_account(login, 'challenge_passed')
-        self._close_account(login)
-        print("Challenge Passed")
-
-    def challenge_failed(self, login):
-        self.local_account_manager.close_account(login, 'failed')
-        self._close_account(login)
-        print("Challenge Failed")
-
-    def handle_violation(self, login: int, violations: List[str], violation_source: str = ""):
-        """Handle rule violations with accumulation logic"""
-        if not violations:
-            return
-            
-        # Categorize violations by severity
-        categorized_violations = self._categorize_violations(violations)
-        print("Logging Violations")
-        self._log_violation_accumulation(login, categorized_violations, violation_source)
-
-
-    def _categorize_violations(self, violations: List[str]) -> Dict[ViolationSeverity, List[str]]:
-        """Categorize violations by severity level"""
-        categorized = {
-            ViolationSeverity.WARNING: [],
-            ViolationSeverity.SEVERE: [],
-            ViolationSeverity.CRITICAL: []
-        }
-        
-        for violation in violations:
-            if any(keyword in violation for keyword in ["DRAWDOWN_EXCEEDED", "DAILY_LOSS_EXCEEDED"]):
-                categorized[ViolationSeverity.CRITICAL].append(violation)
-            elif any(keyword in violation for keyword in [
-                "RISK_EXCEEDED", "NO_STOP_LOSS", "SYMBOL_LIMIT", "OVERALL_RISK_EXCEEDED", "POSITIONS_WITHOUT_STOPS", 
-                "MARTINGALE_DETECTED", "GRID_DETECTED", "HEDGING_DETECTED"
-            ]):
-                categorized[ViolationSeverity.SEVERE].append(violation)
-            elif any(keyword in violation for keyword in ["DRAWDOWN_WARNING", "DAILY_LOSS_WARNING"]):
-                categorized[ViolationSeverity.WARNING].append(violation)
-            else:
-                # Default to severe for unknown violations
-                categorized[ViolationSeverity.SEVERE].append(violation)
-                
-        return categorized
-
-    def _close_account(self, login: int):
-        """Close/disable MT5 account due to rule violations"""
-        try:
-            print(f"Closing account {login} due to rule violations")
-            # 1. Get user info
-            user_info = MT5Manager.MTUser()
-            if not self.manager.UserGet(login, user_info):
-                print(f"Failed to get user info for {login}: {MT5Manager.LastError()}")
-                return False
-                
-            # 2. Close all open positions first
-            self._close_all_positions(login)
-            
-            # 3. Move to disabled group (assuming you have a disabled group)
-            # user_info.Group = "\\Disabled\\"  # Adjust group name as needed
-            user_info.Rights = 0  # Remove all rights
-            
-            if not self.manager.UserUpdate(user_info):
-                print(f"Failed to update user {login}: {MT5Manager.LastError()}")
-                return False
-            
-            print(f"Account {login} successfully closed and moved to disabled group")
-            return True
-            
-        except Exception as e:
-            print(f"Error closing account {login}: {e}")
-            return False
-
-    def _close_hedge_position(self, login, position_id, caused_position_id):
-        print("Close hedge")
-
     def _close_all_positions(self, login: int):
         """Close all open positions for an account"""
         try:
@@ -189,23 +92,109 @@ class MetaTraderBridge:
             for position in positions:
                 result = self.manager.PositionDelete(position)
                 if not result:
-                    print(f"Failed to close position {position.Position}")
-                        
+                    logger.debug(f"Failed to close position {position.Position}")
+               
         except Exception as e:
-            print(f"Error closing positions for {login}: {e}")
+            logger.debug(f"Error closing positions for {login}: {e}")
+
+    def disable_challenge_account_trading(self, login):
+        try:
+            user = self.manager.UserRequest(login) 
+
+            # user not found 
+            if user == False: 
+                logger.debug(f"Failed to request user: {MT5Manager.LastError()}") 
+            else: 
+                # display user balance 
+                logger.info(f"Found user {user.Login}, balance: {user.Balance}") 
+            # update user rights 
+            user.Rights = 0
+            if not self.manager.UserUpdate(user): 
+                logger.debug(f"Failed to update user: {MT5Manager.LastError()}") 
+
+            account = self.get_account(login)
+            save_mt5_account(account)
+            self._close_all_positions(login)
+
+        except Exception as err:
+            logger.debug(f"Error disabling account {str(err)}")
+
+    def enable_account_trading(self, login):
+        try:
+            user = self.manager.UserRequest(login) 
+
+            # user not found 
+            if user == False: 
+                logger.debug(f"Failed to request user: {MT5Manager.LastError()}") 
+            else: 
+                # display user balance 
+                logger.info(f"Found user {user.Login}, balance: {user.Balance}") 
+            # update user rights 
+            user.Rights = MT5Manager.MTUser.EnUsersRights.USER_RIGHT_ENABLED | MT5Manager.MTUser.EnUsersRights.USER_RIGHT_PASSWORD | MT5Manager.MTUser.EnUsersRights.USER_RIGHT_EXPERT 
+            if not self.manager.UserUpdate(user): 
+                logger.debug(f"Failed to update user: {MT5Manager.LastError()}") 
+
+            account = self.get_account(login)
+            save_mt5_account(account)
+
+        except Exception as err:
+            logger.debug(f"Error enabling account {str(err)}")
 
 
-    def _log_violation_accumulation(self, login: int, categorized_violations: Dict[ViolationSeverity, List[str]], source: str):
-        """Log violations that don't trigger closure yet"""
-        for severity, violation_list in categorized_violations.items():
-            for violation in violation_list:
-                try:
-                    RuleViolationLog.objects.create(
-                        login=login,
-                        severity=severity.value,
-                        violation_type=f"{severity.value}_{source}",
-                        message=f"{severity.value}: {violation}",
-                        timestamp=timezone.now()
-                    )
-                except Exception as e:
-                    print(f"Failed to log violation: {e}")
+    def return_account_balance(self, login, initial_balance):
+        try:
+            account = self.get_account(login)
+            current_balance = float(account.Balance)
+            adjustment = float(initial_balance) - current_balance
+
+            if adjustment == 0:
+                return {"success": True, "message": "Account already at initial balance"}
+        
+            deal_id = self.manager.DealerBalance(login, float(adjustment), MT5Manager.MTDeal.EnDealAction.DEAL_BALANCE, f"Reset balance to initial {initial_balance}") 
+            if deal_id is False: 
+                # depositing ended with error 
+                error = MT5Manager.LastError() 
+                # too much deposit amount 
+                if error[1] == MT5Manager.EnMTAPIRetcode.MT_RET_TRADE_MAX_MONEY: 
+                    logger.debug("Money limit") 
+                # insufficient money on the account 
+                elif error[1] == MT5Manager.EnMTAPIRetcode.MT_RET_REQUEST_NO_MONEY: 
+                    logger.debug("Not enough money") 
+                # another error 
+                else: 
+                    logger.debug(f"Balance operation failed {MT5Manager.LastError()}") 
+            else: 
+                # balance deposited successfully 
+                logger.info(f"Balance operation succeeded")
+
+        except Exception as err:
+            logger.debug(f"Error replenishing account balance - {str(err)}")
+
+    def tick(self, symbol, tick:MT5Manager.MTTick):
+        self.in_memory_monitor.OnTick(symbol, tick)
+
+    def add_memory_position(self, position:MT5Position):
+        logger.info(f"calling Bridge Add position {position.login}")
+        self.in_memory_monitor.add_position(position)
+    
+    def update_memory_position(self, position:MT5Position):
+        logger.info(f"calling Bridge Update position {position.login}")
+        self.in_memory_monitor.update_position(position)
+
+    def remove_memory_position(self, position:MT5Position):
+        logger.info(f"calling Bridge Remove position {position.login}")
+        self.in_memory_monitor.remove_position(position)
+
+    def update_memory_account(self, account:MT5Account):
+        logger.info(f"calling Bridge Update Account {account.login}")
+        self.in_memory_monitor.update_account(account)
+    
+    def add_memory_account(self, account:MT5Account):
+        logger.info(f"calling Bridge Add Account {account.login}")
+        self.in_memory_monitor.add_account(account)
+
+    def periodic_cleanup(self):
+        logger.info("Cleaning up...")
+        self.in_memory_monitor.cleanup_unused_symbols()
+        logger.info("Done cleaning up")
+

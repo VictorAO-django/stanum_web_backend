@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Challenge Passed</title>
+  <title>Phase 1 Passed</title>
 </head>
 <body style="font-family: Arial, sans-serif; background-color: #f4f4f7; margin: 0; padding: 0;">
   <table width="100%" bgcolor="#f4f4f7" cellpadding="0" cellspacing="0" border="0">
@@ -11,8 +11,8 @@
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden;">
           <!-- Header -->
           <tr>
-            <td style="background-color: #28a745; color: #ffffff; text-align: center; padding: 20px; font-size: 20px; font-weight: bold;">
-              Congratulations, Challenge Passed!
+            <td style="background-color: #007bff; color: #ffffff; text-align: center; padding: 20px; font-size: 20px; font-weight: bold;">
+              🎉 Phase 1 Completed
             </td>
           </tr>
 
@@ -21,19 +21,26 @@
             <td style="padding: 30px; color: #333333; font-size: 15px; line-height: 1.6;">
               <p>Hi {{ user.user.full_name|default:"Trader" }},</p>
               
-              <p>We are excited to inform you that you have successfully <strong>passed</strong> your challenge <strong>{{ challenge.name }}</strong> (Login: <strong>{{ user.login }}</strong>).</p>
+              <p>Great news! You have successfully <strong>completed Phase 1</strong> of your challenge <strong>{{ challenge.name }}</strong> (Login: <strong>{{ user.login }}</strong>).</p>
 
-              <p><strong>Challenge Summary:</strong></p>
+              <p><strong>Phase 1 Summary:</strong></p>
               <ul>
                 <li>Account Size: ${{ challenge.account_size }}</li>
                 <li>Profit Target: {{ challenge.profit_target_percent }}%</li>
-                <li>Max Daily Loss: {{ challenge.max_daily_loss_percent }}%</li>
-                <li>Max Total Loss: {{ challenge.max_total_loss_percent }}%</li>
+                <li>Max Daily Loss Allowed: {{ challenge.max_daily_loss_percent }}%</li>
+                <li>Max Total Loss Allowed: {{ challenge.max_total_loss_percent }}%</li>
               </ul>
 
-              <p>By achieving your profit target and respecting the risk rules, you’ve proven your trading skill and discipline. You are now eligible for a <strong>Funded Account</strong> 🎯. <br>Your Funded account credentials will be sent to you within 24-48hrs</p>
+              <p>The challenge account has been reset for <strong>Phase 2</strong> </p>
 
-              <p>We’re proud of your success and can’t wait to see your continued growth.</p>
+              <p><strong>Phase 2 Target:</strong></p>
+              <ul>
+                <li>Account Size: ${{ challenge.account_size }}</li>
+                <li>Profit Target: {{ challenge.phase_2_profit_target_percent }}%</li>
+                <li>Max Total Loss Allowed: {{ challenge.additional_phase_total_loss_percent }}%</li>
+              </ul>
+
+              <p>Keep up the discipline and good luck in Phase 2! 🚀</p>
 
               <p style="margin-top: 30px;">Best regards,<br>
               <strong>The {{ company_name }} Team</strong></p>

@@ -3,7 +3,6 @@ from datetime import datetime
 from django.utils import timezone
 from trading.models import MT5Position
 from .account import save_mt5_account
-from manager.rule_checker import *
 
 def save_position(position: MT5Manager.MTPosition):
     """Save or update MT5Position with create/update logic"""
@@ -59,57 +58,68 @@ def save_position(position: MT5Manager.MTPosition):
 class PositionSink:
     def __init__(self, bridge=None):
         self.bridge = bridge
-        self.rule_checker = RuleChecker()
+        if not self.bridge:
+            print("Bridge is None inside OnPositionAdd!")
 
-    def update_user_account(self, position:MT5Manager.MTPosition):
-        print("Reached here")
-        if self.bridge:
-            account: MT5Manager.MTAccount = self.bridge.get_account(position.Login)
-            if account:
-                print(f"Retrieved Account info for {position.Login}")
-                acc = save_mt5_account(account)
-                
-                # Check trading rules
-                violations = self.rule_checker.check_position_rules(position, account)
-                # Handle position violations through bridge
-                if violations and self.bridge:
-                    self.bridge.handle_violation(position.Login, violations, "POSITION")
-                    print("Violations detected", violations)
-                elif violations:
-                    # Fallback logging if bridge not available
-                    print(f"Violations detected for {position.Login} but no bridge available: {violations}")
-            else:
-                print(f"Failed to get account info for {position.Login}")
-        print("Reached here also")
+    def update_user_account(self, login):
+        try:
+            if self.bridge:
+                account: MT5Manager.MTAccount = self.bridge.get_account(login)
+                if account:
+                    print(f"Retrieved Account info for {login}")
+                    return save_mt5_account(account)
+                else:
+                    print(f"Failed to get account info for {login}")
+        except Exception as err:
+            print(f"Issue occured {str(err)}")
 
     # Add position
     def OnPositionAdd(self, position:MT5Manager.MTPosition):
         try:
             print(f"Position added: {position.Print()}")
-            save_position(position)
-            self.update_user_account(position)
+            pos, _ = save_position(position)
+            acc = self.update_user_account(position.Login)
+
+            if acc.challenge_completed or acc.challenge_failed:
+                return
+            self.bridge.update_memory_account(acc)
+            self.bridge.add_memory_position(pos)
         except Exception as err:
-            print("Error Adding position", str(err))
+            print(f"Error Adding position {str(err)}")
 
     # Update position
     def OnPositionUpdate(self, position:MT5Manager.MTPosition):
-        print(f"Position updated: {position.Print()}")
-        # Update existing entry
-        save_position(position)
-        self.update_user_account(position.Login)
+        try:
+            print(f"Position updated: {position.Print()}")
+            pos, _ = save_position(position)
+            acc = self.update_user_account(position.Login)
+            if acc and (acc.challenge_completed or acc.challenge_failed):
+                return
+            self.bridge.update_memory_account(acc)
+            self.bridge.update_memory_position(pos)
+        except Exception as err:
+            print(f"Error while updating position {str(err)}")
 
     # Delete Position
     def OnPositionDelete(self, position:MT5Manager.MTPosition):
-        print(f"Position Deleted", position.Print())
-        pos = MT5Position.objects.filter(position_id=position.Position)
-        if pos.exists():
-            pos = pos.first()
-            pos.closed = True
-            pos.save()
-        self.update_user_account(position.Login)
+        try:
+            pos = MT5Position.objects.filter(position_id=position.Position)
+            if pos.exists():
+                pos = pos.first()
+                pos.closed = True
+                pos.save()
+            acc = self.update_user_account(position.Login)
+            if acc.challenge_completed or acc.challenge_failed:
+                return
+            self.bridge.update_memory_account(acc)
+            self.bridge.remove_memory_position(pos)
+            print(f"Position Deleted {position.Print()}")
+        except Exception as err:
+            print(f"Error while deleting position {str(err)}")
+
     
     # Clean user position
     def OnPositionClean(self, login):
-        print(f"Position Cleaned", login)
-        MT5Position.objects.filter(login=login).delete()
+        print(f"Position Cleaned {login}")
+        MT5Position.objects.filter(login=login).update(closed=True)
         self.update_user_account(login)

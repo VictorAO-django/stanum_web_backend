@@ -333,3 +333,42 @@ class HelpCenter(models.Model):
 
     def __str__(self):
         return f"{self.full_name}-{self.email}"
+    
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ("info", "Info"),
+        ("success", "Success"),
+        ("warning", "Warning"),
+        ("failure", "Failure"),
+        ("error", "Error"),
+        ("trade", "Trade Update"),
+        ("system", "System Alert"),
+    ]
+    # Who receives the notification
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="sent_notifications")
+
+    # Notification content
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    url = models.URLField(null=True, blank=True)
+    type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default="info")
+    is_read = models.BooleanField(default=False)
+    metadata = models.JSONField(null=True, blank=True)   # e.g. {"trade_id": 123, "pnl": -45}
+
+    # Time
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def mark_as_read(self):
+        """Helper to mark notification as read"""
+        self.is_read = True
+        self.read_at = timezone.now()
+        self.save(update_fields=["is_read", "read_at"])
+
+    def __str__(self):
+        return f"Notification({self.recipient}, {self.title}, {self.type})"

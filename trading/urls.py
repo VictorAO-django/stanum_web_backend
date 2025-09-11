@@ -13,5 +13,7 @@ urlpatterns = [
     path('daily-summary/<str:login>', DailySummaryView.as_view()),
 
     path('accounts/<str:login>/earning', AccountEarningsView.as_view()),
-    path('accounts/<str:login>/performance', AccountPerformanceView.as_view())
+    path('accounts/<str:login>/performance', AccountPerformanceView.as_view()),
+
+    path('top-traders', TopTradersView.as_view())
 ]   

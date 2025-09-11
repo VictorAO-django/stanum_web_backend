@@ -132,3 +132,44 @@ class AccountPerformanceView(APIView):
                 })
 
         return Response(data, status=status.HTTP_200_OK)
+    
+
+class TopTradersView(APIView):
+    def get(self, request, *args, **kwargs):
+        now = timezone.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        # Aggregate monthly profit
+        monthly_profits = (
+            MT5Daily.objects.filter(datetime__gte=month_start)
+            .values("login")  # group by trader
+            .annotate(total_profit=Sum("profit"))
+        )
+
+        # Map accounts
+        logins = [m["login"] for m in monthly_profits]
+        accounts = MT5Account.objects.filter(login__in=logins).only("login", "mt5_user")
+        account_map = {acc.login: acc for acc in accounts}
+
+        # Build results with ROI
+        results = []
+        for trader in monthly_profits:
+            acc = account_map.get(trader["login"])
+            if not acc:
+                continue
+            starting_balance = acc.mt5_user.challenge.account_size
+            profit = float(trader["total_profit"] or 0)
+
+            roi = (Decimal(profit) / starting_balance * Decimal(100)) if starting_balance > 0 else 0
+
+            results.append({
+                "login": trader["login"],
+                "name": acc.mt5_user.user.full_name,
+                "roi": round(roi, 2),
+            })
+
+        # Sort by ROI descending and limit top 10
+        results = sorted(results, key=lambda x: x["roi"], reverse=True)[:10]
+
+        return Response(results, status=status.HTTP_200_OK)
+        

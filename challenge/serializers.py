@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import PropFirmChallenge, ChallengeInstrument
+from .models import PropFirmChallenge, ChallengeCertificate
 
 
 class PropFirmChallengeSerializer(serializers.ModelSerializer):
@@ -39,3 +39,9 @@ class PropFirmChallengeSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_available', 'spots_remaining']
+
+
+class ChallengeCertificateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ChallengeCertificate
+        fields=['challenge_class', 'name', 'account_size', 'profit']

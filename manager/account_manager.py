@@ -2,8 +2,9 @@ from django.db import transaction
 from typing import Literal
 from decimal import Decimal
 from .cache import symbol_cache
-from trading.models import MT5User, MT5Position, MT5Account, AccountDrawdown, AccountTotalDrawdown
+from trading.models import MT5User, MT5Position, MT5Account, AccountDrawdown, AccountTotalDrawdown, AccountWatermarks
 from django.utils.timezone import now
+from django.utils import timezone
 
 class AccountManager:
     def get_accounts_with_symbol(self, symbol: str):
@@ -18,8 +19,8 @@ class AccountManager:
 
     def update_account_equity(self, user: MT5User) -> MT5Account:
         """Recalculate account equity, margin, free margin."""
-        positions = list(MT5Position.objects.filter(login=user.login))
-        account, _ = MT5Account.objects.get_or_create(login=user.login)
+        positions = list(MT5Position.objects.filter(login=user.login, closed=False))
+        account, _ = MT5Account.objects.get_or_create(login=user.login, active=True)
 
         balance = account.balance
         profit = Decimal(0.0)
@@ -86,7 +87,8 @@ class AccountManager:
             account.margin = margin
             account.prev_margin_free = account.margin_free
             account.margin_free = free_margin
-            account.save(update_fields=["prev_equity", "equity", "prev_margin", "margin", "prev_margin_free", "margin_free"])
+            account.profit = profit
+            account.save(update_fields=["prev_equity", "equity", "prev_margin", "margin", "prev_margin_free", "margin_free", "profit"])
 
             if updated_positions:
                 MT5Position.objects.bulk_update(updated_positions, ["profit"])
@@ -171,3 +173,35 @@ class AccountManager:
 
         obj.save()
         return obj
+
+    # Just add this method to your existing code
+    def update_watermarks(self, login, balance, equity):
+        watermark, created = AccountWatermarks.objects.get_or_create(
+            login=login,
+            defaults={
+                'hwm_balance': balance, 'hwm_equity': equity,
+                'lwm_balance': balance, 'lwm_equity': equity,
+                'hwm_date': timezone.now(), 'lwm_date': timezone.now()
+            }
+        )
+        
+        if not created:
+            # Update highs
+            if balance > watermark.hwm_balance:
+                watermark.hwm_balance = balance
+                watermark.hwm_date = timezone.now()
+            if equity > watermark.hwm_equity:
+                watermark.hwm_equity = equity
+                watermark.hwm_date = timezone.now()
+                
+            # Update lows  
+            if balance < watermark.lwm_balance:
+                watermark.lwm_balance = balance
+                watermark.lwm_date = timezone.now()
+            if equity < watermark.lwm_equity:
+                watermark.lwm_equity = equity
+                watermark.lwm_date = timezone.now()
+                
+            watermark.save()
+        
+        return watermark

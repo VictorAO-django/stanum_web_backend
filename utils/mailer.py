@@ -1,4 +1,5 @@
 import random
+from typing import List
 from django.core.mail import send_mail,get_connection, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -136,4 +137,37 @@ class Mailer:
             'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
         }
         self.html_content = render_to_string('emails/challenge_entry.html', context)
+        self.send_with_template()
+
+    def challenge_passed_1(self, user:MT5User, challenge:PropFirmChallenge):
+        self.subject = f"Challenge Phase 1 passed {challenge.name}"
+        context = {
+            'user': user, 'company_name': settings.GLOBAL_SERVICE_NAME, 'challenge': challenge,
+        }
+        self.html_content = render_to_string('emails/challenge_passed_1.html', context)
+        self.send_with_template()
+
+    def challenge_passed_2(self, user:MT5User, challenge:PropFirmChallenge):
+        self.subject = f"Challenge passed {challenge.name}"
+        context = {
+            'user': user, 'company_name': settings.GLOBAL_SERVICE_NAME, 'challenge': challenge,
+        }
+        self.html_content = render_to_string('emails/challenge_passed_2.html', context)
+        self.send_with_template()
+
+    def challenge_passed(self, user:MT5User, challenge:PropFirmChallenge):
+        self.subject = f"Challenge passed {challenge.name}"
+        context = {
+            'user': user.user, 'company_name': settings.GLOBAL_SERVICE_NAME, 'challenge': challenge,
+        }
+        self.html_content = render_to_string('emails/challenge_passed.html', context)
+        self.send_with_template()
+
+    def challenge_failed(self, user:MT5User, challenge:PropFirmChallenge, failure_reasons:List[str]):
+        self.subject = f"Challenge failed {challenge.name}"
+        context = {
+            'user': user, 'firm_name': settings.GLOBAL_SERVICE_NAME, 'challenge': challenge, 'failure_reasons': failure_reasons,
+            'restart_url': f"{settings.FRONTEND_BASE_URL}"
+        }
+        self.html_content = render_to_string('emails/challenge_passed.html', context)
         self.send_with_template()

@@ -32,26 +32,27 @@ class MT5UserSerializer(serializers.ModelSerializer):
     def get_account_size(self, obj):
         if obj.challenge:
             return obj.challenge.account_size
-        return "0.0000"
+        return 0.0000
     
     def get_free_margin(self, obj):
-        return "0.0000"
+        return 0.0000
     
     def get_net_profit(self, obj):
-        return "0.0000"
+        return 0.0000
     
     def get_equity(self, obj):
-        return "0.0000"
+        return 0.0000
     
     def to_representation(self, instance):
         representation =  super().to_representation(instance)
         account = MT5Account.objects.filter(login=instance.login)
+        # print("Got account instancr", account)
         if account.exists():
             account = account.first()
             representation['free_margin'] = account.margin_free
             representation['net_profit'] = account.profit
             representation['equity'] = account.equity
-        return super().to_representation(instance)
+        return representation
     
 
 class MT5PositionSerializer(serializers.ModelSerializer):
@@ -69,12 +70,16 @@ class AccountStatSerializer(serializers.ModelSerializer):
     avg_losing = serializers.SerializerMethodField()
     profit_factor = serializers.SerializerMethodField()
     win_ratio = serializers.SerializerMethodField()
+    hwm_balance = serializers.SerializerMethodField()
+    hwm_equity = serializers.SerializerMethodField()
+    lwm_balance = serializers.SerializerMethodField()
+    lwm_equity = serializers.SerializerMethodField()
 
     class Meta:
         model = MT5Account
         fields = [
             'balance', 'equity', 'profit', 'created_at', 'warning', 'critical', 'severe', 'avg_winning', 'avg_losing',
-            'profit_factor', 'win_ratio',
+            'profit_factor', 'win_ratio', 'hwm_balance', 'hwm_equity', 'lwm_balance', 'lwm_equity',
             'challenge', 
         ]
 
@@ -106,6 +111,18 @@ class AccountStatSerializer(serializers.ModelSerializer):
     def get_win_ratio(self, obj):
         return calculate_win_ratio(obj.login)
     
+    def get_hwm_balance(self, obj):
+        return 0
+    
+    def get_hwm_equity(self, obj):
+        return 0
+    
+    def get_lwm_balance(self, obj):
+        return 0
+    
+    def get_lwm_equity(self, obj):
+        return 0
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         user =  MT5User.objects.get(login=instance.login)
@@ -116,6 +133,14 @@ class AccountStatSerializer(serializers.ModelSerializer):
         representation['warning'] = vio.filter(severity='warning').count()
         representation['severe'] = vio.filter(severity='severe').count()
         representation['critical'] = vio.filter(severity='critical').count()
+        
+        watermark = AccountWatermarks.objects.filter(login=instance.login).first()
+        if watermark:
+            representation['hwm_balance'] = watermark.hwm_balance
+            representation['hwm_equity'] = watermark.hwm_equity
+            representation['lwm_balance'] = watermark.lwm_balance
+            representation['lwm_equity'] = watermark.lwm_equity
+
         return representation
     
 
@@ -130,4 +155,3 @@ class AccountEarningsSerializer(serializers.ModelSerializer):
     class Meta:
         model=AccountEarnings
         fields = ['login', 'profit', 'pending', 'disbursed', 'target', 'paid_all']
-

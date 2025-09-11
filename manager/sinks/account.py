@@ -1,7 +1,6 @@
 import MT5Manager
 from trading.models import MT5Account, MT5AccountHistory, MT5User
 from manager.rule_checker import RuleChecker
-from manager.helper import trigger_account_closure, update_drawdown
 from django.utils import timezone
 from manager.account_manager import AccountManager
 
@@ -40,8 +39,8 @@ def save_mt5_account(account_obj: MT5Manager.MTAccount):
         )
     )
     
-    account_manager.update_drawdown(account_obj.Login, account_obj.Equity)
-    account_manager.update_total_drawdown(account_obj.Login, account_obj.Equity, account.mt5_user.challenge.account_size)
+    # account_manager.update_drawdown(account_obj.Login, account_obj.Equity)
+    # account_manager.update_total_drawdown(account_obj.Login, account_obj.Equity, account.mt5_user.challenge.account_size)
     return account
 
 class AccountSink:
