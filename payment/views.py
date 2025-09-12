@@ -239,7 +239,7 @@ class PaymentIPNAPIView(APIView):
             service = NOWPaymentsService()
             # if not service.verify_ipn_signature(request.body, signature):
             #     return Response({'error': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
-            print("Payment IPN received", request.body)
+            print("Payment IPN received")
             # Parse callback data
             try:
                 data = json.loads(request.body)
@@ -294,6 +294,7 @@ class PaymentIPNAPIView(APIView):
         if challenge.challenge_class == 'skill_check':
             balance = float(challenge.account_size - (challenge.account_size * 0.1)) 
 
+        print("Attempt creating MT5Account")
         result = create_mt5_account(
             base_url=settings.BRIDGE_URL,
             account_data={
