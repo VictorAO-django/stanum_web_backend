@@ -47,7 +47,7 @@ class MT5AccountService:
         user.State = data['state']
         user.City = data['city']
         user.Address = data['address']
-        user.Language = 'English'
+        user.Language = 1033 #'English'
         user.Comment = data['comment']
     
         master_password = self.gen_master_password()
