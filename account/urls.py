@@ -45,4 +45,7 @@ urlpatterns = [
     path('2fa/setup', TwoFASetupView.as_view()),
 
     path('help', HelpCenterView.as_view()),
+
+    path('ticket', TicketListCreateAPIView.as_view()),
+    path('ticket/<str:ticket_id>/messages', MessageListCreateAPIView.as_view())
 ]

@@ -1081,3 +1081,32 @@ class HelpCenterView(generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class=HelpCenterSerializer
     models = HelpCenter.objects.all()
+
+
+class TicketListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = TicketSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+    
+    def get_queryset(self):
+        return Ticket.objects.filter(user=self.request.user).order_by("-created_at")
+    
+
+class MessageListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        ticket_id = self.kwargs["ticket_id"]
+        ticket = get_object_or_404(Ticket, ticket_id=ticket_id, user=self.request.user)
+        serializer.save(ticket=ticket, sender=self.request.user)
+        
+
+    def get_queryset(self):
+        ticket_id = self.kwargs.get("ticket_id", None)
+        ticket = get_object_or_404(Ticket, ticket_id=ticket_id, user=self.request.user)
+        return ticket.messages.order_by("created_at")
+
+    

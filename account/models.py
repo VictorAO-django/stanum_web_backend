@@ -9,7 +9,7 @@ from uuid import uuid4
 from django.contrib.postgres.fields import ArrayField, JSONField 
 import datetime, secrets
 from datetime import timedelta
-import uuid, pyotp
+import uuid, pyotp, time, random
 from django.utils.crypto import get_random_string
 
 phone_validator = RegexValidator(
@@ -372,3 +372,39 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification({self.recipient}, {self.title}, {self.type})"
+    
+
+class Ticket(models.Model):
+    STATUS_CHOICES = [
+        ("open", "Open"),
+        ("closed", "Closed"),
+    ]
+    
+    ticket_id=models.CharField(max_length=255, unique=True, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tickets")
+    subject = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="open")
+
+    def save(self, *args, **kwargs):
+        if not self.ticket_id:
+            # Generate something like 'T' + timestamp + random digits
+            timestamp = int(time.time())   # seconds since epoch
+            rand_part = random.randint(100, 999)  # 3-digit random number
+            self.ticket_id = f"T{timestamp}{rand_part}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.ticket_id} - {self.subject}"
+    
+    def __str__(self):
+        return f"{self.ticket_id} - {self.subject}"
+
+class Message(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages")
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message {self.id} on Ticket {self.ticket.id}"

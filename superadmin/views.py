@@ -38,6 +38,7 @@ from utils.pagination import *
 from service.now_payment import NOWPaymentsService
 
 from challenge.models import *
+from account.serializers import MessageSerializer, TicketSerializer
 
 User = get_user_model()
 
@@ -295,3 +296,36 @@ class RejectPayoutView(APIView):
                 data={},
                 http_status=status.HTTP_403_FORBIDDEN
             )
+
+class TicketListCreateAPIView(generics.ListAPIView):
+    serializer_class = TicketSerializer
+    permission_classes=[permissions.IsAdminUser]
+
+    def get_queryset(self):
+        return Ticket.objects.all().order_by("-created_at")
+    
+
+class MessageListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes=[permissions.IsAdminUser]
+
+    def perform_create(self, serializer):
+        ticket_id = self.kwargs["ticket_id"]
+        ticket = get_object_or_404(Ticket, ticket_id=ticket_id, status='open')
+        serializer.save(ticket=ticket, sender=self.request.user)
+        
+
+    def get_queryset(self):
+        ticket_id = self.kwargs.get("ticket_id", None)
+        ticket = get_object_or_404(Ticket, ticket_id=ticket_id)
+        return ticket.messages.order_by("created_at")
+
+
+class CloseTicketApiView(APIView):
+    permission_classes=[permissions.IsAdminUser]
+    
+    def post(self, request, ticket_id, *args, **kwargs):
+        ticket = get_object_or_404(Ticket, ticket_id=ticket_id)
+        ticket.status = 'closed'
+        ticket.save()
+        return Response({'status': 'Ok'}, status=status.HTTP_200_OK)

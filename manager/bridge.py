@@ -32,6 +32,7 @@ class MetaTraderBridge:
         self.user_group = user_group
         self.manager = MT5Manager.ManagerAPI()
         self.in_memory_monitor = InMemoryPropMonitoring(self)
+        self.manager.GroupGet()
 
     def connect(self):
         self._subscribe_sinks()

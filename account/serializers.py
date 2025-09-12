@@ -134,3 +134,34 @@ class HelpCenterSerializer(serializers.ModelSerializer):
         model = HelpCenter
         fields = '__all__'
         read_only_fields = ['id', 'timestamp']
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source="sender.full_name", read_only=True)
+    sender = serializers.PrimaryKeyRelatedField(read_only=True)
+    ticket = serializers.PrimaryKeyRelatedField(read_only=True)
+    
+    class Meta:
+        model = Message
+        fields = ["id", "sender", "sender_name", 'ticket', "text", "created_at"]
+
+    def to_representation(self, instance):
+        # Get the default serialized data
+        data = super().to_representation(instance)
+
+        # Access the current user
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        # Example: mark if this message was sent by the current user
+        data["is_mine"] = instance.sender == user
+
+        return data
+    
+class TicketSerializer(serializers.ModelSerializer):
+    creator_name = serializers.CharField(source='user.full_name')
+    messages = MessageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ["ticket_id", "subject", "status", "created_at", "messages", 'creator_name']

@@ -19,4 +19,9 @@ admin.site.register(Address)
 admin.site.register(DocumentType)
 admin.site.register(ProofOfIdentity)
 admin.site.register(ProofOfAddress)
+
+admin.site.register(Notification)
+admin.site.register(HelpCenter)
+admin.site.register(Ticket)
+admin.site.register(Message)
 # Register your models here.

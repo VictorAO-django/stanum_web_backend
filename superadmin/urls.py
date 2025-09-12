@@ -35,4 +35,7 @@ urlpatterns = [
     path('payouts/<str:id>/ipn', ApprovePayoutView.as_view()),
     path('payouts/<str:id>/reject', RejectPayoutView.as_view()),
     
+    path('ticket', TicketListCreateAPIView.as_view()),
+    path('ticket/<str:ticket_id>/messages', MessageListCreateAPIView.as_view()),
+    path('ticket/<str:ticket_id>/close', CloseTicketApiView.as_view())
 ]
