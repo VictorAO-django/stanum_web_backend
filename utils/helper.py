@@ -237,6 +237,7 @@ def create_mt5_account(
 
     try:
         response = requests.post(url, json=account_data, headers=headers)
+        print(url, account_data)
         response.raise_for_status()
 
         data = response.json()
