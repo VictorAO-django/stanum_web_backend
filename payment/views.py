@@ -255,6 +255,7 @@ class PaymentIPNAPIView(APIView):
                 payment = Payment.objects.get(order_id=data['order_id'])
                 old_status = payment.payment_status
 
+                print("Payment Status", data['payment_status'])
                 if old_status != data['payment_status']:
                     payment.payment_status = data['payment_status']
                     if 'pay_amount' in data:
