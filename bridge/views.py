@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import MT5Manager
 from manager.manager import MT5AccountService
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -71,6 +72,7 @@ class CreateAccountView(APIView):
 
         except Exception as e:
             print(f"MT5 account creation failed for user: {e}")
+            print(f"MT5 error: {MT5Manager.LastError()}")
             return custom_response(
                 status='error',
                 message=f"MT5 account creation failed for user: {e}",

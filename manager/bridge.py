@@ -56,14 +56,14 @@ class MetaTraderBridge:
 
     def _subscribe_sinks(self):
         """Subscribe to all data sinks with bridge reference"""
-        # if not self.manager.UserSubscribe(UserSink()):
-        #     logger.debug(f"UserSubscribe failed: {MT5Manager.LastError()}")
+        if not self.manager.UserSubscribe(UserSink()):
+            logger.debug(f"UserSubscribe failed: {MT5Manager.LastError()}")
 
-        # if not self.manager.PositionSubscribe(PositionSink(self)):
-        #     logger.debug(f"PositionSubscribe failed: {MT5Manager.LastError()}")
+        if not self.manager.PositionSubscribe(PositionSink(self)):
+            logger.debug(f"PositionSubscribe failed: {MT5Manager.LastError()}")
 
-        # if not self.manager.DealSubscribe(DealSink(self)):
-        #     logger.debug(f"DealSubscribe failed: {MT5Manager.LastError()}")
+        if not self.manager.DealSubscribe(DealSink(self)):
+            logger.debug(f"DealSubscribe failed: {MT5Manager.LastError()}")
 
         # if not self.manager.OrderSubscribe(OrderSink()):
         #     logger.debug(f"OrderSubscribe failed: {MT5Manager.LastError()}")
@@ -71,8 +71,8 @@ class MetaTraderBridge:
         # if not self.manager.UserAccountSubscribe(AccountSink(self)):
         #     logger.debug(f"AccountSubscribe failed: {MT5Manager.LastError()}")
 
-        # if not self.manager.TickSubscribe(TickSink(self)):
-        #     logger.debug(f"TickSubscribe failed: {MT5Manager.LastError()}")
+        if not self.manager.TickSubscribe(TickSink(self)):
+            logger.debug(f"TickSubscribe failed: {MT5Manager.LastError()}")
 
         logger.info("All sinks subscribed successfully")
 
