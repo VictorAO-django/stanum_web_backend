@@ -14,6 +14,8 @@ def get_next_login():
             return login
     raise ValueError("No available logins in range 4000-4500")
 
+def str_or_empty(value):
+    return value if value is not None else ""
 
 class MT5AccountService:
     def __init__(self, address, login, password, user_group):
@@ -37,18 +39,18 @@ class MT5AccountService:
         user.Login = get_next_login()
         user.Group = self.user_group 
         user.Leverage = 100 
-        user.FirstName = data['first_name']
-        user.LastName = data['last_name']
-        user.Country = data['country']
-        user.Company = data['company']
-        user.EMail = data['email']
-        user.Phone = data['phone']
-        user.ZIPCode = data["zip_code"]
-        user.State = data['state']
-        user.City = data['city']
-        user.Address = data['address']
-        user.Language = 1033 #'English'
-        user.Comment = data['comment']
+        user.FirstName = str_or_empty(data['first_name'])
+        user.LastName = str_or_empty(data['last_name'])
+        user.Country = str_or_empty(data['country'])
+        user.Company = str_or_empty(data['company'])
+        user.EMail = str_or_empty(data['email'])
+        user.Phone = str_or_empty(data['phone'])
+        user.ZIPCode = str_or_empty(data["zip_code"])
+        user.State = str_or_empty(data['state'])
+        user.City = str_or_empty(data['city'])
+        user.Address = str_or_empty(data['address'])
+        user.Comment = str_or_empty(data['comment'])
+        user.Language = 1033 #'English'=
     
         master_password = self.gen_master_password()
         investor_password = self.gen_investor_password()
