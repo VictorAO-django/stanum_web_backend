@@ -1,5 +1,6 @@
 import random
-from typing import List
+from typing import List, Literal
+import datetime
 from django.core.mail import send_mail,get_connection, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -170,4 +171,74 @@ class Mailer:
             'restart_url': f"{settings.FRONTEND_BASE_URL}"
         }
         self.html_content = render_to_string('emails/challenge_passed.html', context)
+        self.send_with_template()
+
+    def kyc(self, user,  action: Literal[
+            'proof_of_id_approved', 'proof_of_id_rejected',
+            'proof_of_ha1_approved', 'proof_of_ha1_rejected',
+            'proof_of_ha2_approved', 'proof_of_ha2_rejected'
+        ]
+    ):
+        EMAIL_SCENARIOS = {
+            "proof_of_id_approved": {
+                "subject": "✅ Proof of Identity Approved",
+                "title": "Proof of Identity Approved",
+                "message": "We’re pleased to inform you that your <strong>Proof of Identity</strong> has been successfully reviewed and approved.",
+                "status_banner": "✅ Approved – Proof of Identity Verified",
+                "color": "#16a34a",  # green
+            },
+            "proof_of_id_rejected": {
+                "subject": "❌ Proof of Identity Rejected",
+                "title": "Proof of Identity Rejected",
+                "message": "Unfortunately, your <strong>Proof of Identity</strong> was rejected. Please upload a valid government-issued ID with all details clearly visible.",
+                "status_banner": "❌ Rejected – Proof of Identity Failed",
+                "color": "#dc2626",  # red
+            },
+            "proof_of_ha1_approved": {
+                "subject": "✅ Proof of Address 1 Approved",
+                "title": "Proof of Address 1 Approved",
+                "message": "We’re pleased to inform you that your <strong>Proof of Address 1</strong> has been approved.",
+                "status_banner": "✅ Approved – Proof of Address 1 Verified",
+                "color": "#16a34a",
+            },
+            "proof_of_ha1_rejected": {
+                "subject": "❌ Proof of Address 1 Rejected",
+                "title": "Proof of Address 1 Rejected",
+                "message": "Unfortunately, your <strong>Proof of Address 1</strong> was rejected. Please upload a valid document showing your address.",
+                "status_banner": "❌ Rejected – Proof of Address 1 Failed",
+                "color": "#dc2626",
+            },
+            "proof_of_ha2_approved": {
+                "subject": "✅ Proof of Address 2 Approved",
+                "title": "Proof of Address 2 Approved",
+                "message": "We’re pleased to inform you that your <strong>Proof of Address 2</strong> has been approved.",
+                "status_banner": "✅ Approved – Proof of Address 2 Verified",
+                "color": "#16a34a",
+            },
+            "proof_of_ha2_rejected": {
+                "subject": "❌ Proof of Address 2 Rejected",
+                "title": "Proof of Address 2 Rejected",
+                "message": "Unfortunately, your <strong>Proof of Address 2</strong> was rejected. Please upload another valid document showing your address.",
+                "status_banner": "❌ Rejected – Proof of Address 2 Failed",
+                "color": "#dc2626",
+            },
+        }
+
+        scenario = EMAIL_SCENARIOS[action]
+
+        context = {
+            "user_name": getattr(user, "full_name", ""),
+            "company_name": settings.GLOBAL_SERVICE_NAME,
+            "year": datetime.date.today().year,
+            "title": scenario["title"],
+            "message": scenario["message"],
+            "status_banner": scenario["status_banner"],
+            "color": scenario["color"],
+        }
+
+        # subject and html
+        self.subject = scenario["subject"]
+        self.html_content = render_to_string("emails/verification_update.html", context)
+
+        # send email
         self.send_with_template()

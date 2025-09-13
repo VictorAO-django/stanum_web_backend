@@ -165,3 +165,27 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ["ticket_id", "subject", "status", "created_at", "messages", 'creator_name']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source="sender.username", read_only=True)
+    recipient_name = serializers.CharField(source="recipient.username", read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "recipient",
+            "recipient_name",
+            "sender",
+            "sender_name",
+            "title",
+            "message",
+            "url",
+            "type",
+            "is_read",
+            "metadata",
+            "created_at",
+            "read_at",
+        ]
+        read_only_fields = ["id", "created_at", "read_at", "sender_name", "recipient_name"]

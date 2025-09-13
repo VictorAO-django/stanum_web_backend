@@ -47,5 +47,7 @@ urlpatterns = [
     path('help', HelpCenterView.as_view()),
 
     path('ticket', TicketListCreateAPIView.as_view()),
-    path('ticket/<str:ticket_id>/messages', MessageListCreateAPIView.as_view())
+    path('ticket/<str:ticket_id>/messages', MessageListCreateAPIView.as_view()),
+
+    path('notifications', NotificationListAPIView.as_view()),
 ]

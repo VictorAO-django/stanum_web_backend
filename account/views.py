@@ -1109,4 +1109,11 @@ class MessageListCreateAPIView(generics.ListCreateAPIView):
         ticket = get_object_or_404(Ticket, ticket_id=ticket_id, user=self.request.user)
         return ticket.messages.order_by("created_at")
 
-    
+
+class NotificationListAPIView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = LargeResultsSetPagination
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user).order_by("-created_at")

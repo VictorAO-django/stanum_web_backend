@@ -23,6 +23,10 @@ urlpatterns = [
     path('users/<str:id>', UserDetailView.as_view()),
     path('users/<str:id>/delete', DeleteUserView.as_view()),
     path('users/<str:id>/kyc', UserKYCView.as_view()),
+    path('users/<str:id>/kyc/id/action', ProofOfIDActionView.as_view()),
+    path('users/<str:id>/kyc/address1/action', ProofOfAddress1ActionView.as_view()),
+    path('users/<str:id>/kyc/address2/action', ProofOfAddress2ActionView.as_view()),
+
     path('users/<str:id>/wallet', UserWalletView.as_view()),
     path('users/<str:id>/wallet/transactions', UserWalletTransactionView.as_view()),
 

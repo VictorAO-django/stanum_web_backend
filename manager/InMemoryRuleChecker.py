@@ -57,7 +57,7 @@ class InMemoryRuleChecker:
             # print("checking")
             violations.extend(self._check_total_drawdown(account, challenge, total_drawdown))
             # print("checking2")
-            print("Done Checking Violations", account.login, violations)
+            # print("Done Checking Violations", account.login, violations)
             return violations
         except Exception as err:
             print("Error", str(err))
@@ -357,13 +357,16 @@ class InMemoryRuleChecker:
     
     def _check_profit(self, account: AccountData, challenge: PropFirmChallenge) -> bool:
         """Check if account has reached the profit target."""
-        # logger.info("CHECKING PROFIT")
+        logger.info(f"CHECKING PROFIT {account.login}")
         current_profit = account.profit
         if account.step == 2:
             target_profit_amount = (challenge.phase_2_profit_target_percent / Decimal(100)) * challenge.account_size
         else:
             target_profit_amount = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
-        logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
+
+        if (account.login == 4005):
+            logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
+        
 
         # Check if profit target is reached
         return current_profit >= target_profit_amount

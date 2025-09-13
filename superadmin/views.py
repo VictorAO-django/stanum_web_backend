@@ -169,6 +169,62 @@ class UserKYCView(generics.RetrieveAPIView):
     queryset=User.objects.all()
     lookup_field='id'
 
+class ProofOfIDActionView(APIView):
+    permission_classes=[permissions.IsAdminUser]
+
+    def post(self, request, id, *args, **kwargs):
+        data = request.data.get('status', 'pending')
+        if data in ['approved', 'rejected']:
+            user =get_object_or_404(User, id=id)
+            proof = get_object_or_404(ProofOfIdentity, user=user)
+            proof.status = data
+            proof.reviewed_at=timezone.now()
+            proof.save()
+            if data=='approved':
+                Mailer(user.email).kyc(user, 'proof_of_id_approved')
+            if data=='rejected':
+                Mailer(user.email).kyc(user, 'proof_of_id_rejected')
+            return Response({'status': 'Ok'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Bad Request'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProofOfAddress1ActionView(APIView):
+    permission_classes=[permissions.IsAdminUser]
+
+    def post(self, request, id, *args, **kwargs):
+        data = request.data.get('status', 'pending')
+        if data in ['approved', 'rejected']:
+            user =get_object_or_404(User, id=id)
+            proof = get_object_or_404(ProofOfAddress, user=user, address_type='home_address_1')
+            proof.status = data
+            proof.reviewed_at=timezone.now()
+            proof.save()
+            if data=='approved':
+                Mailer(user.email).kyc(user, 'proof_of_ha1_approved')
+            if data=='rejected':
+                Mailer(user.email).kyc(user, 'proof_of_ha1_rejected')
+            return Response({'status': 'Ok'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Bad Request'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProofOfAddress2ActionView(APIView):
+    permission_classes=[permissions.IsAdminUser]
+
+    def post(self, request, id, *args, **kwargs):
+        data = request.data.get('status', 'pending')
+        if data in ['approved', 'rejected']:
+            user =get_object_or_404(User, id=id)
+            proof = get_object_or_404(ProofOfAddress, user=user, address_type='home_address_2')
+            proof.status = data
+            proof.reviewed_at=timezone.now()
+            proof.save()
+            if data=='approved':
+                Mailer(user.email).kyc(user, 'proof_of_ha2_approved')
+            if data=='rejected':
+                Mailer(user.email).kyc(user, 'proof_of_ha2_rejected')
+            return Response({'status': 'Ok'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Bad Request'}, status=status.HTTP_400_BAD_REQUEST)
+
 class UserWalletView(generics.RetrieveAPIView):
     serializer_class = UserWalletSerializer
     permission_classes = [ permissions.IsAdminUser]
