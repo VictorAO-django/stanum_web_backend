@@ -94,23 +94,35 @@ class Mailer:
         self.html_content = render_to_string('emails/otp.html', context)
         self.send_with_template()
 
-    def payment_successful(self, amount, challenge: PropFirmChallenge):
+    def payment_successful(self, user, challenge: PropFirmChallenge, payment):
         self.subject = "Payment Received Successfully"
-        self.message = f"Your payment of ${amount} for {challenge.name} was received."
+        context = {
+            'user': user, 'challenge': challenge, 'payment': payment,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
 
-        self.send()
+        self.html_content = render_to_string('emails/payment_received.html', context)
+        self.send_with_template()
 
-    def payment_failed(self, amount, challenge: PropFirmChallenge):
+    def payment_failed(self, user, challenge: PropFirmChallenge, payment):
         self.subject = "Payment Failed"
-        self.message = f"Your payment of ${amount} for {challenge.name} failed."
+        context = {
+            'user': user, 'challenge': challenge, 'payment': payment,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
 
-        self.send()
+        self.html_content = render_to_string('emails/payment_failed.html', context)
+        self.send_with_template()
 
-    def payment_expired(self, amount, challenge: PropFirmChallenge):
-        self.subject = "Payment SessionExpired"
-        self.message = f"Your payment session of ${amount} for {challenge.name} has expired."
+    def payment_failed(self, user, challenge: PropFirmChallenge, payment):
+        self.subject = "Payment Session Expired"
+        context = {
+            'user': user, 'challenge': challenge, 'payment': payment,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
 
-        self.send()
+        self.html_content = render_to_string('emails/payment_expired.html', context)
+        self.send_with_template()
 
     def wallet_funding_success(self, transaction: PropFirmWalletTransaction):
         self.subject = "Wallet funding successful"
@@ -138,6 +150,16 @@ class Mailer:
             'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
         }
         self.html_content = render_to_string('emails/challenge_entry.html', context)
+        self.send_with_template()
+
+    def funded_account_issued(self, user:MT5User, challenge: PropFirmChallenge, password):
+        self.subject = f"Funded Account Issued"
+        context = {
+            'user': user, 'challenge': challenge, 'password': password, 'broker_name': settings.BROKER_NAME,
+            'server': settings.SERVER_NAME,'current_year': settings.CURRENT_YEAR, 
+            'company_name': settings.GLOBAL_SERVICE_NAME, 'firm_name': settings.GLOBAL_SERVICE_NAME,
+        }
+        self.html_content = render_to_string('emails/funded_account_issued.html', context)
         self.send_with_template()
 
     def challenge_passed_1(self, user:MT5User, challenge:PropFirmChallenge):
@@ -168,9 +190,9 @@ class Mailer:
         self.subject = f"Challenge failed {challenge.name}"
         context = {
             'user': user, 'firm_name': settings.GLOBAL_SERVICE_NAME, 'challenge': challenge, 'failure_reasons': failure_reasons,
-            'restart_url': f"{settings.FRONTEND_BASE_URL}"
+            'restart_url': f"{settings.FRONTEND_BASE_URL}funding"
         }
-        self.html_content = render_to_string('emails/challenge_passed.html', context)
+        self.html_content = render_to_string('emails/challenge_failed.html', context)
         self.send_with_template()
 
     def kyc(self, user,  action: Literal[
@@ -242,3 +264,29 @@ class Mailer:
 
         # send email
         self.send_with_template()
+
+    
+    def admin_trade_rule_violation(self, user:MT5User, violation: RuleViolationLog):
+        self.subject = f"Violation Notification"
+        context = {
+            'user': user, 'firm_name': settings.GLOBAL_SERVICE_NAME, 'violation': violation,
+        }
+        self.html_content = render_to_string('emails/rule_violation/trade_admin.html', context)
+        self.send_with_template()  
+
+
+    def user_trade_rule_violation(self, user:MT5User, violation: RuleViolationLog):
+        self.subject = f"Violation Notification"
+        context = {
+            'user': user, 'firm_name': settings.GLOBAL_SERVICE_NAME, 'violation': violation,
+        }
+        self.html_content = render_to_string('emails/rule_violation/trade_user.html', context)
+        self.send_with_template() 
+
+    def certificate_issued(self, certificate: ChallengeCertificate):
+        self.subject = f"Challenge Certificate Issued"
+        context = {
+            'certificate': certificate, 'firm_name': settings.GLOBAL_SERVICE_NAME,
+        }
+        self.html_content = render_to_string('emails/certificate_issued.html', context)
+        self.send_with_template() 

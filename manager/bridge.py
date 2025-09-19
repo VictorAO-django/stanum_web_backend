@@ -8,14 +8,13 @@ from .sinks.account import AccountSink, save_mt5_account
 from .sinks.summary import SummarySink
 from .sinks.daily import DailySink
 from .sinks.tick import TickSink
-from trading.models import MT5User, RuleViolationLog, MT5Position, MT5Account
+from trading.models import MT5User, RuleViolationLog, MT5Position, MT5Account, MT5Deal
 from challenge.models import PropFirmChallenge
 from datetime import datetime, timedelta
 from django.utils import timezone
 from collections import defaultdict
 from enum import Enum
 from typing import List, Dict
-from .account_manager import AccountManager
 from .InMemoryPropMonitoring import InMemoryPropMonitoring
 
 from .logging_config import get_prop_logger
@@ -171,6 +170,15 @@ class MetaTraderBridge:
         except Exception as err:
             logger.debug(f"Error replenishing account balance - {str(err)}")
 
+    def reset_account(self, login, initial_balance):
+        try:
+            logger.info(f"Account reset begins")
+            self._close_all_positions(login)
+            self.return_account_balance(login, initial_balance)
+            logger.info(f"Account reset successful")
+        except Exception as err:
+            logger.error(f"Failed to reset account {str(err)}")
+
     def tick(self, symbol, tick:MT5Manager.MTTick):
         self.in_memory_monitor.OnTick(symbol, tick)
 
@@ -185,6 +193,18 @@ class MetaTraderBridge:
     def remove_memory_position(self, position:MT5Position):
         logger.info(f"calling Bridge Remove position {position.login}")
         self.in_memory_monitor.remove_position(position)
+
+    def add_memory_deal(self, deal:MT5Deal):
+        logger.info(f"calling Bridge Add deal {deal.login}")
+        self.in_memory_monitor.add_deal(deal)
+    
+    def update_memory_deal(self, deal:MT5Deal):
+        logger.info(f"calling Bridge Update deal {deal.login}")
+        self.in_memory_monitor.update_deal(deal)
+
+    def remove_memory_deal(self, deal:MT5Deal):
+        logger.info(f"calling Bridge Remove deal {deal.login}")
+        self.in_memory_monitor.remove_deal(deal)
 
     def update_memory_account(self, account:MT5Account):
         logger.info(f"calling Bridge Update Account {account.login}")

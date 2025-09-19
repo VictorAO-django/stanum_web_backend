@@ -1,0 +1,8 @@
+##############################################################################################################
+### TO REMOVE HEDGING (I.E MAKE A NETTING ACCOUNT)
+##############################################################################################################
+This can be done with the IMTConGroup configuration.
+IMTConGroup::EnMarginMode 
+MARGIN_MODE_RETAIL (Used for the OTC market. Margin calculation is based on the type of instrument, as well as group settings. The netting position accounting system is used.)
+
+line 359

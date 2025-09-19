@@ -128,6 +128,11 @@ class ProofOfAddressSerializer(serializers.ModelSerializer):
         fields = ['id', 'address_type', 'document_type', 'document_file', 'status', 'submitted_at']
         read_only_fields = ['status', 'submitted_at']
 
+class KYCStatusSerializer(serializers.Serializer):
+    id = serializers.DictField()
+    address_1 = serializers.DictField()
+    address_2 = serializers.DictField()
+
 
 class HelpCenterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -159,12 +164,13 @@ class MessageSerializer(serializers.ModelSerializer):
         return data
     
 class TicketSerializer(serializers.ModelSerializer):
-    creator_name = serializers.CharField(source='user.full_name')
+    creator_name = serializers.CharField(source='user.full_name', read_only=True)
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Ticket
-        fields = ["ticket_id", "subject", "status", "created_at", "messages", 'creator_name']
+        fields = ["ticket_id", "subject", "status", "created_at", "messages", "creator_name"]
+        read_only_fields = ["ticket_id", "created_at"] 
 
 
 class NotificationSerializer(serializers.ModelSerializer):

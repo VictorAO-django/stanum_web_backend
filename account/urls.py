@@ -41,6 +41,7 @@ urlpatterns = [
     path('document-types', DocumentTypeListView.as_view()),
     path('kyc/identity', SubmitProofOfIdentityView.as_view()),
     path('kyc/address', SubmitProofOfAddressView.as_view()),
+    path('kyc/status', KYCStatusView.as_view()),
 
     path('2fa/setup', TwoFASetupView.as_view()),
 

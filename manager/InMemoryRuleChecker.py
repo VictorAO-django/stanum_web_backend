@@ -14,44 +14,18 @@ logger = get_prop_logger('rules')
 
 class InMemoryRuleChecker:
     """In-memory rule checker that persists across bridge restarts"""
-
-    def check_position_rules(self, position: MT5Manager.MTPosition, account: MT5Manager.MTAccount) -> List[str]:
-        """Check rules for a new deal"""
-        print("Analysing position", position.Login)
-        violations = []
-        
-        # if not challenge:
-        #     return violations
-        
-        # user = MT5User.objects.get(login=position.Login)
-
-        # # 1. Check HFT (High Frequency Trading)
-        # violations.extend(self._check_hft(position, challenge))
-        
-        # # 2. Check risk per trade
-        # violations.extend(self._check_risk_per_trade(position, challenge, user, account))
-        
-        # # 3 Check Overall Risk limit
-        # violations.extend(self._check_overall_risk_limit(position, challenge, user, account))
-
-        # # 3. Check symbol position limit (max 2 per symbol)
-        # violations.extend(self._check_symbol_limit(position, challenge))
-        
-        # # 4. Check for grid/martingale patterns
-        # violations.extend(self._check_prohibited_strategies(position, challenge))
-        
-        return violations
     
-    def check_account_rules(self, account: AccountData, challenge: PropFirmChallenge, daily_drawdown:DailyDrawdownData=None, total_drawdown:AccountTotalDrawdownData=None) -> List[str]:
+    def check_account_rules(self, account: AccountData, challenge: PropFirmChallenge, daily_drawdown:DailyDrawdownData=None, total_drawdown:AccountTotalDrawdownData=None) -> List[ViolationDict]:
         """Check account-level rules (drawdown, daily loss)"""
-        violations = []
+        violations:List[ViolationDict] = []
         # print("Checking Violations")
         if not challenge:
             return violations
         
         try:
-            # violations.extend(self._check_challenge_period(account, challenge))
-            violations.extend(self._check_max_days(account, challenge))
+            #Check if the challenge class is a funded or not
+            if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
+                violations.extend(self._check_max_days(account, challenge))
             if account.step != 2:
                 violations.extend(self._check_daily_drawdown(account, challenge, daily_drawdown))
             # print("checking")
@@ -62,172 +36,105 @@ class InMemoryRuleChecker:
         except Exception as err:
             print("Error", str(err))
     
-    # def _check_hft(self, position: MT5Manager.MTPosition, challenge: PropFirmChallenge) -> List[str]:
-    #     """Check for High Frequency Trading using database queries"""
-    #     violations = []
-        
-    #     # Count trades in last minute from database
-    #     one_minute_ago = timezone.now() - timedelta(minutes=1)
-    #     one_hour_ago = timezone.now() - timedelta(hours=1)
-        
-    #     recent_trades_count_1_min = MT5Position.objects.filter(login=position.Login, created_at__gte=one_minute_ago).count()
-    #     recent_trades_count_1_hr = MT5Position.objects.filter(login=position.Login, created_at__gte=one_hour_ago).count()
-        
-    #     if recent_trades_count_1_min > challenge.max_trades_per_minute:
-    #         violations.append(f"HFT_VIOLATION: {recent_trades_count_1_min} trades in 1 minute (limit: {challenge.max_trades_per_minute})")
-        
-    #     if recent_trades_count_1_hr > challenge.max_trades_per_hour:
-    #         violations.append(f"HFT_VIOLATION: {recent_trades_count_1_hr} trades in 1 hour (limit: {challenge.max_trades_per_hour})")
+    def _check_hft(self, deals: List[DealData], challenge: PropFirmChallenge) -> List[ViolationDict]:
+        """Check for High Frequency Trading using provided deals list"""
+        violations: List[ViolationDict] = []
 
-    #     return violations
-    
+        current_time_unix = int(time.time())
+        one_minute_ago = current_time_unix - 60
+        one_hour_ago = current_time_unix - 3600
 
-    # def _check_risk_per_trade(self, position: MT5Manager.MTPosition, challenge: PropFirmChallenge, user: MT5User, account: MT5Manager.MTAccount) -> List[str]:
-    #     violations = []
+        # Filter only real entry deals (buy/sell with entry IN or INOUT)
+        deals = [
+            d for d in deals 
+            if (d.action in [0, 1]) and (d.entry in [0, 2])
+        ]
 
-    #     if account.Equity <= 0:
-    #         return violations
+        # Count deals in the last minute/hour for this login
+        recent_trades_count_1_min = sum(1 for d in deals if  d.time and d.time >= one_minute_ago)
+        recent_trades_count_1_hr = sum(1 for d in deals if d.time and d.time >= one_hour_ago)
 
-    #     # Get position details
-    #     volume = abs(float(position.Volume))
-    #     price_open = float(position.PriceOpen)
-    #     equity = float(account.Equity)
-        
-    #     # Calculate actual risk (you need stop loss for this)
-    #     if hasattr(position, 'PriceSL') and position.PriceSL > 0:
-    #         stop_loss = float(position.PriceSL)
-            
-    #         # Calculate risk per unit
-    #         risk_per_unit = abs(price_open - stop_loss)
-            
-    #         # Calculate total risk amount
-    #         pip_value = volume * risk_per_unit  # This may need adjustment based on instrument
-    #         risk_amount = pip_value
-            
-    #         # Calculate risk as percentage of equity
-    #         risk_percent = (risk_amount / equity) * 100
-            
-    #         print(f"DEBUG - Risk Amount: {risk_amount}, Risk Percent: {risk_percent}%")
-            
-    #         max_risk = challenge.max_risk_per_trade_percent
-            
-    #         if risk_percent > max_risk:
-    #             violations.append(f"RISK_EXCEEDED: {risk_percent:.2f}% risk (max: {max_risk}%)")
-    #     else:
-    #         # If no stop loss, you might want to flag this as unlimited risk
-    #         violations.append("NO_STOP_LOSS: Position has unlimited risk")
-            
-    #     return violations
+        if recent_trades_count_1_min > challenge.max_trades_per_minute:
+            violations.append(
+                {"type": "HFT_MINUTE_VIOLATION", "message": f"{recent_trades_count_1_min} trades in 1 minute (limit: {challenge.max_trades_per_minute})"}
+            )
+
+        if recent_trades_count_1_hr > challenge.max_trades_per_hour:
+            violations.append(
+                {"type": "HFT_HOUR_VIOLATION", "message": f"{recent_trades_count_1_hr} trades in 1 hour (limit: {challenge.max_trades_per_hour})"}
+            )
+
+        return violations
+
     
+    def _check_symbol_limit(self, position:PositionData, positions:List[PositionData], challenge: PropFirmChallenge) -> List[ViolationDict]:
+        """Check positions per symbol using database"""
+        violations:List[ViolationDict] = []
+        
+        # Count existing positions for this symbol (excluding the current one being added)
+        count = sum(1 for p in positions if p.symbol == position.symbol and p.position_id != position.position_id)
+        # Add 1 for the current position being added
+        total_count = count + 1
+
+        max_positions_per_symbol = challenge.max_orders_per_symbol
+        if total_count > max_positions_per_symbol:
+            violations.append(
+                {"type": "SYMBOL_LIMIT", "message": f"{count} positions on {position.symbol} (max: {max_positions_per_symbol})"}
+            )
+                
+        return violations
     
-    # def _check_overall_risk_limit(self, position: MT5Manager.MTPosition, challenge: PropFirmChallenge, user: MT5User, account: MT5Manager.MTAccount) -> List[str]:
-    #     """Check overall risk across all open positions"""
-    #     violations = []
-        
-    #     if account.Equity <= 0:
-    #         return violations
-        
-    #     # Get all current open positions for this login
-    #     all_positions = MT5Position.objects.filter(login=position.Login, closed=False)
-        
-    #     total_risk_amount = 0
-    #     positions_without_stops = 0
-        
-    #     for pos in all_positions:
-    #         volume = abs(float(pos.volume))
-    #         price_open = float(pos.price_open)
-            
-    #         # Calculate actual risk based on stop loss
-    #         if hasattr(pos, 'price_sl') and pos.price_sl and float(pos.price_sl) > 0:
-    #             stop_loss = float(pos.price_sl)
-                
-    #             # Risk per unit (distance to stop loss)
-    #             risk_per_unit = abs(price_open - stop_loss)
-                
-    #             # Total risk for this position
-    #             position_risk = volume * risk_per_unit  # May need adjustment for different instruments
-    #             total_risk_amount += position_risk
-                
-    #         else:
-    #             # Position without stop loss = unlimited risk
-    #             positions_without_stops += 1
-        
-    #     # Calculate total risk percentage
-    #     total_risk_percent = (total_risk_amount / float(account.Equity)) * 100
-        
-    #     print(f"DEBUG - Total Risk Amount: {total_risk_amount}, Total Risk %: {total_risk_percent}%")
-        
-    #     max_overall_risk = challenge.overall_risk_limit_percent
-        
-    #     if total_risk_percent > max_overall_risk:
-    #         violations.append(f"OVERALL_RISK_EXCEEDED: {total_risk_percent:.2f}% total risk (max: {max_overall_risk}%)")
-        
-    #     if positions_without_stops > 0:
-    #         violations.append(f"POSITIONS_WITHOUT_STOPS: {positions_without_stops} positions have unlimited risk")
-        
-    #     return violations
+    def _check_prohibited_strategies(self, deals: List[DealData], challenge: "PropFirmChallenge") -> List[ViolationDict]:
+        """Detects prohibited strategies such as Grid and Martingale. Returns a list of detected violations."""
+
+        violations:List[ViolationDict] = []
+
+        # Filter only relevant "entry" deals (open/in-out trades)
+        open_deals = [
+            d for d in deals
+            if (d.action in [0, 1]) and (d.entry in [0, 2])  # buy/sell + entry
+        ]
+        if not open_deals:
+            return violations
+
+        #Sort by time to process sequentially
+        open_deals.sort(key=lambda d: d.time)
+
+        # =========================================================
+        # GRID DETECTION
+        # Logic: multiple trades (3+) opened close in time with same lot size.
+        # Often across same symbol, but we can check globally too.
+        # =========================================================
+        if not challenge.grid_trading_allowed and len(open_deals) >= 3:
+            last_3 = open_deals[-3:]
+            volumes = [float(d.volume) for d in last_3]
+
+            if len(set(volumes)) == 1:
+                # optionally, you can check same symbol:
+                # symbols = {d.symbol for d in last_3}
+                # if len(symbols) == 1:
+                violations.append(
+                    {"type": "GRID_DETECTED", "message": f"3+ trades with equal volume ({volumes[0]})"}
+                )
+
+        # =========================================================
+        # MARTINGALE DETECTION
+        # Logic: lot size increases after a losing trade.
+        # Classic martingale = "if previous trade lost, increase next volume".
+        # =========================================================
+        if not challenge.martingale_allowed and len(open_deals) >= 2:
+            for prev, curr in zip(open_deals[:-1], open_deals[1:]):
+                prev_loss = prev.profit < 0
+                increased_lot = curr.volume > prev.volume
+
+                if prev_loss and increased_lot:
+                    violations.append(
+                        {"type": "MARTINGALE_DETECTED", "message": f"Lot increased from {prev.volume} - {curr.volume} after a loss"}
+                    )
+                    break  # one detection is enough
+
+        return violations
     
-    # def _check_symbol_limit(self, position: MT5Manager.MTPosition, challenge: PropFirmChallenge) -> List[str]:
-    #     """Check max 2 positions per symbol using database"""
-    #     violations = []
-        
-    #     # Count current open positions for this symbol
-    #     current_positions = MT5Position.objects.filter(
-    #         login=position.Login,
-    #         symbol=position.Symbol,
-    #         closed=False
-    #     ).count()
-        
-    #     max_positions_per_symbol = challenge.max_orders_per_symbol
-        
-    #     if current_positions > max_positions_per_symbol:
-    #         violations.append(f"SYMBOL_LIMIT: {current_positions} positions on {position.Symbol} (max: {max_positions_per_symbol})")
-                
-    #     return violations
-    
-    # def _check_prohibited_strategies(self, position: MT5Manager.MTPosition, challenge: PropFirmChallenge) -> List[str]:
-    #     """Basic grid/martingale/hedging detection using database queries"""
-    #     violations = []
-        
-    #     # Get recent positions for this login (last 24 hours)
-    #     positions = MT5Position.objects.filter(
-    #         login=position.Login,
-    #         closed=False
-    #     ).order_by('-created_at')
-        
-    #     if not challenge.grid_trading_allowed:
-    #         if positions.count() >= 3:
-    #             positions_list = list(positions)
-                
-    #             # Simple grid detection: 3+ trades with same volume
-    #             volumes = [float(d.volume) for d in positions_list]
-    #             if len(set(volumes)) == 1:  # All same volume
-    #                 violations.append(f"GRID_DETECTED: Equal volumes ({volumes[0]}) on {position.Symbol}")
-        
-    #     if not challenge.martingale_allowed:
-    #         # Simple martingale detection: check if volume doubled after loss
-    #         if positions.count() >= 2:
-    #             positions_list = list(positions)
-    #             previous_position = positions_list[1]  # Second most recent
-                
-    #             if (float(previous_position.profit) < 0 and  # Previous trade was loss
-    #                 float(position.Volume) >= float(previous_position.volume) * 1.8):  # Current volume ~doubled
-    #                 violations.append(f"MARTINGALE_DETECTED: Volume increase after loss on {position.Symbol}")
-        
-    #     if not challenge.hedging_within_account_allowed:
-    #         # Hedging detection: Check for opposing positions on same symbol
-    #         current_positions = MT5Position.objects.filter(
-    #             login=position.Login,
-    #             symbol=position.Symbol
-    #         ).exclude(position_id=position.Position)  # Exclude current position
-            
-    #         for existing_pos in current_positions:
-    #             # Check if positions are opposing (different action types)
-    #             if existing_pos.action != position.Action:  # 0=BUY, 1=SELL
-    #                 violations.append(f"HEDGING_DETECTED: Opposing positions on {position.Symbol} - Current: {'BUY' if position.Action == 0 else 'SELL'}, Existing: {'BUY' if existing_pos.action == 0 else 'SELL'}")
-    #                 break  # Only report once per symbol
-                    
-    #     return violations
     
     def _check_min_days(self, account: AccountData, challenge: PropFirmChallenge) -> list[str]:
         """Check if minimum trading days have been met."""
@@ -258,18 +165,18 @@ class InMemoryRuleChecker:
         # Checks
         if days_elapsed > total_allowed_days:
             violations.append(
-                f"MAX DAYS EXCEEDED: {days_elapsed} > allowed {total_allowed_days}"
+                f"MAX_DAYS_EXCEEDED: {days_elapsed} > allowed {total_allowed_days}"
             )
         elif days_elapsed < challenge.min_trading_days:
             violations.append(
-                f"MIN DAYS NOT REACHED: {days_elapsed}/{challenge.min_trading_days}"
+                f"MIN_DAYS_NOT_REACHED: {days_elapsed}/{challenge.min_trading_days}"
             )
         # print("DONE CHECKING PERIOD")
         return violations
 
-    def _check_max_days(self, account: AccountData, challenge: PropFirmChallenge) -> list[str]:
+    def _check_max_days(self, account: AccountData, challenge: PropFirmChallenge) -> list[ViolationDict]:
         """Check if account has exceeded max trading days (including extensions)."""
-        violations = []
+        violations:List[ViolationDict] = []
 
         max_days = challenge.max_trading_days or 0
         additional_days = challenge.additional_trading_days or 0
@@ -281,15 +188,15 @@ class InMemoryRuleChecker:
 
         if days_elapsed > total_allowed_days:
             violations.append(
-                f"MAX DAYS EXCEEDED: {days_elapsed} > allowed {total_allowed_days}"
+                {"type": "MAX_DAYS_EXCEEDED", "message": f"{days_elapsed} > allowed {total_allowed_days}"}
             )
 
         return violations
 
-    def _check_daily_drawdown(self, account: AccountData, challenge: PropFirmChallenge, dd: DailyDrawdownData) -> list[str]:
+    def _check_daily_drawdown(self, account: AccountData, challenge: PropFirmChallenge, dd: DailyDrawdownData) -> list[ViolationDict]:
         """Check drawdown limits using tracked high-watermark equity."""
         # print("CHECKING DAILY DRAWSOWN", dd)
-        violations = []
+        violations:List[ViolationDict] = []
 
         if dd:
             equity_peak = float(dd.equity_high)
@@ -305,11 +212,11 @@ class InMemoryRuleChecker:
         else:
             current_dd_percent = 0
 
-        max_dd = float(challenge.max_total_loss_percent)
-
+        max_dd = float(challenge.max_daily_loss_percent)
+        
         if current_dd_percent > max_dd:
             violations.append(
-                f"DAILY_DRAWDOWN_EXCEEDED: {current_dd_percent:.2f}% (max: {max_dd}%)"
+                {"type": "DAILY_DRAWDOWN_EXCEEDED", "message": f"{current_dd_percent:.2f}% (max: {max_dd}%)"}
             )
         # elif current_dd_percent > max_dd * 0.8:  # 80% warning threshold
         #     violations.append(
@@ -319,12 +226,12 @@ class InMemoryRuleChecker:
         # print("DONE CHECKING DAILY DRAWSOWN")
         return violations
         
-    def _check_total_drawdown(self, account: AccountData, challenge: PropFirmChallenge, total_dd: AccountTotalDrawdownData) -> List[str]:
+    def _check_total_drawdown(self, account: AccountData, challenge: PropFirmChallenge, total_dd: AccountTotalDrawdownData) -> List[ViolationDict]:
         """
         Check overall drawdown using AccountTotalDrawdown model.
         """
         # print("CHECKING TOTALDRAWDOWN", total_dd)
-        violations = []
+        violations:List[ViolationDict] = []
         current_equity = account.equity
 
         # Update peak/low and recalc drawdown
@@ -344,8 +251,7 @@ class InMemoryRuleChecker:
         # 3. Compare current equity to limits
         if current_equity < min_allowed_equity:
             violations.append(
-                f"TOTAL_DRAWDOWN_EXCEEDED: Equity {current_equity:.2f} < {min_allowed_equity:.2f} "
-                f"(limit {max_dd_percent}%)"
+                {"type": "TOTAL_DRAWDOWN_EXCEEDED", "message": f"TOTAL_DRAWDOWN_EXCEEDED: Equity {current_equity:.2f} < {min_allowed_equity:.2f} (limit {max_dd_percent}%)"}
             )
         # elif current_equity < min_allowed_equity * 1.1:  # optional 10% warning buffer
         #     violations.append(

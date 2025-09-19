@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Trading Violation Notice</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f5f5f5; margin: 0; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-align: center;">
+
+    <h2 style="color: #d9534f; margin-bottom: 20px;">⚠️ Trading Rule Violation</h2>
+
+    <p style="margin-bottom: 20px;">Dear {{ user.user.full_name }},</p>
+
+    <p style="margin-bottom: 20px;">
+      Our monitoring system has detected a <strong>rule violation</strong> on your account 
+      <strong>{{ user.login }}</strong>.
+    </p>
+
+    <table cellpadding="8" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%; margin: 0 auto; text-align: left;">
+      <tr style="background-color: #f9f9f9;">
+        <td><strong>Symbol:</strong></td>
+        <td>{{ violation.trade_data.symbol }}</td>
+      </tr>
+      <tr>
+        <td><strong>Violation Type:</strong></td>
+        <td>{{ violation.violation_type }}</td>
+      </tr>
+      <tr style="background-color: #f9f9f9;">
+        <td><strong>Details:</strong></td>
+        <td>{{ violation.message }}</td>
+      </tr>
+      <tr>
+        <td><strong>Detected At:</strong></td>
+        <td>{{ violation.timestamp|date:"D d M Y H:i" }}</td>
+      </tr>
+    </table>
+
+    <p style="margin-top: 30px; margin-bottom: 20px;">
+      Please review your trading activity and ensure you remain compliant with the rules 
+      of the <strong>{{ user.challenge.name }}</strong> challenge.  
+      Continued violations may result in <strong>trade closure or account suspension</strong>.
+    </p>
+
+    <p style="margin-top: 30px; color: #666;">Thank you for your cooperation,<br>
+    <em>Prop Firm Compliance Team</em></p>
+
+  </div>
+</body>
+</html>

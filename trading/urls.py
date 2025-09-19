@@ -14,6 +14,7 @@ urlpatterns = [
 
     path('accounts/<str:login>/earning', AccountEarningsView.as_view()),
     path('accounts/<str:login>/performance', AccountPerformanceView.as_view()),
+    path('accounts/<str:login>/logs', AccountLogsApiView.as_view()),
 
     path('top-traders', TopTradersView.as_view())
 ]   

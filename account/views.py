@@ -5,7 +5,6 @@ from django.http import Http404
 from django.db.models import Sum, Avg, Count, Max, Min
 from django.views.decorators.cache import cache_page
 from django.utils.dateparse import parse_datetime
-from metaapi_cloud_sdk import MetaApi
 from django_filters.rest_framework import DjangoFilterBackend
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, render
@@ -924,7 +923,7 @@ class SubmitProofOfIdentityView(APIView):
 
         serializer = ProofOfIdentitySerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=user)  # Ensure user is set
+            serializer.save(user=user, status='pending')  # Ensure user is set
             return custom_response(
                 status="success",
                 message="Document uploaded. Admin will review within 24 hours.",
@@ -971,7 +970,7 @@ class SubmitProofOfAddressView(APIView):
 
         serializer = ProofOfAddressSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(user=user)  # Ensure user is set
+            serializer.save(user=user, status='pending')  # Ensure user is set
             return custom_response(
                 status="success",
                 message="Document uploaded. Admin will review within 24 hours.",
@@ -996,6 +995,25 @@ class SubmitProofOfAddressView(APIView):
                 status=status.HTTP_200_OK
             )
         return Response(data=[], status=status.HTTP_200_OK)
+
+
+class KYCStatusView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = KYCStatusSerializer
+
+    def get_object(self):
+        user = self.request.user
+        proof_id = ProofOfIdentity.objects.filter(user=user).last()
+        proof_address_1 = ProofOfAddress.objects.filter(user=user, address_type='home_address_1').last()
+        proof_address_2 = ProofOfAddress.objects.filter(user=user, address_type='home_address_2').last()
+
+        return {
+            "id": {"status": proof_id.status if proof_id else None},
+            "address_1": {"status": proof_address_1.status if proof_address_1 else None},
+            "address_2": {"status": proof_address_2.status if proof_address_2 else None},
+        }
+
+        
 
 
 class TwoFASetupView(APIView):
@@ -1117,3 +1135,4 @@ class NotificationListAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return Notification.objects.filter(recipient=self.request.user).order_by("-created_at")
+    

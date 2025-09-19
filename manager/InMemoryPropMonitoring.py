@@ -1,16 +1,21 @@
-import MT5Manager, traceback
+import MT5Manager, traceback, redis
 from datetime import date
+from django.conf import settings
 from django.utils.timezone import now
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from trading.models import *
 from account.models import Notification
 from trading.tasks import *
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from .InMemoryData import *
 from .InMemoryRuleChecker import *
 
 from .logging_config import get_prop_logger
 logger = get_prop_logger('monitoring')
+
+channel_layer = get_channel_layer()
 
 class InMemoryPropMonitoring:
     def __init__(self, bridge):
@@ -19,12 +24,15 @@ class InMemoryPropMonitoring:
 
         self.local_accounts: Dict[int, AccountData] = {}
         self.positions: Dict[int, List[PositionData]] = {}
+        self.deals: Dict[int, List[DealData]] = {}
         self.account_challenge: Dict[int, PropFirmChallenge] = {}
 
         self.symbol:Dict[str, MT5Manager.MTTick] = {}
 
         self.daily_drawdowns: Dict[int, Dict[date, DailyDrawdownData]] = {}
         self.total_drawdown: Dict[int, AccountTotalDrawdownData] = {}
+
+        self.violation_counts: Dict[int, Dict[str, int]] = {} 
 
         self._load_local_accounts()
         self._load_positions()
@@ -42,18 +50,23 @@ class InMemoryPropMonitoring:
         logger.info(f"Account Removed {login}")
 
     def add_account(self, acc:MT5Account):
-        acc_state =  AccountData(
-            login=acc.login, currency_digits=acc.currency_digits, balance=acc.balance, credit=acc.credit, margin=acc.margin,
-            prev_margin=acc.prev_margin, margin_free=acc.margin_free, prev_margin_free=acc.prev_margin_free, margin_level=acc.margin_level,
-            margin_leverage=acc.margin_leverage, margin_initial=acc.margin_initial, margin_maintenance=acc.margin_maintenance,
-            profit=acc.profit, storage=acc.storage, commission=acc.commission, floating=acc.floating, equity=acc.equity, prev_equity=acc.prev_equity,
-            so_activation=acc.so_activation, so_time=acc.so_time, so_level=acc.so_level, so_equity=acc.so_equity, so_margin=acc.so_margin,
-            blocked_commission=acc.blocked_commission, blocked_profit=acc.blocked_profit, assets=acc.assets, liabilities=acc.liabilities,
-            active=acc.active, created_at=acc.created_at, updated_at=acc.updated_at, step=acc.step
-        )
-        self.local_accounts[acc.login] = acc_state
-        self.account_challenge[acc.login] = acc.mt5_user.challenge
-        logger.info(f"Added Account {acc.login}")
+        try:
+            acc_state =  AccountData(
+                login=acc.login, currency_digits=acc.currency_digits, balance=acc.balance, credit=acc.credit, margin=acc.margin,
+                prev_margin=acc.prev_margin, margin_free=acc.margin_free, prev_margin_free=acc.prev_margin_free, margin_level=acc.margin_level,
+                margin_leverage=acc.margin_leverage, margin_initial=acc.margin_initial, margin_maintenance=acc.margin_maintenance,
+                profit=acc.profit, storage=acc.storage, commission=acc.commission, floating=acc.floating, equity=acc.equity, prev_equity=acc.prev_equity,
+                so_activation=acc.so_activation, so_time=acc.so_time, so_level=acc.so_level, so_equity=acc.so_equity, so_margin=acc.so_margin,
+                blocked_commission=acc.blocked_commission, blocked_profit=acc.blocked_profit, assets=acc.assets, liabilities=acc.liabilities,
+                active=acc.active, created_at=acc.created_at, updated_at=acc.updated_at, step=acc.step
+            )
+            self.local_accounts[acc.login] = acc_state
+            self.account_challenge[acc.login] = acc.mt5_user.challenge
+            logger.info(f"Added Account {acc.login}")
+            return True
+        except Exception as err:
+            logger.error(f"Error adding account {acc.login}: {str(err)}")
+            return False
     
     def update_account(self, acc: MT5Account):
         try:
@@ -74,10 +87,14 @@ class InMemoryPropMonitoring:
             self.local_accounts[acc.login] = updated
             self.account_challenge[acc.login] = acc.mt5_user.challenge
             logger.info(f"Updated Account {acc.login}")
-
+            return True
         except Exception as err:
             logger.debug(f"Error while updating Account {str(err)}")
+            return False
     
+    #############################################################################################################
+    ## POSITION
+    #############################################################################################################
     def _load_positions(self):
         positions = MT5Position.objects.filter(closed=False)
         for pos in positions:
@@ -105,8 +122,18 @@ class InMemoryPropMonitoring:
                 action=pos.action, reason=pos.reason, digits=pos.digits, digits_currency=pos.digits_currency, obsolete_value=pos.obsolete_value
             )
             self.positions.setdefault(pos.login, []).append(pos_state)
+            #update equity with new position included
+            self.update_account_equity(pos.login)
+
             logger.info(f"Position Addedd {pos.login}")
-            # self._check_trading_rules(pos.login)
+
+            positions = self.deals.get(pos.login, [])
+            challenge = self.account_challenge.get(pos.login)
+
+            violations:List[ViolationDict] = []
+            violations.extend(self.rule_checker._check_symbol_limit(pos, positions, challenge))
+            self._handle_trade_violations(pos.login, pos.symbol, violations)
+
 
         except Exception as err:
             logger.debug(f"Error while updating position {str(err)}")
@@ -149,29 +176,154 @@ class InMemoryPropMonitoring:
     
     def _clear_positions(self, login):
         self.positions[login] = []
+
+    #############################################################################################################
+    ## DEALS
+    #############################################################################################################
+    def _load_deals(self):
+        deals = MT5Deal.objects.filter(deleted=False)
+        for deal in deals:
+            deal_state = DealData(
+                deal=deal.deal, login=deal.login, order=deal.order, external_id=deal.external_id, dealer=deal.dealer,
+                action=deal.action, entry=deal.entry, symbol=deal.symbol, comment=deal.comment, reason=deal.reason,
+                action_gateway=deal.action_gateway, gateway=deal.gateway, price=float(deal.price), price_sl=float(deal.price_sl),
+                price_tp=float(deal.price_tp), price_position=float(deal.price_position), price_gateway=float(deal.price_gateway),
+                market_bid=float(deal.market_bid), market_ask=float(deal.market_ask), market_last=float(deal.market_last),
+                volume=deal.volume, volume_ext=float(deal.volume_ext), volume_closed=deal.volume_closed, volume_closed_ext=float(deal.volume_closed_ext),
+                volume_gateway_ext=float(deal.volume_gateway_ext), profit=float(deal.profit), profit_raw=float(deal.profit_raw),
+                value=float(deal.value), storage=float(deal.storage), commission=float(deal.commission), fee=float(deal.fee),
+                contract_size=float(deal.contract_size), tick_value=float(deal.tick_value), tick_size=float(deal.tick_size),
+                rate_profit=float(deal.rate_profit), rate_margin=float(deal.rate_margin), digits=deal.digits, digits_currency=deal.digits_currency,
+                expert_id=deal.expert_id, position_id=deal.position_id, flags=deal.flags, modification_flags=deal.modification_flags,
+                deleted=deal.deleted, time=deal.time, time_msc=deal.time_msc, created_at=deal.created_at, updated_at=deal.updated_at,
+            )
+            self.deals.setdefault(deal.login, []).append(deal_state)
+        logger.info(f"Deals Loaded {len(deals)}")
     
+    def add_deal(self, deal:MT5Deal):
+        try:
+            deal_state = DealData(
+                deal=deal.deal, login=deal.login, order=deal.order, external_id=deal.external_id, dealer=deal.dealer,
+                action=deal.action, entry=deal.entry, symbol=deal.symbol, comment=deal.comment, reason=deal.reason,
+                action_gateway=deal.action_gateway, gateway=deal.gateway, price=float(deal.price), price_sl=float(deal.price_sl),
+                price_tp=float(deal.price_tp), price_position=float(deal.price_position), price_gateway=float(deal.price_gateway),
+                market_bid=float(deal.market_bid), market_ask=float(deal.market_ask), market_last=float(deal.market_last),
+                volume=deal.volume, volume_ext=float(deal.volume_ext), volume_closed=deal.volume_closed, volume_closed_ext=float(deal.volume_closed_ext),
+                volume_gateway_ext=float(deal.volume_gateway_ext), profit=float(deal.profit), profit_raw=float(deal.profit_raw),
+                value=float(deal.value), storage=float(deal.storage), commission=float(deal.commission), fee=float(deal.fee),
+                contract_size=float(deal.contract_size), tick_value=float(deal.tick_value), tick_size=float(deal.tick_size),
+                rate_profit=float(deal.rate_profit), rate_margin=float(deal.rate_margin), digits=deal.digits, digits_currency=deal.digits_currency,
+                expert_id=deal.expert_id, position_id=deal.position_id, flags=deal.flags, modification_flags=deal.modification_flags,
+                deleted=deal.deleted, time=deal.time, time_msc=deal.time_msc, created_at=deal.created_at, updated_at=deal.updated_at,
+            )
+            self.deals.setdefault(deal.login, []).append(deal_state)
+            logger.info(f"Deal Addedd {deal.login}")
+
+            deals = self.deals.get(deal.login, [])
+            challenge = self.account_challenge.get(deal.login)
+
+            violations:List[ViolationDict] = []
+            violations.extend(self.rule_checker._check_hft(deals, challenge))
+            violations.extend(self.rule_checker._check_prohibited_strategies(deals, challenge))
+
+            #Handle the Trade Violations
+            self._handle_trade_violations(deal.login, deal.symbol, violations)
+
+        except Exception as err:
+            logger.debug(f"Error while updating deal {str(err)}")
+
+    def update_deal(self, deal: MT5Deal):
+        try:
+            deal_entry = self.deals.get(deal.login, None)
+            if not deal_entry:
+                return  # nothing to update
+
+            for i, existing in enumerate(deal_entry):
+                if existing.deal == deal.deal:
+                    # overwrite with fresh data
+                    updated = DealData(
+                        deal=deal.deal, login=deal.login, order=deal.order, external_id=deal.external_id, dealer=deal.dealer,
+                        action=deal.action, entry=deal.entry, symbol=deal.symbol, comment=deal.comment, reason=deal.reason,
+                        action_gateway=deal.action_gateway, gateway=deal.gateway, price=float(deal.price), price_sl=float(deal.price_sl),
+                        price_tp=float(deal.price_tp), price_position=float(deal.price_position), price_gateway=float(deal.price_gateway),
+                        market_bid=float(deal.market_bid), market_ask=float(deal.market_ask), market_last=float(deal.market_last),
+                        volume=deal.volume, volume_ext=float(deal.volume_ext), volume_closed=deal.volume_closed, volume_closed_ext=float(deal.volume_closed_ext),
+                        volume_gateway_ext=float(deal.volume_gateway_ext), profit=float(deal.profit), profit_raw=float(deal.profit_raw),
+                        value=float(deal.value), storage=float(deal.storage), commission=float(deal.commission), fee=float(deal.fee),
+                        contract_size=float(deal.contract_size), tick_value=float(deal.tick_value), tick_size=float(deal.tick_size),
+                        rate_profit=float(deal.rate_profit), rate_margin=float(deal.rate_margin), digits=deal.digits, digits_currency=deal.digits_currency,
+                        expert_id=deal.expert_id, position_id=deal.position_id, flags=deal.flags, modification_flags=deal.modification_flags,
+                        deleted=deal.deleted, time=deal.time, time_msc=deal.time_msc, created_at=deal.created_at, updated_at=deal.updated_at,
+                    )
+                    deal_entry[i] = updated
+                    break
+            logger.info(f"Deal Updated {deal.login}")
+        except Exception as err:
+            logger.debug(f"Error while updating deal {str(err)}")
+
+    def remove_deal(self, deal: MT5Deal):
+        try:
+            deal_entry = self.deals.get(deal.login, None)
+            if deal_entry:
+                for i in deal_entry:
+                    if i.deal == deal.deal:
+                        deal_entry.remove(i) #Remove Position
+                        break   # stop after removing
+            logger.info(f"Deal Removed {deal.login}")
+        except Exception as err:
+            logger.debug(f"Error while removing deal {str(err)}")
+    
+    def _clear_deals(self, login):
+        self.deals[login] = []
+    
+
+    def _handle_trade_violations(self, login, symbol, violations:List[ViolationDict]):
+        if violations:
+            compiled_violations:List[Tuple[ViolationDict, Literal['warning', 'severe', 'critical']]] = []
+            for violation in violations:
+                violation_type =violation['type']
+                if login not in self.violation_counts:
+                    self.violation_counts[login] = {}
+                if violation_type not in self.violation_counts[login]:
+                    self.violation_counts[login][violation_type] = 0
+                    
+                # Increment count
+                self.violation_counts[login][violation_type] += 1
+                count = self.violation_counts[login][violation_type]
+                severity:Literal['warning', 'severe', 'critical'] = 'warning'
+                if count == 1:
+                    severity = 'warning'
+                elif count == 2:
+                    severity = 'severe'  
+                elif count >= 3:
+                    severity = 'critical'
+
+                compiled_violations.append((violation, severity))
+            #Send email notification about the violation
+            trade_rule_violation_alert.delay(login, compiled_violations, symbol,)
+
+
     def cleanup_completed_account(self, login: int):
         """Remove all data for completed/failed accounts"""
         self.local_accounts.pop(login, None)
         self.positions.pop(login, None) 
+        self.deals.pop(login, None) 
         self.account_challenge.pop(login, None)
         self.daily_drawdowns.pop(login, None)
         self.total_drawdown.pop(login, None)
+        self.violation_counts.pop(login, None)
         logger.info(f"Cleaned up completed account {login}")
-                
-    def _check_trading_rules(self, login):
-        account = self.local_accounts.get(login)
-        violations = self.rule_checker.check_position_rules(account)
-        # Handle position violations through bridge
-        if violations and self.bridge:
-            # self.bridge.handle_violation(login, violations, "POSITION")
-            logger.info(f"Violations detected ({violations})")
-        elif violations:
-            # Fallback logging if bridge not available
-            logger.debug(f"Violations detected for {login} but no bridge available: {violations}")
 
     def _move_to_step_2(self, login, challenge:PropFirmChallenge):
         try:
+            # 1. First close all positions on MT5
+            self.bridge._close_all_positions(login)
+            # 2. Then clear from memory
+            self._clear_positions(login)
+            self._clear_deals(login)
+            # 3. Reset balance
+            self.bridge.return_account_balance(login, challenge.account_size)
+            # 4. Update database and memory state
             acc = self.local_accounts.get(login)
             acc.step = 2
 
@@ -180,10 +332,9 @@ class InMemoryPropMonitoring:
             mt5_account.phase_2_start_date = now()
             mt5_account.save()
 
-            # Reset tracking for new phase
+            # 5. Reset tracking for new phase
             self._reset_phase_tracking(login)
-            self.bridge._close_all_positions(login)
-            self.bridge.return_account_balance(login, challenge.account_size)
+            # 6. Send notification
             self._send_phase_1_success_notification(mt5_account.mt5_user, challenge)
 
             logger.info(f"Account {login} successfully moved to Phase 2")
@@ -215,9 +366,10 @@ class InMemoryPropMonitoring:
         except Exception as err:
             logger.debug(f"Error processing challenge pass for {acc.login}: {str(err)}")
 
-    def _challenge_failed(self, login: int, reasons:List[str], challenge:PropFirmChallenge):
+    def _challenge_failed(self, login: int, reasons:List[ViolationDict], challenge:PropFirmChallenge):
         """Handle complete challenge failure"""
         try:
+            # Update database first (before clearing memory)
             mt5_account = MT5Account.objects.get(login=login)
             mt5_account.challenge_failed = True
             mt5_account.challenge_failure_date = now()
@@ -225,19 +377,33 @@ class InMemoryPropMonitoring:
             mt5_account.failure_reason = reasons
             mt5_account.save()
 
+            # Update user status
+            failure_type = "failed"
+            if any("MAX_DAYS_EXCEEDED" == reason['type'] for reason in reasons):
+                failure_type = "expired"
+            
             mt5_user = mt5_account.mt5_user
-            mt5_user.account_status = 'disabled'
+            mt5_user.account_status = failure_type
             mt5_user.save()
+            
+            # Try to disable account - if this fails, we still have the data
+            try:
+                #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
+                self.bridge.disable_challenge_account_trading(login)
+            except Exception as disable_error:
+                logger.error(f"Failed to disable trading for {login}: {disable_error}")
+                # Continue anyway - account is marked as failed in database
 
             #CLEAR IN MEMORY POSITION
             self._clear_positions(login)
-            #DISAVLE ACCOUNT AND CLOSE POSITIONS ON MT5
-            self.bridge.disable_challenge_account_trading(login)
+            #CLEAR IN MEMORY DEAL
+            self._clear_deals(login)
             #SEND NOTIFICATION ALERT
             self._send_challenge_failure_notification(mt5_user, challenge, reasons)
 
-            logger.info(f"Successfully processed challenge failure {login}")
+            # Finally cleanup (this removes all tracking data)
             self.cleanup_completed_account(login)
+            logger.info(f"Successfully processed challenge failure {login}")
 
         except Exception as err:
             logger.debug(f"Error processing challenge failure for {login}: {str(err)}")
@@ -259,6 +425,12 @@ class InMemoryPropMonitoring:
         
         if login in self.positions:
             self.positions[login] = []
+
+        if login in self.deals:
+            self.deals[login] = []
+
+        if login in self.violation_counts:
+            self.violation_counts[login] = {}
         
         logger.info(f"Phase 2: Fresh total drawdown tracking started at {account.equity}")
     
@@ -278,28 +450,30 @@ class InMemoryPropMonitoring:
 
                 challenge = self.account_challenge.get(acc.login)
                 broken_rules = self.rule_checker.check_account_rules(acc, challenge, dd, total_dd) 
-
+                
                 if len(broken_rules) == 0:
-                    # Check if minimum days requirement met
-                    if not self.rule_checker._check_min_days(acc, challenge):
-                        # logger.info(f"NO ACCOUNT VIOLATIONS BUT MIN DAYS NOT REACHED YET {acc.login}")
-                        return False
+                    #Check If the rules configuration is not for a funded account
+                    if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
+                        # Check if minimum days requirement met
+                        if not self.rule_checker._check_min_days(acc, challenge):
+                            # logger.info(f"NO ACCOUNT VIOLATIONS BUT MIN DAYS NOT REACHED YET {acc.login}")
+                            return False
 
-                    # Check if profit target met
-                    if self.rule_checker._check_profit(acc, challenge):
-                        # Both conditions met - determine next action based on phase
-                        if (challenge.challenge_type == 'two_step') and (acc.step == 1):
-                            # Move to Phase 2
-                            self._move_to_step_2(acc.login, challenge)
-                            return True
-                        else:
-                            # Challenge fully completed
-                            self._challenge_passed(acc, challenge)
-                            # Now clear drawdowns since challenge is fully done
-                            self._clear_drawdowns(acc.login)
-                            return True
-                    # logger.info(f"NO ACCOUNT VIOLATIONS BUT TARGET PROFIT NOT YET MADE {acc.login}")
-                    return False
+                        # Check if profit target met
+                        if self.rule_checker._check_profit(acc, challenge):
+                            # Both conditions met - determine next action based on phase
+                            if (challenge.challenge_type == 'two_step') and (acc.step == 1):
+                                # Move to Phase 2
+                                self._move_to_step_2(acc.login, challenge)
+                                return True
+                            else:
+                                # Challenge fully completed
+                                self._challenge_passed(acc, challenge)
+                                # Now clear drawdowns since challenge is fully done
+                                self._clear_drawdowns(acc.login)
+                                return True
+                        # logger.info(f"NO ACCOUNT VIOLATIONS BUT TARGET PROFIT NOT YET MADE {acc.login}")
+                        return False
                 else:
                     self._handle_account_rules_violation(acc.login, broken_rules)
                     self._challenge_failed(acc.login, broken_rules, challenge)
@@ -339,6 +513,11 @@ class InMemoryPropMonitoring:
                 if not price:
                     continue
 
+                # Validate tick data
+                if price.bid <= 0 or price.ask <= 0:
+                    logger.warning(f"Invalid tick data for {pos.symbol}: bid={price.bid}, ask={price.ask}")
+                    continue
+
                 current_bid = Decimal(str(price.bid))
                 current_ask = Decimal(str(price.ask))
                 volume_in_lots = Decimal(pos.volume / 10000)
@@ -363,6 +542,10 @@ class InMemoryPropMonitoring:
             free_margin = equity - margin
 
             # logger.info(f"Final calculation: Total Profit-{profit} Total Margin-{margin} Equity-{equity} Free Margin-{free_margin}")
+
+            # Validate final equity calculation
+            if equity < 0:
+                logger.error(f"Negative equity calculated for {login}: {equity}")
 
             # update account state
             account.prev_equity = account.equity
@@ -454,7 +637,7 @@ class InMemoryPropMonitoring:
             # Update peak if current equity is higher
             if account.equity > td.equity_peak:
                 td.equity_peak = account.equity
-                td.equity_low = account.equity  # reset low after new peak
+                # td.equity_low = account.equity  # reset low after new peak
             else:
                 # Update equity low if lower
                 if td.equity_low == 0 or account.equity < td.equity_low:
@@ -471,19 +654,15 @@ class InMemoryPropMonitoring:
             logger.debug(f"Error updating account total drawdown: {str(err)}")
             traceback.print_exc()
 
-    def _handle_account_rules_violation(self, login: int, violations: List[str]):
+    def _handle_account_rules_violation(self, login: int, violations: List[ViolationDict]):
         """Handle rule violations - warnings or account restrictions"""
         try:
+            compiled_violations:List[Tuple[ViolationDict, Literal['warning', 'severe', 'critical']]] =  []
             for violation in violations:
-                # Log violation
-                RuleViolationLog.objects.create(
-                    login=login,
-                    violation_type="RULES_VIOLATION",
-                    violations=violation,
-                    message='critical',
-                    timestamp=now(),
-                    auto_closed=True
-                )
+                compiled_violations.append((violation, 'severe'))
+            
+            #Send email notification about the violation
+            account_rule_violation_log.delay(login, compiled_violations)
             logger.info(f"Violations logged for {login}: {violations}")
             
         except Exception as e:
@@ -509,7 +688,7 @@ class InMemoryPropMonitoring:
             logger.debug(f"Could not send challenge success notification {user.login} - {str(err)}")
 
 
-    def _send_challenge_failure_notification(self, user: MT5User, challenge: PropFirmChallenge, reasons: List[str]):
+    def _send_challenge_failure_notification(self, user: MT5User, challenge: PropFirmChallenge, reasons: List[ViolationDict]):
         try:
             result = send_challenge_failed_mail_task.delay(user.login, challenge.id, reasons)
         except Exception as err:
@@ -534,19 +713,59 @@ class InMemoryPropMonitoring:
             for pos in positions:
                 used_symbols.add(pos.symbol)
         
-        symbols_to_remove = [symbol for symbol in self.symbol 
-                            if symbol not in used_symbols]
-        for symbol in symbols_to_remove:
-            del self.symbol[symbol]
+        # Keep a small buffer for recently used symbols
+        symbols_to_remove = []
+        for symbol in self.symbol:
+            if symbol not in used_symbols:
+                symbols_to_remove.append(symbol)
         
-        if symbols_to_remove:
-            logger.info(f"Cleaned up {len(symbols_to_remove)} unused symbols")
+        # Only remove if we have too many unused symbols
+        if len(symbols_to_remove) > 100:  # Configurable threshold
+            for symbol in symbols_to_remove[:50]:  # Remove oldest 50
+                del self.symbol[symbol]
+            logger.info(f"Cleaned up {len(symbols_to_remove[:50])} unused symbols")
 
 
 
 
 
-
+    ###############################################################################################################################
+    ################# WEBSOCKET USAGE
+    ###############################################################################################################################
+    def _broadcast_account_stats(self, login: int):
+        """Send real-time stats to Redis for WebSocket subscribers"""
+        if not self.redis_client:
+            return
+            
+        try:
+            stats = self.account_stat(login)
+            
+            # Add drawdown data
+            today = now().date()
+            daily_dd = self.daily_drawdowns.get(login, {}).get(today)
+            total_dd = self.total_drawdown.get(login)
+            
+            stats.update({
+                'daily_drawdown_percent': float(daily_dd.drawdown_percent) if daily_dd else 0,
+                'total_drawdown_percent': float(total_dd.drawdown_percent) if total_dd else 0,
+                'equity_peak': float(total_dd.equity_peak) if total_dd else 0,
+                'equity_low': float(total_dd.equity_low) if total_dd else 0,
+                'daily_equity_high': float(daily_dd.equity_high) if daily_dd else 0,
+                'daily_equity_low': float(daily_dd.equity_low) if daily_dd else 0,
+                'timestamp': int(time.time())
+            })
+            
+            group_name = f"account_{login}"
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    "type": "account_stats",  # This maps to consumer handler
+                    "data": json.dumps(stats),
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Error broadcasting stats for {login}: {e}")
 
 
     ###############################################################################################################################

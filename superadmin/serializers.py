@@ -3,6 +3,7 @@ from account.models import *
 from challenge.models import *
 from payment.models import *
 from trading.models import *
+from utils.helper import *
 
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
@@ -84,3 +85,66 @@ class UserWalletTransactionSerializer(serializers.ModelSerializer):
             return f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={obj.pay_address}"
         return None
     
+
+
+class AdminMT5UserSerializer(serializers.ModelSerializer):
+    challenge_name = serializers.SerializerMethodField()
+    challenge_class = serializers.CharField(source='challenge.challenge_class')
+    free_margin = serializers.SerializerMethodField()
+    net_profit = serializers.SerializerMethodField()
+    account_size = serializers.SerializerMethodField()
+    equity = serializers.SerializerMethodField()
+    password = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+    user_id = serializers.SerializerMethodField()
+    class Meta:
+        model = MT5User
+        fields = [
+            'login', 'server', 'balance', 'account_type', 'account_status', 'password', 'created_at',
+            'free_margin', 'net_profit', 'account_size', 'equity', 'challenge_name', 'challenge_class', 'email', 'user_id'
+        ]
+    
+    def get_email(self, obj):
+        if obj.user:
+            return obj.user.email
+        return ""
+    
+    def get_user_id(self, obj):
+        if obj.user:
+            return obj.user.id
+        return 0
+    
+    def get_password(self, obj):
+        if obj.password:
+            return decrypt_password(obj.password)
+        return ""
+    
+    def get_challenge_name(self, obj):
+        if obj.challenge:
+            return obj.challenge.name
+        return ""
+    
+    def get_account_size(self, obj):
+        if obj.challenge:
+            return obj.challenge.account_size
+        return 0.0000
+    
+    def get_free_margin(self, obj):
+        return 0.0000
+    
+    def get_net_profit(self, obj):
+        return 0.0000
+    
+    def get_equity(self, obj):
+        return 0.0000
+    
+    def to_representation(self, instance):
+        representation =  super().to_representation(instance)
+        account = MT5Account.objects.filter(login=instance.login)
+        # print("Got account instancr", account)
+        if account.exists():
+            account = account.first()
+            representation['free_margin'] = account.margin_free
+            representation['net_profit'] = account.profit
+            representation['equity'] = account.equity
+        return representation

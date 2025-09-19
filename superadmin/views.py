@@ -5,7 +5,6 @@ from django.http import Http404
 from django.db.models import Sum, Avg, Count, Max, Min
 from django.views.decorators.cache import cache_page
 from django.utils.dateparse import parse_datetime
-from metaapi_cloud_sdk import MetaApi
 from django_filters.rest_framework import DjangoFilterBackend
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, render
@@ -38,6 +37,7 @@ from utils.pagination import *
 from service.now_payment import NOWPaymentsService
 
 from challenge.models import *
+from trading.serializers import MT5UserSerializer
 from account.serializers import MessageSerializer, TicketSerializer
 
 User = get_user_model()
@@ -141,6 +141,14 @@ class UserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     lookup_field='id'
 
+class TradingAccountListView(generics.ListAPIView):
+    permission_classes=[permissions.IsAdminUser]
+    serializer_class = AdminMT5UserSerializer
+    queryset = MT5User.objects.all().order_by('-created_at')
+    pagination_class = StandardResultsSetPagination
+    filterset_class = MT5UserFilter
+    filter_backends = [DjangoFilterBackend]
+
 class ChallengeListView(generics.ListAPIView):
     permission_classes=[permissions.IsAdminUser]
     serializer_class = ChallengeSerializer
@@ -148,7 +156,8 @@ class ChallengeListView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
     filterset_class = PropFirmChallengeFilter
     filter_backends = [DjangoFilterBackend]
-    
+
+
 class ChallengeCreateView(generics.CreateAPIView):
     permission_classes=[permissions.IsAdminUser]
     serializer_class=ChallengeSerializer
@@ -385,3 +394,105 @@ class CloseTicketApiView(APIView):
         ticket.status = 'closed'
         ticket.save()
         return Response({'status': 'Ok'}, status=status.HTTP_200_OK)
+    
+
+class IssueFundedAccountAPIView(APIView):
+    def post(self, request, login, *args, **kwargs):
+        challenge_mt5_user = get_object_or_404(MT5User, login=login, account_type='challenge')
+        if challenge_mt5_user.funded_account_issued:
+            return custom_response(
+                status="Forbidden",
+                message="Funded Account Already issues for this completed challenge account",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
+        
+        user = challenge_mt5_user.user
+        first_name, last_name = split_full_name(user.full_name)
+        address = Address.objects.get(user=user)
+
+        if challenge_mt5_user.challenge.challenge_class == 'challenge':
+            challenge = PropFirmChallenge.objects.filter(challenge_class='challenge_funding').first()
+
+        if challenge_mt5_user.challenge.challenge_class == 'skill_check':
+            challenge = PropFirmChallenge.objects.filter(challenge_class='skill_check_funding').first()
+
+        if not challenge:
+            return custom_response(
+                status="Bad Request",
+                message="Corresponding funded account configuration cannot be found",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        balance = float(challenge.account_size)
+        result = create_mt5_account(
+            base_url=settings.BRIDGE_URL,
+            account_data={
+                'first_name': first_name,
+                'last_name': last_name,
+                'balance': balance,
+                'country': user.country,
+                'company': settings.GLOBAL_SERVICE_NAME,
+                'address': address.home_address,
+                'email': user.email,
+                'phone': user.phone_number,
+                'zip_code': address.zip_code,
+                'state': address.state,
+                'city': address.town,
+                'language': 'english',
+                'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({challenge.name})",
+                'challenge_name': challenge.name,
+            }
+        )
+
+        if result:
+            mt5_user_login, password = result
+            mt5_user = MT5User.objects.filter(login=mt5_user_login).first()
+            if mt5_user:
+                mt5_user.user = user
+                mt5_user.challenge = challenge
+                mt5_user.account_type = 'funded'
+                mt5_user.password = encrypt_password(password)
+                mt5_user.save()
+
+                #Mark as issued
+                challenge_mt5_user.funded_account_issued = True
+                challenge_mt5_user.save()
+
+                #Create Account Earning
+                target_profit_amount = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
+                AccountEarnings.objects.create(login=mt5_user.login, target=target_profit_amount)
+
+
+                #Issue Certificate
+                completed_challenge_profit_target =  (challenge_mt5_user.challenge.profit_target_percent / Decimal(100)) * challenge_mt5_user.challenge.account_size
+                certificate=ChallengeCertificate.objects.create(
+                    user=user, 
+                    challenge_class = challenge_mt5_user.challenge.challenge_class,
+                    name = challenge_mt5_user.challenge.name,
+                    account_size = challenge_mt5_user.challenge.account_size,
+                    profit=completed_challenge_profit_target
+                )
+
+                #Send email
+                mailer = Mailer(user.email)
+                mailer.funded_account_issued(mt5_user, challenge, password)
+                mailer.certificate_issued(certificate)
+
+                print("Account created:", mt5_user_login, password)
+                return custom_response(
+                    status="ok",
+                    message="Funded account successfully created.",
+                    data={},
+                    http_status=status.HTTP_200_OK
+                )
+        else:
+            print("Failed to create account")
+            return custom_response(
+                status="Bad Request",
+                message="Error creating funded account.",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+        

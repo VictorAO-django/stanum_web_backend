@@ -5,6 +5,7 @@ from django.db.models import Q
 
 from payment.models import *
 from challenge.models import *
+from trading.models import *
 
 class PropFirmWalletTransactionFilter(django_filters.FilterSet):
     # Date filters
@@ -50,3 +51,12 @@ class PropFirmChallengeFilter(django_filters.FilterSet):
     class Meta:
         model =  PropFirmChallenge
         fields = ['challenge_class']
+
+
+class MT5UserFilter(django_filters.FilterSet):
+    account_status = django_filters.CharFilter(field_name='account_status', lookup_expr='iexact')
+    account_type = django_filters.CharFilter(field_name='account_type', lookup_expr='iexact')
+    login = django_filters.CharFilter(field_name='login', lookup_expr='icontains')
+    class Meta:
+        model =  MT5User
+        fields = ['account_status', 'account_type', 'login']

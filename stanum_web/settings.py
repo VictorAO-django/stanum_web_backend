@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-import dotenv, os
+import dotenv, os, json
 import dj_database_url
 from datetime import timedelta
 
@@ -56,6 +56,13 @@ CHANNEL_LAYERS = {
             "hosts": [REDIS_URL],
         },
     },
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://:dev_haywhy_doings@66.29.135.68:6379/0',
+    }
 }
 
 # Define ASGI application
@@ -360,3 +367,5 @@ BRIDGE_URL=os.getenv('BRIDGE_URL')
 BRIDGE_SECRET=os.getenv('BRIDGE_SECRET')
 
 MT5ACCOUNT_PASSWORD_KEY=os.getenv('MT5ACCOUNT_PASSWORD_KEY')
+
+ADMIN_EMAILS = json.loads(os.getenv("ADMIN_EMAILS", "[]"))

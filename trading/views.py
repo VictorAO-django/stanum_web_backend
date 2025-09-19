@@ -22,6 +22,7 @@ from .models import *
 from .serializers import *
 
 from utils.helper import *
+from utils.pagination import LargeResultsSetPagination
 
 class TradingAccountView(generics.ListAPIView):
     permission_classes=[IsAuthenticated]
@@ -173,3 +174,17 @@ class TopTradersView(APIView):
 
         return Response(results, status=status.HTTP_200_OK)
         
+
+
+class AccountLogsApiView(APIView):
+    def get(self, request, login, *args, **kwargs):
+        rule_violations = RuleViolationLog.objects.filter(login=login)
+        rule_violations_data = RuleViolationLogSerializer(rule_violations, many=True).data
+
+        challenge_logs = ChallengeLog.objects.filter(user__login=login)
+        challenge_logs_data = ChallengeLogSerializer(challenge_logs, many=True).data
+
+        return Response({
+            'violations': rule_violations_data,
+            'logs': challenge_logs_data
+        })

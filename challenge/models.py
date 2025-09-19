@@ -163,10 +163,12 @@ class ChallengeCertificate(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    login = models.CharField(max_length=10, null=True)
     challenge_class = models.CharField(max_length=255, choices=CHALLENGE_CLASS)
     name = models.CharField(max_length=255)
     account_size = models.BigIntegerField()
     profit = models.DecimalField(max_digits=20, decimal_places=2)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.full_name} - {self.challenge_class}"

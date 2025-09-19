@@ -7,16 +7,18 @@ from challenge.serializers import PropFirmChallengeSerializer
 
 class MT5UserSerializer(serializers.ModelSerializer):
     challenge_name = serializers.SerializerMethodField()
+    challenge_class = serializers.CharField(source='challenge.challenge_class')
     free_margin = serializers.SerializerMethodField()
     net_profit = serializers.SerializerMethodField()
     account_size = serializers.SerializerMethodField()
     equity = serializers.SerializerMethodField()
     password = serializers.SerializerMethodField()
+
     class Meta:
         model = MT5User
         fields = [
             'login', 'server', 'balance', 'account_type', 'account_status', 'password', 'created_at',
-            'free_margin', 'net_profit', 'account_size', 'equity', 'challenge_name'
+            'free_margin', 'net_profit', 'account_size', 'equity', 'challenge_name', 'challenge_class'
         ]
 
     def get_password(self, obj):
@@ -74,13 +76,12 @@ class AccountStatSerializer(serializers.ModelSerializer):
     hwm_equity = serializers.SerializerMethodField()
     lwm_balance = serializers.SerializerMethodField()
     lwm_equity = serializers.SerializerMethodField()
-
     class Meta:
         model = MT5Account
         fields = [
             'balance', 'equity', 'profit', 'created_at', 'warning', 'critical', 'severe', 'avg_winning', 'avg_losing',
             'profit_factor', 'win_ratio', 'hwm_balance', 'hwm_equity', 'lwm_balance', 'lwm_equity',
-            'challenge', 
+            'challenge', 'failure_reason' ,
         ]
 
     def get_challenge(self, obj):
@@ -127,6 +128,7 @@ class AccountStatSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         user =  MT5User.objects.get(login=instance.login)
         representation['created_at'] = user.created_at
+        representation['account_status'] = user.account_status
         representation['challenge'] = PropFirmChallengeSerializer(user.challenge).data
 
         vio = RuleViolationLog.objects.filter(login=instance.login)
@@ -155,3 +157,17 @@ class AccountEarningsSerializer(serializers.ModelSerializer):
     class Meta:
         model=AccountEarnings
         fields = ['login', 'profit', 'pending', 'disbursed', 'target', 'paid_all']
+
+
+
+class RuleViolationLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RuleViolationLog
+        fields = ['id', 'login', 'violation_type', 'severity', 'message', 'timestamp']
+
+
+class ChallengeLogSerializer(serializers.ModelSerializer):
+    login = serializers.CharField(source='user.login', read_only=True)
+    class Meta:
+        model = ChallengeLog
+        fields = ['id', 'login', 'action', 'details', 'timestamp']

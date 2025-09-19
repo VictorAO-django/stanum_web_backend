@@ -1,7 +1,12 @@
-from typing import Dict, Set, List, Optional
+from typing import Dict, Set, List, Optional, TypedDict, Tuple
 from dataclasses import dataclass
 from datetime import datetime, time, date
 from decimal import Decimal
+
+class ViolationDict(TypedDict):
+    type: str
+    message: str
+
 
 @dataclass
 class AccountData:
@@ -103,6 +108,72 @@ class PositionData:
     closed: bool = False
 
     # Metadata
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+@dataclass
+class DealData:
+    # Core identifiers
+    deal: int
+    login: int
+    order: Optional[int] = None
+    external_id: Optional[str] = None
+    dealer: Optional[int] = None
+
+    # Deal details
+    action: Optional[str] = None      # Buy/Sell/etc
+    entry: Optional[str] = None       # Entry direction
+    symbol: Optional[str] = None
+    comment: Optional[str] = None
+    reason: Optional[str] = None
+    action_gateway: Optional[str] = None
+    gateway: Optional[str] = None
+
+    # Prices
+    price: float = 0.0
+    price_sl: float = 0.0
+    price_tp: float = 0.0
+    price_position: float = 0.0
+    price_gateway: float = 0.0
+    market_bid: float = 0.0
+    market_ask: float = 0.0
+    market_last: float = 0.0
+
+    # Volumes
+    volume: int = 0
+    volume_ext: float = 0.0
+    volume_closed: int = 0
+    volume_closed_ext: float = 0.0
+    volume_gateway_ext: float = 0.0
+
+    # Profit & financials
+    profit: float = 0.0
+    profit_raw: float = 0.0
+    value: float = 0.0
+    storage: float = 0.0
+    commission: float = 0.0
+    fee: float = 0.0
+    contract_size: float = 0.0
+    tick_value: float = 0.0
+    tick_size: float = 0.0
+    rate_profit: float = 0.0
+    rate_margin: float = 0.0
+
+    # Meta
+    digits: int = 0
+    digits_currency: int = 0
+    expert_id: Optional[int] = None
+    position_id: Optional[int] = None
+
+    # Flags
+    flags: int = 0
+    modification_flags: int = 0
+    deleted: bool = False
+
+    # Timestamps
+    time: Optional[int] = None        # Unix timestamp
+    time_msc: Optional[int] = None    # Unix timestamp (ms)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Your Funded Account Has Been Issued</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; background-color: #f9fafb; color: #333; margin: 0; padding: 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f9fafb; padding: 20px;">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background: #ffffff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden;">
+            <tr>
+              <td style="background-color: #2c3e50; padding: 20px; text-align: center;">
+                <h2 style="color: #ffffff; margin: 0;">Funded Account Issued</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 30px;">
+                <p style="font-size: 16px;">Hi <b>{{ user.full_name }}</b>,</p>
+                <p style="font-size: 16px; line-height: 1.5;">
+                  Congratulations! Your <b>funded trading account</b> has been successfully issued.
+                </p>
+
+                <table width="100%" cellpadding="10" cellspacing="0" border="0" style="margin: 20px 0; border: 1px solid #e5e7eb; border-radius: 6px;">
+                  <tr>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;"><b>Login:</b></td>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;">{{ user.login }}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;"><b>Password:</b></td>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;">{{ password }}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;"><b>Account size:</b></td>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;">{{ challenge.account_size }}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;"><b>Server:</b></td>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;">${{ server }}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;"><b>Broker:</b></td>
+                    <td style="font-size: 15px; border-bottom: 1px solid #e5e7eb;">${{ broker_name }}</td>
+                  </tr>
+                </table>
+
+                <h3 style="margin-top:25px; font-size:16px; color:#0d1117;">📌 Account Rules</h3>
+              <ul style="margin:10px 0; padding-left:20px;">
+                <li>Account Size: <strong>${{ challenge.account_size }}</strong></li>
+                <li>Profit Split: <strong>{{ challenge.profit_split_percent }}%</strong></li>
+                <li>Max Daily Loss: <strong>{{ challenge.max_daily_loss_percent }}%</strong></li>
+                <li>Max Total Loss: <strong>{{ challenge.max_total_loss_percent }}%</strong></li>
+              </ul>
+
+                <p style="font-size: 16px; line-height: 1.5;">
+                  You can now log in to your trading platform and start trading under your funded account conditions.
+                </p>
+
+                <p style="font-size: 16px; line-height: 1.5;">
+                  If you have any questions, our support team is always ready to help.
+                </p>
+
+                <p style="font-size: 16px; margin-top: 30px;">
+                  Best regards,<br/>
+                  <b>YourPropFirm Team</b>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+                © {{ current_year }} YourPropFirm. All rights reserved.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

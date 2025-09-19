@@ -46,6 +46,8 @@ class MT5User(models.Model):
     password = models.CharField(max_length=255, null=True)
     fail_reason = models.TextField(blank=True)
     
+    funded_account_issued = models.BooleanField(default=False)
+
     # Core identifiers
     login = models.BigIntegerField(primary_key=True)  # MT5 account login
     group = models.CharField(max_length=64, blank=True, null=True)
@@ -684,3 +686,9 @@ class ChallengeLog(models.Model):
     action = models.CharField(max_length=50)
     details = models.TextField()
     timestamp = models.DateTimeField()
+
+
+class FundedAccountIssued(models.Model):
+    user_from = models.ForeignKey(MT5User, on_delete=models.CASCADE)
+    user_to = models.ForeignKey(MT5Account, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)

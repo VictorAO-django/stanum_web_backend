@@ -25,15 +25,12 @@ from account.models import (
 )
 
 from service.paystack import PaystackService
-from service.metaapi_request import *
 from utils.helper import *
 from utils.permission import *
 from utils.pagination import *
 from utils.filters import *
 
 User = get_user_model()
-
-logger = logging.getLogger("webhook")
 
 class AvailableCurrenciesAPIView(APIView):
     """Get list of available cryptocurrencies"""
@@ -102,6 +99,9 @@ class PaymentCreateAPIView(APIView):
         challenge = PropFirmChallenge.objects.filter(id=challenge_id)
         if challenge.exists():
             challenge = challenge.first()
+        
+        print("CHALLENGE_ID", challenge.id)
+
 
         if payload.get('description', '') == '':
             payload['description'] = f"Stanum payment for challenge {challenge.name}"
@@ -320,7 +320,7 @@ class PaymentIPNAPIView(APIView):
 
         try:
             mailer = Mailer(user.email)
-            mailer.payment_successful(challenge.challenge_fee, challenge)
+            mailer.payment_successful(user, challenge, payment)
 
             if result:
                 mt5_user_login, password = result
@@ -333,11 +333,12 @@ class PaymentIPNAPIView(APIView):
                     #Create Account Earning
                     target_profit_amount = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
                     AccountEarnings.objects.create(login=mt5_user.login, target=target_profit_amount)
+                    #Send email
                     mailer.challenge_entry(mt5_user, challenge, password)
 
-                    print("✅ Account created:", mt5_user_login, password)
+                    print("Account created:", mt5_user_login, password)
             else:
-                print("❌ Failed to create account")
+                print("Failed to create account")
 
             referral = Referral.objects.filter(user=user)
             if referral.exists():
@@ -350,13 +351,19 @@ class PaymentIPNAPIView(APIView):
     
     def handle_payment_failure(self, payment: Payment, challenge: PropFirmChallenge, user):
         """Handle failed payment - override this method for custom logic"""
-        Mailer(user.email).payment_failed(challenge.challenge_fee, challenge)
-        print(f"Payment {payment.order_id} failed")
+        try:
+            Mailer(user.email).payment_failed(user, challenge, payment)
+            print(f"Payment {payment.order_id} failed")
+        except Exception as err:
+            print(f"Error while sending payment failure email: {str(err)}")
     
     def handle_payment_expired(self, payment: Payment, challenge: PropFirmChallenge, user):
         """Handle expired payment - override this method for custom logic"""
-        Mailer(user.email).payment_expired(challenge.challenge_fee, challenge)
-        print(f"Payment {payment.order_id} expired")
+        try:
+            Mailer(user.email).payment_expired(user, challenge, payment)
+            print(f"Payment {payment.order_id} expired")
+        except Exception as err:
+            print(f"Error while sending payment session timeout email: {str(err)}")
 
 
 
@@ -675,7 +682,7 @@ class WithdrawView(APIView):
                 http_status=status.HTTP_404_NOT_FOUND
             )
         except Exception as err:
-            logger.error(f"WITHDRAWAL REQUEST ERROR: {err}", exc_info=True)
+            print.error(f"WITHDRAWAL REQUEST ERROR: {err}", exc_info=True)
             return custom_response(
                 status="Error",
                 message="Something went wrong while processing your withdrawal.",

@@ -30,6 +30,9 @@ urlpatterns = [
     path('users/<str:id>/wallet', UserWalletView.as_view()),
     path('users/<str:id>/wallet/transactions', UserWalletTransactionView.as_view()),
 
+    path('accounts', TradingAccountListView.as_view()),
+    path('accounts/<str:login>/issue-funded-account', IssueFundedAccountAPIView.as_view()),
+
     path('challenges', ChallengeListView.as_view()),
     path('challenges/create/', ChallengeCreateView.as_view()),
     path('challenges/<str:id>/', ChallengeDetailView.as_view()),

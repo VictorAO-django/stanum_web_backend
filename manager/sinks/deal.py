@@ -1,6 +1,5 @@
 import MT5Manager
 from trading.models import MT5Deal
-from manager.rule_checker import RuleChecker
 import logging
 from .account import save_mt5_account
 
@@ -61,24 +60,38 @@ def save_mt5_deal(deal_obj: MT5Manager.MTDeal):
 class DealSink:
     def __init__(self, bridge=None):
         self.bridge = bridge
-        self.rule_checker = RuleChecker()
     
     def OnDealAdd(self, deal: MT5Manager.MTDeal):
         try:
             print("Deal Added", deal.Print())
-            save_mt5_deal(deal)
+            mt5_deal = save_mt5_deal(deal)
+            self.bridge.add_memory_deal(mt5_deal)
         except Exception as err:
             print("Error Adding deal", str(err))
     
     def OnDealUpdate(self, deal: MT5Manager.MTDeal):
-        print("Deal Updated", deal.Print())
-        # Save updated deal to database
-        save_mt5_deal(deal)
+        try:
+            print("Deal Updated", deal.Print())
+            # Save updated deal to database
+            mt5_deal = save_mt5_deal(deal)
+            self.bridge.update_memory_deal(mt5_deal)
+        except Exception as err:
+            print("Error Updating deal", str(err))
 
     def OnDealDelete(self, deal: MT5Manager.MTDeal):
-        print("Deal Deleted", deal.Print())
-        MT5Deal.objects.filter(deal=deal.Deal).update(deleted=True)
-        print(f"Deal {deal.Deal} deleted from database")
+        try:
+            print("Deal Deleted", deal.Print())
+            mt5_deal = MT5Deal.objects.filter(deal=deal.Deal)
+            if mt5_deal.exists():
+                mt5_deal = mt5_deal.first()
+                mt5_deal.deleted = True
+                mt5_deal.save()
+
+                self.bridge.remove_memory_deal(mt5_deal)
+            print(f"Deal {deal.Deal} deleted from database")
+        except Exception as err:
+            print("Error Adding deal", str(err))
+        
     
     def OnDealClean(self, login):
         print("Deal Clean", login)
