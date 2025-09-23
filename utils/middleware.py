@@ -15,7 +15,7 @@ def get_user_from_token(token_key):
         print('token instance', token)
         return token.user
     except CustomAuthToken.DoesNotExist:
-        # print('token error', token_key)
+        print('token error', token_key)
         return None
 
 class TokenAuthMiddleware(BaseMiddleware):
@@ -23,11 +23,14 @@ class TokenAuthMiddleware(BaseMiddleware):
         close_old_connections()
 
         token_key = None
-        headers = dict(scope.get("headers", []))
-        # Extract token from sec-websocket-protocol header
-        protocol_header = headers.get(b'sec-websocket-protocol')
-        if protocol_header:
-            token_key = protocol_header.decode()
+        # Extract token from query string instead of subprotocol
+        query_string = scope.get('query_string', b'').decode()
+        if 'token=' in query_string:
+            # Parse token from query params
+            for param in query_string.split('&'):
+                if param.startswith('token='):
+                    token_key = param.split('token=')[1]
+                    break
 
         user = None
         if token_key:
@@ -38,14 +41,7 @@ class TokenAuthMiddleware(BaseMiddleware):
         else:
             scope["user"] = user
 
-        # IMPORTANT: Accept the connection with the protocols to avoid client disconnect!
-        # Override send to add subprotocols to handshake response:
-        async def send_wrapper(message):
-            if message.get("type") == "websocket.accept":
-                message.setdefault("subprotocol", token_key)
-            await send(message)
-
-        return await super().__call__(dict(scope), receive, send_wrapper)
+        return await super().__call__(dict(scope), receive, send)
 
 def TokenAuthMiddlewareStack(inner):
     from channels.auth import AuthMiddlewareStack

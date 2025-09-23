@@ -1,11 +1,7 @@
 import MT5Manager
 from trading.models import MT5Account, MT5AccountHistory, MT5User
-from manager.rule_checker import RuleChecker
 from django.utils import timezone
-from manager.account_manager import AccountManager
 
-rule_checker = RuleChecker()
-account_manager = AccountManager()
 
 def save_mt5_account(account_obj: MT5Manager.MTAccount):
     # Update current account state
@@ -38,75 +34,32 @@ def save_mt5_account(account_obj: MT5Manager.MTAccount):
             updated_at=timezone.now(),
         )
     )
-    
-    # account_manager.update_drawdown(account_obj.Login, account_obj.Equity)
-    # account_manager.update_total_drawdown(account_obj.Login, account_obj.Equity, account.mt5_user.challenge.account_size)
     return account
 
 class AccountSink:
     def __init__(self, bridge=None):
         self.bridge = bridge
-        self.rule_checker = RuleChecker()
     
     def OnAccountMarginCallEnter(self, account: MT5Manager.MTAccount, group: MT5Manager.MTConGroup):
         print("Account entering the Margin Call state", account.Login)
-        
         # Save account state and create history record
         save_mt5_account(account)
-        
-        # Check account rules for margin call situations
-        violations = self.rule_checker.check_account_rules(account)
-        
-        if violations and self.bridge:
-            self.bridge.handle_violation(account.Login, violations, "MARGIN_CALL_ENTER")
-        
-        # Additional margin call specific violation
-        margin_call_violation = [f"MARGIN_CALL_ENTERED: Margin level {account.MarginLevel}%"]
-        if self.bridge:
-            self.bridge.handle_violation(account.Login, margin_call_violation, "MARGIN_CALL")
 
     def OnAccountMarginCallLeave(self, account: MT5Manager.MTAccount, group: MT5Manager.MTConGroup):
         print("Account exiting the Margin Call state", account.Login)
-        
         save_mt5_account(account)
-        
-        # Log recovery from margin call
-        recovery_log = [f"MARGIN_CALL_RECOVERY: Margin level restored to {account.MarginLevel}%"]
-        if self.bridge:
-            self.bridge.handle_violation(account.Login, recovery_log, "MARGIN_CALL_RECOVERY")
+
 
     def OnAccountStopOutEnter(self, account: MT5Manager.MTAccount, group: MT5Manager.MTConGroup):
         print("Account entering the Stop Out state", account.Login)
-        
         save_mt5_account(account)
-        
-        # Stop out is critical - check all rules
-        violations = self.rule_checker.check_account_rules(account)
-        
-        # Add stop out specific critical violation
-        stop_out_violation = [f"STOP_OUT_ENTERED: Critical margin level {account.MarginLevel}%"]
-        violations.extend(stop_out_violation)
-        
-        if violations and self.bridge:
-            self.bridge.handle_violation(account.Login, violations, "STOP_OUT_ENTER")
     
     def OnAccountStopOutLeave(self, account: MT5Manager.MTAccount, group: MT5Manager.MTConGroup):
         print("Account exiting the Stop Out state", account.Login)
-        
         save_mt5_account(account)
-        
-        # Log recovery from stop out
-        recovery_log = [f"STOP_OUT_RECOVERY: Account recovered, margin level: {account.MarginLevel}%"]
-        if self.bridge:
-            self.bridge.handle_violation(account.Login, recovery_log, "STOP_OUT_RECOVERY")
     
     def OnAccountUpdate(self, account: MT5Manager.MTAccount):
         """Handle general account updates - add this if MT5 provides this callback"""
         # Save account state (history will be created if significant change)
         print("Account update", account.Login)
         save_mt5_account(account)
-        # Check drawdown and daily loss rules on every significant update
-        violations = self.rule_checker.check_account_rules(account)
-        
-        if violations and self.bridge:
-            self.bridge.handle_violation(account.Login, violations, "ACCOUNT_UPDATE")

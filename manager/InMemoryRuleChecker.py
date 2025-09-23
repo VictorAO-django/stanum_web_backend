@@ -10,6 +10,7 @@ from typing import List
 from .InMemoryData import *
 
 from .logging_config import get_prop_logger
+import time
 logger = get_prop_logger('rules')
 
 class InMemoryRuleChecker:
@@ -197,81 +198,61 @@ class InMemoryRuleChecker:
         """Check drawdown limits using tracked high-watermark equity."""
         # print("CHECKING DAILY DRAWSOWN", dd)
         violations:List[ViolationDict] = []
-
-        if dd:
-            equity_peak = float(dd.equity_high)
-        else:
-            # fallback: initial balance or current equity if no record exists yet
-            equity_peak = max(float(account.equity), float(challenge.account_size))
-
-        current_equity = float(account.equity)
-
-        # Calculate drawdown %
-        if equity_peak > 0:
-            current_dd_percent = ((equity_peak - current_equity) / equity_peak) * 100
-        else:
-            current_dd_percent = 0
-
-        max_dd = float(challenge.max_daily_loss_percent)
+        if not dd:
+            # No record yet, safe to assume no violation
+            return violations
         
+        current_dd_percent = float(dd.drawdown_percent)
+        max_dd = float(challenge.max_daily_loss_percent)
         if current_dd_percent > max_dd:
-            violations.append(
-                {"type": "DAILY_DRAWDOWN_EXCEEDED", "message": f"{current_dd_percent:.2f}% (max: {max_dd}%)"}
-            )
-        # elif current_dd_percent > max_dd * 0.8:  # 80% warning threshold
-        #     violations.append(
-        #         f"DAILY_DRAWDOWN_WARNING: {current_dd_percent:.2f}% (limit: {max_dd}%)"
-        #     )
+            violations.append({ "type": "DAILY_DRAWDOWN_EXCEEDED", "message": f"{current_dd_percent:.2f}% (max: {max_dd}%)"})
 
         # print("DONE CHECKING DAILY DRAWSOWN")
         return violations
         
-    def _check_total_drawdown(self, account: AccountData, challenge: PropFirmChallenge, total_dd: AccountTotalDrawdownData) -> List[ViolationDict]:
+    def _check_total_drawdown(
+        self,
+        account: AccountData,
+        challenge: PropFirmChallenge,
+        total_dd: AccountTotalDrawdownData
+    ) -> List[ViolationDict]:
         """
         Check overall drawdown using AccountTotalDrawdown model.
         """
-        # print("CHECKING TOTALDRAWDOWN", total_dd)
-        violations:List[ViolationDict] = []
-        current_equity = account.equity
+        violations: List[ViolationDict] = []
+        if not total_dd:
+            # No record yet, safe to assume no violation
+            return violations
 
-        # Update peak/low and recalc drawdown
-        if current_equity > total_dd.equity_peak:
-            total_dd.equity_peak = current_equity
-            total_dd.equity_low = current_equity
-        elif current_equity < total_dd.equity_low:
-            total_dd.equity_low = current_equity
+        current_dd_percent = float(total_dd.drawdown_percent)
+        max_dd = (
+            float(challenge.max_total_loss_percent)
+            if account.step == 1
+            else float(challenge.additional_phase_total_loss_percent)
+        )
 
-        if total_dd.equity_peak > 0:
-            total_dd.drawdown_percent = ((total_dd.equity_peak - total_dd.equity_low) / total_dd.equity_peak) * 100
-
-        # 2. Calculate allowed minimum equity
-        max_dd_percent = challenge.max_total_loss_percent if account.step == 1 else challenge.additional_phase_total_loss_percent
-        min_allowed_equity = total_dd.equity_peak * (1 - max_dd_percent / 100)
-
-        # 3. Compare current equity to limits
-        if current_equity < min_allowed_equity:
+        if current_dd_percent > max_dd:
             violations.append(
-                {"type": "TOTAL_DRAWDOWN_EXCEEDED", "message": f"TOTAL_DRAWDOWN_EXCEEDED: Equity {current_equity:.2f} < {min_allowed_equity:.2f} (limit {max_dd_percent}%)"}
+                {
+                    "type": "TOTAL_DRAWDOWN_EXCEEDED",
+                    "message": f"{current_dd_percent:.2f}% (max: {max_dd}%)"
+                }
             )
-        # elif current_equity < min_allowed_equity * 1.1:  # optional 10% warning buffer
-        #     violations.append(
-        #         f"TOTAL_DRAWDOWN_WARNING: Equity {current_equity:.2f} close to limit {min_allowed_equity:.2f}"
-        #     )
-        # print("DONE CHECKING TOTAL DD")
+
         return violations
 
     
     def _check_profit(self, account: AccountData, challenge: PropFirmChallenge) -> bool:
         """Check if account has reached the profit target."""
-        logger.info(f"CHECKING PROFIT {account.login}")
+        # logger.info(f"CHECKING PROFIT {account.login}")
         current_profit = account.profit
         if account.step == 2:
             target_profit_amount = (challenge.phase_2_profit_target_percent / Decimal(100)) * challenge.account_size
         else:
             target_profit_amount = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
 
-        if (account.login == 4005):
-            logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
+        # if (account.login == 4005):
+        #     logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
         
 
         # Check if profit target is reached

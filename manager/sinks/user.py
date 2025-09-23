@@ -2,7 +2,6 @@ import MT5Manager
 from trading.models import MT5User, MT5Deal, MT5Position, MT5UserLoginHistory
 from datetime import datetime
 from utils.helper import encrypt_password
-from manager.rule_checker import RuleChecker
 from .account import save_mt5_account
 
 def save_mt5_user(user_obj: MT5Manager.MTUser):
@@ -112,7 +111,6 @@ def delete_user(login):
 class UserSink: 
     def __init__(self, bridge=None):
         self.bridge = bridge
-        self.rule_checker = RuleChecker()
 
     def update_user_account(self, login):
         try:

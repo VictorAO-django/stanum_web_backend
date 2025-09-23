@@ -1,10 +1,4 @@
-import MT5Manager, queue, threading
-from manager.account_manager import AccountManager
-from manager.rule_checker import RuleChecker
-from trading.models import SymbolPrice, MT5User
-from typing import NamedTuple
-from django.utils.timezone import now
-from manager.cache import symbol_cache
+import MT5Manager
 
 class TickSink:
     def __init__(self, bridge=None):

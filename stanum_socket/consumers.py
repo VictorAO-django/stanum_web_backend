@@ -52,12 +52,22 @@ class AccountStatsConsumer(AsyncJsonWebsocketConsumer):
         """Verify that the connected user has access to this account"""
         try:
             user = self.scope["user"]
-            # print("USER", user)
+            print("USER", user)
             if not user or isinstance(user, AnonymousUser):
                 return False
             MT5User.objects.get(login=self.login, user=user, account_status="active")
-            # print("MT5 USER EXIST")
+            print("MT5 USER EXIST")
             return True
         except MT5User.DoesNotExist:
-            # print("MT5 USER DONT EXIST")
+            print("MT5 USER DONT EXIST")
             return False
+
+
+class TestConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        print(f"Headers: {dict(self.scope['headers'])}")
+        print(f"Subprotocols: {self.scope.get('subprotocols', [])}")
+        print(f"Origin: {dict(self.scope['headers']).get(b'origin', b'None')}")
+
+        await self.accept()
+        await self.send(text_data="IT WORKS!")

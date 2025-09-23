@@ -44,11 +44,10 @@ METAAPI_TOKEN =os.getenv('METAAPI_TOKEN')
 CURRENT_YEAR=os.getenv('CURRENT_YEAR', '2025')
 GLOBAL_SERVICE_NAME = os.getenv("GLOBAL_SERVICE_NAME", 'Stanumcapital')
 
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -61,7 +60,7 @@ CHANNEL_LAYERS = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://:dev_haywhy_doings@66.29.135.68:6379/0',
+        'LOCATION': REDIS_URL,
     }
 }
 
@@ -190,8 +189,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
@@ -254,64 +253,6 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_BROKER_URL = 'pyamqp://guest:guest@localhost//'
 CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_WORKER_POOL = 'solo'
-
-# Logging Configuration
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'formatters': {
-#         'verbose': {
-#             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-#             'style': '{',
-#         },
-#         'simple': {
-#             'format': '{levelname} {message}',
-#             'style': '{',
-#         },
-#     },
-#     'handlers': {
-#         'file': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': 'logs/django.log',
-#             'formatter': 'verbose',
-#         },
-#         'trading_file': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': 'logs/trading.log',
-#             'formatter': 'verbose',
-#         },
-#         "webhook_file": {
-#             "level": "DEBUG",
-#             "class": "logging.FileHandler",
-#             "filename": "logs/webhook.log",
-#             'formatter': 'verbose',
-#         },
-#         'console': {
-#             'level': 'INFO',
-#             'class': 'logging.StreamHandler',
-#             'formatter': 'simple',
-#         },
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['file', 'console'],
-#             'level': 'INFO',
-#             'propagate': True,
-#         },
-#         'trading': {
-#             'handlers': ['trading_file', 'console'],
-#             'level': 'INFO',
-#             'propagate': False,
-#         },
-#         'webhook': {
-#             "handlers": ["webhook_file", "console"],
-#             "level": "DEBUG",
-#             "propagate": False,
-#         }
-#     },
-# }
 
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True

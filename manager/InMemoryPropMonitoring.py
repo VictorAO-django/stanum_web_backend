@@ -1,21 +1,26 @@
-import MT5Manager, traceback, redis
+import MT5Manager
+import traceback
 from datetime import date
-from django.conf import settings
+from datetime import time as dtime
 from django.utils.timezone import now
 from typing import List, Dict, Tuple
 from trading.models import *
-from account.models import Notification
 from trading.tasks import *
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-
 from .InMemoryData import *
 from .InMemoryRuleChecker import *
-
 from .logging_config import get_prop_logger
+import time
+
 logger = get_prop_logger('monitoring')
 
 channel_layer = get_channel_layer()
+
+def decimal_default(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError
 
 class InMemoryPropMonitoring:
     def __init__(self, bridge):
@@ -176,6 +181,7 @@ class InMemoryPropMonitoring:
     
     def _clear_positions(self, login):
         self.positions[login] = []
+        logger.info(f"Position cleared for {login}")
 
     #############################################################################################################
     ## DEALS
@@ -275,6 +281,7 @@ class InMemoryPropMonitoring:
     
     def _clear_deals(self, login):
         self.deals[login] = []
+        logger.info(f"Deals cleared for {login}")
     
 
     def _handle_trade_violations(self, login, symbol, violations:List[ViolationDict]):
@@ -371,28 +378,28 @@ class InMemoryPropMonitoring:
         try:
             # Update database first (before clearing memory)
             mt5_account = MT5Account.objects.get(login=login)
-            mt5_account.challenge_failed = True
-            mt5_account.challenge_failure_date = now()
-            mt5_account.active = False
-            mt5_account.failure_reason = reasons
-            mt5_account.save()
+            # mt5_account.challenge_failed = True
+            # mt5_account.challenge_failure_date = now()
+            # mt5_account.active = False
+            # mt5_account.failure_reason = reasons
+            # mt5_account.save()
 
-            # Update user status
-            failure_type = "failed"
-            if any("MAX_DAYS_EXCEEDED" == reason['type'] for reason in reasons):
-                failure_type = "expired"
+            # # Update user status
+            # failure_type = "failed"
+            # if any("MAX_DAYS_EXCEEDED" == reason['type'] for reason in reasons):
+            #     failure_type = "expired"
             
             mt5_user = mt5_account.mt5_user
-            mt5_user.account_status = failure_type
-            mt5_user.save()
+            # mt5_user.account_status = failure_type
+            # mt5_user.save()
             
             # Try to disable account - if this fails, we still have the data
-            try:
-                #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
-                self.bridge.disable_challenge_account_trading(login)
-            except Exception as disable_error:
-                logger.error(f"Failed to disable trading for {login}: {disable_error}")
-                # Continue anyway - account is marked as failed in database
+            # try:
+            #     #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
+            #     self.bridge.disable_challenge_account_trading(login)
+            # except Exception as disable_error:
+            #     logger.error(f"Failed to disable trading for {login}: {disable_error}")
+            #     # Continue anyway - account is marked as failed in database
 
             #CLEAR IN MEMORY POSITION
             self._clear_positions(login)
@@ -444,9 +451,13 @@ class InMemoryPropMonitoring:
             accounts =  self.get_accounts_with_symbol(symbol)
             # print(f"ACCOUNTS WITH SYMBOL({symbol})", len(accounts))
             for acc in accounts:
+                # print("Running account", acc.login)
                 self.update_account_equity(acc.login)
                 dd = self.update_drawdown(acc.login)
                 total_dd = self.update_total_drawdown(acc.login)
+                
+                #broadcast after equity/drawdown updates
+                # self._broadcast_account_stats(acc.login)
 
                 challenge = self.account_challenge.get(acc.login)
                 broken_rules = self.rule_checker.check_account_rules(acc, challenge, dd, total_dd) 
@@ -457,7 +468,7 @@ class InMemoryPropMonitoring:
                         # Check if minimum days requirement met
                         if not self.rule_checker._check_min_days(acc, challenge):
                             # logger.info(f"NO ACCOUNT VIOLATIONS BUT MIN DAYS NOT REACHED YET {acc.login}")
-                            return False
+                            continue
 
                         # Check if profit target met
                         if self.rule_checker._check_profit(acc, challenge):
@@ -465,17 +476,21 @@ class InMemoryPropMonitoring:
                             if (challenge.challenge_type == 'two_step') and (acc.step == 1):
                                 # Move to Phase 2
                                 self._move_to_step_2(acc.login, challenge)
-                                return True
+                                print("Reached here 1")
+                                continue
                             else:
                                 # Challenge fully completed
                                 self._challenge_passed(acc, challenge)
                                 # Now clear drawdowns since challenge is fully done
+                                print("Reached here 2")
                                 self._clear_drawdowns(acc.login)
-                                return True
+                                continue
                         # logger.info(f"NO ACCOUNT VIOLATIONS BUT TARGET PROFIT NOT YET MADE {acc.login}")
-                        return False
+                        continue
                 else:
+                    print("Handling account violation")
                     self._handle_account_rules_violation(acc.login, broken_rules)
+                    print("Failing account")
                     self._challenge_failed(acc.login, broken_rules, challenge)
 
         except Exception as err:
@@ -663,7 +678,7 @@ class InMemoryPropMonitoring:
             
             #Send email notification about the violation
             account_rule_violation_log.delay(login, compiled_violations)
-            logger.info(f"Violations logged for {login}: {violations}")
+            # logger.info(f"Violations logged for {login}: {violations}")
             
         except Exception as e:
             logger.debug(f"Error logging violations for {login}: {e}")
@@ -691,6 +706,7 @@ class InMemoryPropMonitoring:
     def _send_challenge_failure_notification(self, user: MT5User, challenge: PropFirmChallenge, reasons: List[ViolationDict]):
         try:
             result = send_challenge_failed_mail_task.delay(user.login, challenge.id, reasons)
+            logger.info(f"Failure alert sent to {user.login} ")
         except Exception as err:
             logger.debug(f"Could not send challenge failure notification {user.login} - {str(err)}")
 
@@ -733,10 +749,7 @@ class InMemoryPropMonitoring:
     ################# WEBSOCKET USAGE
     ###############################################################################################################################
     def _broadcast_account_stats(self, login: int):
-        """Send real-time stats to Redis for WebSocket subscribers"""
-        if not self.redis_client:
-            return
-            
+        """Send real-time stats to Redis for WebSocket subscribers"""            
         try:
             stats = self.account_stat(login)
             
@@ -759,13 +772,15 @@ class InMemoryPropMonitoring:
             async_to_sync(channel_layer.group_send)(
                 group_name,
                 {
-                    "type": "account_stats",  # This maps to consumer handler
-                    "data": json.dumps(stats),
+                    "type": "account_update",  # This maps to consumer handler
+                    "data": json.dumps(stats, default=decimal_default),
                 }
             )
+            print("Broadcasted:", login, stats)
             
         except Exception as e:
             logger.error(f"Error broadcasting stats for {login}: {e}")
+            traceback.print_exc()
 
 
     ###############################################################################################################################
@@ -791,17 +806,17 @@ class InMemoryPropMonitoring:
         positions = self.positions.get(login, [])
         for pos in positions:
             if pos.profit > 0:
-                winning += pos.profit
+                winning += Decimal(pos.profit)
                 winning_count += 1
             elif pos.profit < 0:
-                losing += pos.profit
+                losing += Decimal(pos.profit)
                 losing_count += 1
 
         # Challenge info
         challenge = self.account_challenge.get(login)
         profit_target = Decimal(0)
         if challenge:
-            profit_target = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
+            profit_target = (challenge.profit_target_percent / Decimal(100)) * Decimal(challenge.account_size)
 
         # Win ratio
         win_ratio = (winning_count / len(positions) * 100) if positions else 0
