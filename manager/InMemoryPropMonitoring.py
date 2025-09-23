@@ -36,6 +36,7 @@ class InMemoryPropMonitoring:
 
         self.daily_drawdowns: Dict[int, Dict[date, DailyDrawdownData]] = {}
         self.total_drawdown: Dict[int, AccountTotalDrawdownData] = {}
+        self.account_watermarks: Dict[int, AccountWatermarksData] = {}
 
         self.violation_counts: Dict[int, Dict[str, int]] = {} 
 
@@ -43,6 +44,8 @@ class InMemoryPropMonitoring:
         self._load_positions()
 
         self.count = 0
+
+        self.lock_account: Set[int] = set()
 
         logger.info("InMemoryMonitor Initialized")
 
@@ -323,26 +326,23 @@ class InMemoryPropMonitoring:
 
     def _move_to_step_2(self, login, challenge:PropFirmChallenge):
         try:
-            # 1. First close all positions on MT5
-            self.bridge._close_all_positions(login)
+            print("Moving account to step 2")
+            # 1. First reset account on MT5 (close positions and reset account_size)
+            self.bridge.reset_account(login, challenge.account_size)
             # 2. Then clear from memory
             self._clear_positions(login)
             self._clear_deals(login)
-            # 3. Reset balance
-            self.bridge.return_account_balance(login, challenge.account_size)
             # 4. Update database and memory state
             acc = self.local_accounts.get(login)
             acc.step = 2
 
-            mt5_account = MT5Account.objects.get(login=login)
-            mt5_account.step = 2
-            mt5_account.phase_2_start_date = now()
-            mt5_account.save()
+            #Move the DB account to phase 2 on celery
+            move_account_to_step_2.delay(login)
 
             # 5. Reset tracking for new phase
             self._reset_phase_tracking(login)
             # 6. Send notification
-            self._send_phase_1_success_notification(mt5_account.mt5_user, challenge)
+            self._send_phase_1_success_notification(login, challenge)
 
             logger.info(f"Account {login} successfully moved to Phase 2")
         except Exception as err:
@@ -351,22 +351,10 @@ class InMemoryPropMonitoring:
     def _challenge_passed(self,acc:AccountData,challenge:PropFirmChallenge):
         """Handle complete challenge success - eligible for funded account"""
         try:
-            mt5_account = MT5Account.objects.get(login=acc.login)
-            mt5_account.challenge_completed = True
-            mt5_account.challenge_completion_date = now()
-            mt5_account.is_funded_eligible = True
-            mt5_account.save()
+            #Pass account in celery
+            pass_account.delay(acc.login, challenge.id)
 
-            mt5_user = mt5_account.mt5_user
-            mt5_user.account_status = 'challenge_passed'
-            mt5_user.save()
-
-            if challenge.challenge_type == 'one_step':
-                self._send_challenge_success_notification(mt5_user, challenge)
-            else:
-                self._send_phase_2_success_notification(mt5_user, challenge)
-
-            self.bridge.disable_challenge_account_trading(acc.login)
+            # self.bridge.disable_challenge_account_trading(acc.login)
             self.cleanup_completed_account(acc.login)
             logger.info(f"Challenge PASSED for account {acc.login}")
 
@@ -376,40 +364,35 @@ class InMemoryPropMonitoring:
     def _challenge_failed(self, login: int, reasons:List[ViolationDict], challenge:PropFirmChallenge):
         """Handle complete challenge failure"""
         try:
-            # Update database first (before clearing memory)
-            mt5_account = MT5Account.objects.get(login=login)
-            # mt5_account.challenge_failed = True
-            # mt5_account.challenge_failure_date = now()
-            # mt5_account.active = False
-            # mt5_account.failure_reason = reasons
-            # mt5_account.save()
+            
+            # Update user status
+            failure_type = "failed"
+            if any("MAX_DAYS_EXCEEDED" == reason['type'] for reason in reasons):
+                failure_type = "expired"
+            logger.info(f"Decided failure type: {failure_type}")
+            
+            #Update DB in Celery
+            fail_account.delay(login, failure_type, reasons)
 
-            # # Update user status
-            # failure_type = "failed"
-            # if any("MAX_DAYS_EXCEEDED" == reason['type'] for reason in reasons):
-            #     failure_type = "expired"
-            
-            mt5_user = mt5_account.mt5_user
-            # mt5_user.account_status = failure_type
-            # mt5_user.save()
-            
             # Try to disable account - if this fails, we still have the data
-            # try:
-            #     #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
-            #     self.bridge.disable_challenge_account_trading(login)
-            # except Exception as disable_error:
-            #     logger.error(f"Failed to disable trading for {login}: {disable_error}")
-            #     # Continue anyway - account is marked as failed in database
+            try:
+                #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
+                logger.info("Start disabling account")
+                self.bridge.disable_challenge_account_trading(login)
+            except Exception as disable_error:
+                logger.error(f"Failed to disable trading for {login}: {disable_error}")
+                # Continue anyway - account is marked as failed in database
 
             #CLEAR IN MEMORY POSITION
             self._clear_positions(login)
             #CLEAR IN MEMORY DEAL
             self._clear_deals(login)
             #SEND NOTIFICATION ALERT
-            self._send_challenge_failure_notification(mt5_user, challenge, reasons)
+            self._send_challenge_failure_notification(login, challenge, reasons)
 
             # Finally cleanup (this removes all tracking data)
             self.cleanup_completed_account(login)
+            self.lock_account.remove(login)
             logger.info(f"Successfully processed challenge failure {login}")
 
         except Exception as err:
@@ -452,14 +435,20 @@ class InMemoryPropMonitoring:
             # print(f"ACCOUNTS WITH SYMBOL({symbol})", len(accounts))
             for acc in accounts:
                 # print("Running account", acc.login)
-                self.update_account_equity(acc.login)
+                _acc = self.update_account_equity(acc.login)
+                self.update_account_watermarks(_acc.login, _acc.balance, _acc.equity)
                 dd = self.update_drawdown(acc.login)
                 total_dd = self.update_total_drawdown(acc.login)
                 
                 #broadcast after equity/drawdown updates
-                # self._broadcast_account_stats(acc.login)
+                self._broadcast_account_stats(acc.login)
 
                 challenge = self.account_challenge.get(acc.login)
+                # if self.count == 0:
+                #     self.count += 1
+                #     self._move_to_step_2(acc.login, challenge)
+                # return 
+            
                 broken_rules = self.rule_checker.check_account_rules(acc, challenge, dd, total_dd) 
                 
                 if len(broken_rules) == 0:
@@ -489,6 +478,7 @@ class InMemoryPropMonitoring:
                         continue
                 else:
                     print("Handling account violation")
+                    self.lock_account.add(acc.login)
                     self._handle_account_rules_violation(acc.login, broken_rules)
                     print("Failing account")
                     self._challenge_failed(acc.login, broken_rules, challenge)
@@ -500,6 +490,9 @@ class InMemoryPropMonitoring:
     def get_accounts_with_symbol(self, symbol: str) -> List[AccountData]:
         accounts = []
         for login, account in self.local_accounts.items():
+            # Skip accounts that are in the lock set
+            if login in self.lock_account:
+                continue
             pos_list = self.positions.get(login, [])
             for pos in pos_list:
                 if pos.symbol == symbol:
@@ -669,6 +662,38 @@ class InMemoryPropMonitoring:
             logger.debug(f"Error updating account total drawdown: {str(err)}")
             traceback.print_exc()
 
+    def update_account_watermarks(self, login: int, balance: Decimal, equity: Decimal):
+        watermark = self.account_watermarks.get(login)
+
+        if not watermark:
+            watermark = AccountWatermarksData(
+                login=login,
+                hwm_balance=balance, lwm_balance=balance,
+                hwm_equity=equity, lwm_equity=equity
+            )
+            self.account_watermarks[login] = watermark
+            return
+
+        # High-water marks
+        if balance > watermark.hwm_balance:
+            watermark.hwm_balance = balance
+            watermark.lwm_balance = balance  # reset low when new high found
+
+        if equity > watermark.hwm_equity:
+            watermark.hwm_equity = equity
+            watermark.lwm_equity = equity  # reset low when new high found
+
+        # Low-water marks
+        if balance < watermark.lwm_balance:
+            watermark.lwm_balance = balance
+
+        if equity < watermark.lwm_equity:
+            watermark.lwm_equity = equity
+
+        # Save back
+        self.account_watermarks[login] = watermark
+
+
     def _handle_account_rules_violation(self, login: int, violations: List[ViolationDict]):
         """Handle rule violations - warnings or account restrictions"""
         try:
@@ -684,31 +709,19 @@ class InMemoryPropMonitoring:
             logger.debug(f"Error logging violations for {login}: {e}")
         
 
-    def _send_phase_1_success_notification(self, user: MT5User, challenge: PropFirmChallenge):
+    def _send_phase_1_success_notification(self, login, challenge: PropFirmChallenge):
         try:
-            result = send_phase_1_success_task.delay(user.login, challenge.id)
+            result = send_phase_1_success_task.delay(login, challenge.id)
         except Exception as err:
-            logger.debug(f"Could not send phase q success notification {user.login} - {str(err)}")
-
-    def _send_phase_2_success_notification(self, user: MT5User, challenge: PropFirmChallenge):
-        try:
-            result = send_phase_2_success_task.delay(user.login, challenge.id)
-        except Exception as err:
-            logger.debug(f"Could not send phase q success notification {user.login} - {str(err)}")
-
-    def _send_challenge_success_notification(self, user: MT5User, challenge: PropFirmChallenge):
-        try:
-            result = send_challenge_success_mail_task.delay(user.login, challenge.id)
-        except Exception as err:
-            logger.debug(f"Could not send challenge success notification {user.login} - {str(err)}")
+            logger.debug(f"Could not send phase q success notification {login} - {str(err)}")
 
 
-    def _send_challenge_failure_notification(self, user: MT5User, challenge: PropFirmChallenge, reasons: List[ViolationDict]):
+    def _send_challenge_failure_notification(self, login, challenge: PropFirmChallenge, reasons: List[ViolationDict]):
         try:
-            result = send_challenge_failed_mail_task.delay(user.login, challenge.id, reasons)
-            logger.info(f"Failure alert sent to {user.login} ")
+            result = send_challenge_failed_mail_task.delay(login, challenge.id, reasons)
+            logger.info(f"Failure alert sent to {login} ")
         except Exception as err:
-            logger.debug(f"Could not send challenge failure notification {user.login} - {str(err)}")
+            logger.debug(f"Could not send challenge failure notification {login} - {str(err)}")
 
 
     def cleanup_old_daily_drawdowns(self, days_to_keep: int = 30):
@@ -755,9 +768,12 @@ class InMemoryPropMonitoring:
             
             # Add drawdown data
             today = now().date()
+            account = self.local_accounts.get(login, None)
             daily_dd = self.daily_drawdowns.get(login, {}).get(today)
             total_dd = self.total_drawdown.get(login)
             
+            watermark = self.account_watermarks.get(login)
+
             stats.update({
                 'daily_drawdown_percent': float(daily_dd.drawdown_percent) if daily_dd else 0,
                 'total_drawdown_percent': float(total_dd.drawdown_percent) if total_dd else 0,
@@ -765,7 +781,11 @@ class InMemoryPropMonitoring:
                 'equity_low': float(total_dd.equity_low) if total_dd else 0,
                 'daily_equity_high': float(daily_dd.equity_high) if daily_dd else 0,
                 'daily_equity_low': float(daily_dd.equity_low) if daily_dd else 0,
-                'timestamp': int(time.time())
+                'timestamp': int(time.time()),
+                'hwm_equity': float(watermark.hwm_equity) if watermark else 0,
+                'hwm_balance': float(watermark.hwm_balance) if watermark else 0,
+                'lwm_equity': float(watermark.lwm_equity) if watermark else 0,
+                'lwm_balance': float(watermark.lwm_balance) if watermark else 0,
             })
             
             group_name = f"account_{login}"
@@ -776,7 +796,7 @@ class InMemoryPropMonitoring:
                     "data": json.dumps(stats, default=decimal_default),
                 }
             )
-            print("Broadcasted:", login, stats)
+            print("Broadcasted:", login)
             
         except Exception as e:
             logger.error(f"Error broadcasting stats for {login}: {e}")
@@ -823,7 +843,7 @@ class InMemoryPropMonitoring:
 
         # Profit factor
         if losing_count == 0 and winning_count > 0:
-            profit_factor = float('inf')
+            profit_factor = None
         elif losing_count == 0:
             profit_factor = 0
         else:

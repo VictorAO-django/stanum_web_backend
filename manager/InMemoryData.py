@@ -199,3 +199,11 @@ class AccountTotalDrawdownData:
 
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+@dataclass
+class AccountWatermarksData:
+    login: int
+    hwm_balance: Decimal = Decimal("0")
+    lwm_balance: Decimal = Decimal("0")
+    hwm_equity: Decimal = Decimal("0")
+    lwm_equity: Decimal = Decimal("0")

@@ -50,7 +50,6 @@ def send_phase_1_success_task(user_login, challenge_id,):
         traceback.print_exc()
 
 
-@shared_task
 def send_phase_2_success_task(user_login, challenge_id,):
     try:
         user=MT5User.objects.get(login=user_login)
@@ -90,7 +89,7 @@ def send_phase_2_success_task(user_login, challenge_id,):
     except Exception as err:
         traceback.print_exc()
 
-@shared_task
+
 def send_challenge_success_mail_task(user_login, challenge_id):
     try:
         user=MT5User.objects.get(login=user_login)
@@ -224,6 +223,64 @@ def account_rule_violation_log(
                     message=violation['type'],
                     auto_closed=True
                 )
+                print(vio)
         print("Account Rule Violation Log Task Stopped")
     except Exception as err:
+        traceback.print_exc()
+
+@shared_task
+def fail_account(login, failure_type: Literal["expired", "failed"], reasons):
+    try:
+        mt5_account = MT5Account.objects.get(login=login)
+        print(f"Retrieved Database Account: {login}")
+        mt5_account.challenge_failed = True
+        mt5_account.challenge_failure_date = now()
+        mt5_account.active = False
+        mt5_account.failure_reason = reasons
+        mt5_account.save()
+
+        print(f"Decided failure type: {failure_type}")
+        mt5_user = mt5_account.mt5_user
+        mt5_user.account_status = failure_type
+        mt5_user.save()
+        print(f"Failed account", login)
+    except Exception as err:
+        print("Error failing account")
+        traceback.print_exc()
+
+@shared_task
+def pass_account(login, challenge_id):
+    try:        
+        mt5_account = MT5Account.objects.get(login=login)
+        mt5_account.challenge_completed = True
+        mt5_account.challenge_completion_date = now()
+        mt5_account.is_funded_eligible = True
+        mt5_account.save()
+
+        mt5_user = mt5_account.mt5_user
+        mt5_user.account_status = 'challenge_passed'
+        mt5_user.save()
+
+        challenge = PropFirmChallenge.objects.get(id=challenge_id)
+
+        if challenge.challenge_type == 'one_step':
+            send_challenge_success_mail_task(login, challenge_id)
+        else:
+            send_phase_2_success_task(login, challenge_id)
+
+    except Exception as err:
+        print(f"Error passing account: {login}")
+        traceback.print_exc()
+
+@shared_task
+def move_account_to_step_2(login):
+    try:
+        mt5_account = MT5Account.objects.get(login=login)
+        mt5_account.step = 2
+        mt5_account.phase_2_start_date = now()
+        mt5_account.save()
+
+        print(f"moved account to step 2: {login}")
+    except Exception as err:
+        print(f"Error moving account to step 2: {login}")
         traceback.print_exc()

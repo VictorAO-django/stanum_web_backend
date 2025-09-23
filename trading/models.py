@@ -254,7 +254,7 @@ class MT5Account(models.Model):
     challenge_completed = models.BooleanField(default=False)
     challenge_completion_date = models.BooleanField(null=True)
     challenge_failed = models.BooleanField(default=False)
-    challenge_failure_date = models.BooleanField(null=True)
+    challenge_failure_date = models.DateTimeField(null=True)
     failure_reason = models.JSONField(null=True, blank=True)
     
     is_funded_eligible = models.BooleanField(default=False)

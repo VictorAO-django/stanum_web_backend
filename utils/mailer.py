@@ -17,7 +17,7 @@ from payment.models import *
 from trading.models import *
 class Mailer:
     def __init__(self, email=None, service=None):
-        self.sender_email = 'noreply@stanum.com' #default sender email
+        self.sender_email = 'noreply@stanumcapital.com' #default sender email
         self.email = email #receiver email
         self.service = service #service
         

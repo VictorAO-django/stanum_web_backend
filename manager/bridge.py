@@ -31,7 +31,6 @@ class MetaTraderBridge:
         self.user_group = user_group
         self.manager = MT5Manager.ManagerAPI()
         self.in_memory_monitor = InMemoryPropMonitoring(self)
-        self.manager.GroupGet()
 
     def connect(self):
         self._subscribe_sinks()
@@ -87,18 +86,23 @@ class MetaTraderBridge:
     def _close_all_positions(self, login: int):
         """Close all open positions for an account"""
         try:
+            print("attempting to retrieve account positions")
             # Get all open positions
             positions = self.manager.PositionGet(login)
+            print("Positions retrieved", positions)
             for position in positions:
+                print(f"Attending to {position.Position}")
                 result = self.manager.PositionDelete(position)
+                print("Reached here")
                 if not result:
-                    logger.debug(f"Failed to close position {position.Position}")
-               
+                    print(f"Failed to close position {position.Position}")
+                print(MT5Manager.LastError())
         except Exception as e:
-            logger.debug(f"Error closing positions for {login}: {e}")
+            print(f"Error closing positions for {login}: {e}")
 
     def disable_challenge_account_trading(self, login):
         try:
+            logger.info(f"Requesting for user detail", login)
             user = self.manager.UserRequest(login) 
 
             # user not found 
@@ -112,9 +116,9 @@ class MetaTraderBridge:
             if not self.manager.UserUpdate(user): 
                 logger.debug(f"Failed to update user: {MT5Manager.LastError()}") 
 
-            account = self.get_account(login)
-            save_mt5_account(account)
-            self._close_all_positions(login)
+            # account = self.get_account(login)
+            # save_mt5_account(account)
+            # self._close_all_positions(login)
 
         except Exception as err:
             logger.debug(f"Error disabling account {str(err)}")
@@ -172,12 +176,12 @@ class MetaTraderBridge:
 
     def reset_account(self, login, initial_balance):
         try:
-            logger.info(f"Account reset begins")
+            print(f"Account reset begins {login}")
             self._close_all_positions(login)
             self.return_account_balance(login, initial_balance)
-            logger.info(f"Account reset successful")
+            print(f"Account reset successful")
         except Exception as err:
-            logger.error(f"Failed to reset account {str(err)}")
+            print(f"Failed to reset account {str(err)}")
 
     def tick(self, symbol, tick:MT5Manager.MTTick):
         self.in_memory_monitor.OnTick(symbol, tick)
