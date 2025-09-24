@@ -136,7 +136,7 @@ def send_challenge_failed_mail_task(user_login, challenge_id, compiled_violation
         user=MT5User.objects.get(login=user_login)
         challenge=PropFirmChallenge.objects.get(id=challenge_id)
 
-        reasons = [f"{reason["type"]}: {reason['message']}" for reason in compiled_violation]
+        reasons = [f"{reason['type']}: {reason['message']}" for reason in compiled_violation]
         reason_text = ", ".join(reasons) if reasons else "Unspecified reasons"
 
         mailer = Mailer([user.user.email] + settings.ADMIN_EMAILS)
