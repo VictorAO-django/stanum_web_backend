@@ -796,7 +796,7 @@ class InMemoryPropMonitoring:
                     "data": json.dumps(stats, default=decimal_default),
                 }
             )
-            # print("Broadcasted:", login)
+            print("Broadcasted:", login)
             
         except Exception as e:
             logger.error(f"Error broadcasting stats for {login}: {e}")

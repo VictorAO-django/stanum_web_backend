@@ -79,3 +79,5 @@ fastapi
 channels
 channels_redis
 daphne
+
+concurrent-log-handler
