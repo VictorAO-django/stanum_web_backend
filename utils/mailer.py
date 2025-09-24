@@ -290,3 +290,9 @@ class Mailer:
         }
         self.html_content = render_to_string('emails/certificate_issued.html', context)
         self.send_with_template() 
+
+    def subscribe_newsletter(self, unsubscribe_link):
+        self.subject = "You subscrribed to our newsletter"
+        context = {'firm_name': settings.GLOBAL_SERVICE_NAME, 'unsubscribe_link':unsubscribe_link}
+        self.html_content=render_to_string('emails/newsletter_subscribe.html', context)
+        self.send_with_template()

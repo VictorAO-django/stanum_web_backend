@@ -24,4 +24,6 @@ admin.site.register(Notification)
 admin.site.register(HelpCenter)
 admin.site.register(Ticket)
 admin.site.register(Message)
+
+admin.site.register(NewsletterSubscriber)
 # Register your models here.

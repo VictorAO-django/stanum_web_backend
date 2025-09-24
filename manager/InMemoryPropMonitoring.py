@@ -3,7 +3,7 @@ import traceback
 from datetime import date
 from datetime import time as dtime
 from django.utils.timezone import now
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 from trading.models import *
 from trading.tasks import *
 from asgiref.sync import async_to_sync
@@ -328,7 +328,7 @@ class InMemoryPropMonitoring:
         try:
             print("Moving account to step 2")
             # 1. First reset account on MT5 (close positions and reset account_size)
-            self.bridge.reset_account(login, challenge.account_size)
+            # self.bridge.reset_account(login, challenge.account_size)
             # 2. Then clear from memory
             self._clear_positions(login)
             self._clear_deals(login)
@@ -378,7 +378,7 @@ class InMemoryPropMonitoring:
             try:
                 #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
                 logger.info("Start disabling account")
-                self.bridge.disable_challenge_account_trading(login)
+                # self.bridge.disable_challenge_account_trading(login)
             except Exception as disable_error:
                 logger.error(f"Failed to disable trading for {login}: {disable_error}")
                 # Continue anyway - account is marked as failed in database
@@ -796,7 +796,7 @@ class InMemoryPropMonitoring:
                     "data": json.dumps(stats, default=decimal_default),
                 }
             )
-            print("Broadcasted:", login)
+            # print("Broadcasted:", login)
             
         except Exception as e:
             logger.error(f"Error broadcasting stats for {login}: {e}")
@@ -861,3 +861,40 @@ class InMemoryPropMonitoring:
         })
 
         return data
+    
+
+    def analyze_account_rating(self):
+        try:
+            accounts_to_rate=[]
+            logger.info("Analyzing account rating data")
+            for login, account in self.local_accounts.items():
+                watermark = self.account_watermarks.get(login, [])
+                if not watermark:
+                    continue
+                stat = self.account_stat(login)
+
+                # Convert Decimals to strings for serialization
+                serialized_stat = {}
+                for key, value in stat.items():
+                    if isinstance(value, Decimal):
+                        serialized_stat[key] = str(value)
+                    else:
+                        serialized_stat[key] = value
+
+                accounts_to_rate.append(
+                    {
+                        'watermark': {
+                            'login': watermark.login,
+                            'hwm_balance': str(watermark.hwm_balance),
+                            'lwm_balance': str(watermark.lwm_balance),
+                            'hwm_equity': str(watermark.hwm_equity),
+                            'lwm_equity': str(watermark.lwm_equity),
+                        },
+                        'stat': serialized_stat
+                    }
+                )
+            logger.info(f"Transferring Analyzed data to celery {len(accounts_to_rate)}")
+            update_account_ratings.delay(accounts_to_rate)
+        except Exception as err:
+            logger.info("Error while analyzing account rating")
+            traceback.print_exc()

@@ -51,4 +51,9 @@ urlpatterns = [
     path('ticket/<str:ticket_id>/messages', MessageListCreateAPIView.as_view()),
 
     path('notifications', NotificationListAPIView.as_view()),
+
+    path('newsletter/subscribe', SubscribeAPIView.as_view()),
+    path('newsletter/unsubscribe', UnsubscribeAPIView.as_view(), name='newsletter-unsubscribe'),
+
+    path('rating', UserRatingView.as_view()),
 ]

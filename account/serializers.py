@@ -195,3 +195,24 @@ class NotificationSerializer(serializers.ModelSerializer):
             "read_at",
         ]
         read_only_fields = ["id", "created_at", "read_at", "sender_name", "recipient_name"]
+
+
+class NewsletterSubscriberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NewsletterSubscriber
+        fields = ["email"]
+
+    def validate_email(self, value):
+        if NewsletterSubscriber.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already subscribed.")
+        return value
+    
+class UnsubscribeSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            subscriber = NewsletterSubscriber.objects.get(email=value)
+        except NewsletterSubscriber.DoesNotExist:
+            raise serializers.ValidationError("This email is not subscribed.")
+        return value

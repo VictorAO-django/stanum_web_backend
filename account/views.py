@@ -2,12 +2,13 @@ import json, io, base64, qrcode, pyotp
 from decimal import Decimal
 from django.utils.decorators import method_decorator
 from django.http import Http404
+from django.utils.http import urlencode
 from django.db.models import Sum, Avg, Count, Max, Min
 from django.views.decorators.cache import cache_page
 from django.utils.dateparse import parse_datetime
 from django_filters.rest_framework import DjangoFilterBackend
-from django.urls import reverse
-from django.shortcuts import get_object_or_404, render
+from rest_framework.reverse import reverse
+from django.shortcuts import get_object_or_404, render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -1136,3 +1137,86 @@ class NotificationListAPIView(generics.ListAPIView):
     def get_queryset(self):
         return Notification.objects.filter(recipient=self.request.user).order_by("-created_at")
     
+
+class SubscribeAPIView(generics.GenericAPIView):
+    authentication_classes = [] 
+    permission_classes = [AllowAny] 
+    serializer_class = NewsletterSubscriberSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+
+        subscriber, created = NewsletterSubscriber.objects.get_or_create(email=email)
+
+        if not created:
+            if subscriber.is_active:
+                return Response(
+                    {"message": "You are already subscribed."},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                subscriber.is_active = True
+                subscriber.subscribed_at = timezone.now()
+                subscriber.unsubscribed_at = None
+                subscriber.save()
+
+                return Response(
+                    {"message": "Welcome back! You’ve been re-subscribed."},
+                    status=status.HTTP_200_OK
+                )
+
+        mailer=Mailer(subscriber.email)
+        mailer.subscribe_newsletter(self.get_unsubscribe_link(subscriber.email, request))
+        return Response(
+            {"message": "Successfully subscribed."},
+            status=status.HTTP_201_CREATED
+        )
+    
+    def get_unsubscribe_link(self, email, request):
+        base_url = reverse("newsletter-unsubscribe", request=request)
+        query_string = urlencode({"email": email})
+        full_url = f"{base_url}?{query_string}"
+        return full_url
+    
+
+class UnsubscribeAPIView(APIView):
+    authentication_classes = [] 
+    permission_classes = [AllowAny] 
+
+    def get(self, request, *args, **kwargs):
+        email = request.query_params.get('email')
+
+        if email:
+            try:
+                subscriber = NewsletterSubscriber.objects.get(email=email)
+                if subscriber.is_active:
+                    subscriber.is_active = False
+                    subscriber.unsubscribed_at = timezone.now()
+                    subscriber.save()
+            except NewsletterSubscriber.DoesNotExist:
+                pass  # ignore missing emails
+
+        # Always redirect user to frontend
+        return redirect(settings.FRONTEND_BASE_URL)
+    
+
+class UserRatingView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        data = self.rating_data(user)
+        return Response({'data':data}, status=status.HTTP_200_OK)
+    
+    def rating_data(self, user):
+        account_ratings = AccountRating.objects.filter(mt5_user__user=user)
+        if not account_ratings.exists():
+            return {'score': 0, 'stars': 0}
+        
+        avg_score = account_ratings.aggregate(avg=Avg('score'))['avg'] or 0
+        return {
+            'score': avg_score,
+            'stars': min(int(avg_score / 20), 5)
+        }

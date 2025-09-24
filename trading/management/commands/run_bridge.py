@@ -51,11 +51,14 @@ class Command(BaseCommand):
         
         local_tz = pytz.timezone('Africa/Lagos')
         # Run every day at 00:15 UTC
-        job = scheduler.add_job(fetch_daily_reports, trigger="cron", hour=0, minute=15, timezone=local_tz)
-        job._scheduler.add_job(bridge.periodic_cleanup, trigger="cron", minute=0)
+        scheduler.add_job(fetch_daily_reports, trigger="cron", hour=0, minute=15, timezone=local_tz)
+        #Run every hour
+        scheduler.add_job(bridge.periodic_cleanup, trigger="cron", minute=0)
+        #Run 6pm everyday
+        job=scheduler.add_job(bridge.periodic_account_rating, trigger="cron", hour=18, minute=0, timezone=local_tz, next_run_time=datetime.now())
         scheduler.start()
 
-        print(f"Job scheduled. Next run at: {job.next_run_time}")
+        # print(f"Job scheduled. Next run at: {job.next_run_time}")
         print("APScheduler started.")
 
         while True:

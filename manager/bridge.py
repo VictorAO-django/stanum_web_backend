@@ -223,3 +223,8 @@ class MetaTraderBridge:
         self.in_memory_monitor.cleanup_unused_symbols()
         logger.info("Done cleaning up")
 
+    def periodic_account_rating(self):
+        print("Start rating account")
+        self.in_memory_monitor.analyze_account_rating()
+        print("Done rating account")
+

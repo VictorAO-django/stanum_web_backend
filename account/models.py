@@ -408,3 +408,13 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message {self.id} on Ticket {self.ticket.id}"
+    
+
+class NewsletterSubscriber(models.Model):
+    email = models.EmailField(unique=True)
+    is_active = models.BooleanField(default=True)  # subscribed or not
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+    unsubscribed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.email

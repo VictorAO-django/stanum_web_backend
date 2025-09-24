@@ -11,7 +11,7 @@ from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
-from trading.models import MT5User, MT5Deal
+from trading.models import MT5User, MT5Deal, AccountRating, UserRating
 from account.models import Referral, ReferralEarning, ReferalEarningTransaction
 
 User = get_user_model()
@@ -334,3 +334,30 @@ def calculate_win_ratio(login=None):
         return 0  # avoid division by zero
 
     return (winning_trades / total_trades) * 100
+
+
+def calculate_user_rating(user:MT5User):
+    accounts = user.accounts.all().select_related("rating")
+    if not accounts:
+        return None
+
+    # Example: weighted average (funded > evaluation)
+    weights = {"funded": 2, "challenge": 1.5, "evaluation": 1}
+    total_score, total_weight = 0, 0
+
+    for acc in accounts:
+        if hasattr(acc, "rating"):
+            weight = weights.get(acc.account_type, 1)
+            total_score += float(acc.rating.score) * weight
+            total_weight += weight
+
+    avg_score = total_score / total_weight if total_weight else 0
+    stars = round(avg_score / 20)
+
+    # Save/update
+    rating, _ = UserRating.objects.get_or_create(user=user)
+    rating.score = avg_score
+    rating.stars = stars
+    rating.save()
+
+    return rating
