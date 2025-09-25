@@ -17,6 +17,7 @@ class PropFirmChallengeSerializer(serializers.ModelSerializer):
             'status',
             'account_size',
             'challenge_fee',
+            'challenge_class',
             'refundable_fee',
             'profit_split_percent',
             'max_daily_loss_percent',
