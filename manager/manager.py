@@ -3,16 +3,17 @@ from typing import List
 from .interface import NewAccountData
 from trading.models import MT5Account, MT5User
 from .sinks.user import save_mt5_user
+from django.conf import settings
 
-LOGIN_START = 4000
-LOGIN_END = 4500
+LOGIN_START =int(settings.LOGIN_START)
+LOGIN_END = int(settings.LOGIN_END)
 
 def get_next_login():
     used = set(MT5User.objects.values_list("login", flat=True))
     for login in range(LOGIN_START, LOGIN_END + 1):
         if login not in used:
             return login
-    raise ValueError("No available logins in range 4000-4500")
+    raise ValueError(f"No available logins in range {LOGIN_START}-{LOGIN_END}")
 
 def str_or_empty(value):
     return value if value is not None else ""
