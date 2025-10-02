@@ -324,6 +324,7 @@ class PaymentIPNAPIView(APIView):
                 'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({challenge.name})",
                 'challenge_name': challenge.name,
                 'challenge_id': challenge.id,
+                'competition_id': None,
             }
         )
 
@@ -467,6 +468,7 @@ class ContestPaymentIPNAPIView(APIView):
                 'comment': f"{settings.GLOBAL_SERVICE_NAME} Competition Account ({contest.name})",
                 'challenge_name': contest.name,
                 'challenge_id': None,
+                'competition_id': contest.id
             }
         )
 

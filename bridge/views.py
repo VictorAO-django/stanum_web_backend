@@ -1,5 +1,5 @@
 from django.shortcuts import render
-import MT5Manager
+import MT5Manager, traceback
 from dataclasses import asdict
 from sub_manager.manager import MT5AccountService
 from rest_framework.response import Response
@@ -38,6 +38,38 @@ def broadcast_account(account:MT5Account):
     
     elif competition:
         cx_data = transform_competition(account.mt5_user.competition)
+        data = {
+            'login': account.login,
+            'competition': asdict(cx_data),
+        }
+        p.produce(
+            "account_competition_initiate", 
+            json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+    p.flush()
+
+
+def broadcast_account_with_challenge(account:MT5Account, challenge):
+    if challenge:
+        ch_data = transform_propfirmchallenge(challenge)
+        data = {
+            'login': account.login,
+            'account': {
+                'created_at': account.created_at,
+                'active': account.active,
+                'step': account.step,
+            },
+            'challenge': asdict(ch_data),
+        }
+        p.produce(
+            "account_challenge_initiate", 
+            json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+    p.flush()
+
+def broadcast_account_with_competition(account:MT5Account, competition):
+    if competition:
+        cx_data = transform_competition(competition)
         data = {
             'login': account.login,
             'competition': asdict(cx_data),
@@ -98,11 +130,21 @@ class CreateAccountView(APIView):
             challenge_id = data.get("challenge_id", None)
             if challenge_id:
                 try:
-                    challenge = PropFirmChallenge.objects.get(id=data["challenge_id"])
-                    broadcast_account(account, challenge)
+                    challenge = PropFirmChallenge.objects.get(id=challenge_id)
+                    broadcast_account_with_challenge(account, challenge)
                 except Exception as err:
+                    traceback.print_exc()
                     print("Error occured while broadcasting account to kafka", str(err))
 
+            competition_id = data.get('competition_id', None)
+            if competition_id:
+                try:
+                    competition = Competition.objects.get(id=competition_id)
+                    broadcast_account_with_competition(account, competition)
+                except Exception as err:
+                    traceback.print_exc()
+                    print("Error occured while broadcasting account to kafka", str(err))
+                    
             print(f"({mt5_user.login})password", master_password)
             
             return custom_response(
