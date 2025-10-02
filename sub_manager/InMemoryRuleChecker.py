@@ -1,22 +1,17 @@
-import MT5Manager
-from challenge.models import PropFirmChallenge
-from datetime import datetime, timedelta
+
 from django.utils.timezone import now
 from decimal import Decimal
-from django.db.models import Q, Count, Sum
-from django.utils import timezone
 from typing import List
+from sub_manager.InMemoryData import *
 
-from .InMemoryData import *
-
-from .logging_config import get_prop_logger
+from sub_manager.logging_config import get_prop_logger
 import time
 logger = get_prop_logger('rules')
 
 class InMemoryRuleChecker:
     """In-memory rule checker that persists across bridge restarts"""
     
-    def check_account_rules(self, account: AccountData, challenge: PropFirmChallenge, daily_drawdown:DailyDrawdownData=None, total_drawdown:AccountTotalDrawdownData=None) -> List[ViolationDict]:
+    def check_account_rules(self, account: AccountData, challenge: PropFirmChallengeData, daily_drawdown:DailyDrawdownData=None, total_drawdown:AccountTotalDrawdownData=None) -> List[ViolationDict]:
         """Check account-level rules (drawdown, daily loss)"""
         violations:List[ViolationDict] = []
         # print("Checking Violations")
@@ -37,7 +32,7 @@ class InMemoryRuleChecker:
         except Exception as err:
             print("Error", str(err))
     
-    def _check_hft(self, deals: List[DealData], challenge: PropFirmChallenge) -> List[ViolationDict]:
+    def _check_hft(self, deals: List[DealData], challenge: PropFirmChallengeData) -> List[ViolationDict]:
         """Check for High Frequency Trading using provided deals list"""
         violations: List[ViolationDict] = []
 
@@ -68,7 +63,7 @@ class InMemoryRuleChecker:
         return violations
 
     
-    def _check_symbol_limit(self, position:PositionData, positions:List[PositionData], challenge: PropFirmChallenge) -> List[ViolationDict]:
+    def _check_symbol_limit(self, position:PositionData, positions:List[PositionData], challenge: PropFirmChallengeData) -> List[ViolationDict]:
         """Check positions per symbol using database"""
         violations:List[ViolationDict] = []
         
@@ -85,7 +80,7 @@ class InMemoryRuleChecker:
                 
         return violations
     
-    def _check_prohibited_strategies(self, deals: List[DealData], challenge: "PropFirmChallenge") -> List[ViolationDict]:
+    def _check_prohibited_strategies(self, deals: List[DealData], challenge: PropFirmChallengeData) -> List[ViolationDict]:
         """Detects prohibited strategies such as Grid and Martingale. Returns a list of detected violations."""
 
         violations:List[ViolationDict] = []
@@ -137,7 +132,7 @@ class InMemoryRuleChecker:
         return violations
     
     
-    def _check_min_days(self, account: AccountData, challenge: PropFirmChallenge) -> list[str]:
+    def _check_min_days(self, account: AccountData, challenge: PropFirmChallengeData) -> list[str]:
         """Check if minimum trading days have been met."""
 
         min_days = challenge.min_trading_days or 0
@@ -147,7 +142,7 @@ class InMemoryRuleChecker:
 
         return days_elapsed > min_days
     
-    def _check_challenge_period(self, account: AccountData, challenge: PropFirmChallenge):
+    def _check_challenge_period(self, account: AccountData, challenge: PropFirmChallengeData):
         """Check if challenge period has exceeded allocated days."""
         violations = []
 
@@ -175,7 +170,7 @@ class InMemoryRuleChecker:
         # print("DONE CHECKING PERIOD")
         return violations
 
-    def _check_max_days(self, account: AccountData, challenge: PropFirmChallenge) -> list[ViolationDict]:
+    def _check_max_days(self, account: AccountData, challenge: PropFirmChallengeData) -> list[ViolationDict]:
         """Check if account has exceeded max trading days (including extensions)."""
         violations:List[ViolationDict] = []
 
@@ -194,7 +189,7 @@ class InMemoryRuleChecker:
 
         return violations
 
-    def _check_daily_drawdown(self, account: AccountData, challenge: PropFirmChallenge, dd: DailyDrawdownData) -> list[ViolationDict]:
+    def _check_daily_drawdown(self, account: AccountData, challenge: PropFirmChallengeData, dd: DailyDrawdownData) -> list[ViolationDict]:
         """Check drawdown limits using tracked high-watermark equity."""
         # print("CHECKING DAILY DRAWSOWN", dd)
         violations:List[ViolationDict] = []
@@ -213,7 +208,7 @@ class InMemoryRuleChecker:
     def _check_total_drawdown(
         self,
         account: AccountData,
-        challenge: PropFirmChallenge,
+        challenge: PropFirmChallengeData,
         total_dd: AccountTotalDrawdownData
     ) -> List[ViolationDict]:
         """
@@ -242,14 +237,14 @@ class InMemoryRuleChecker:
         return violations
 
     
-    def _check_profit(self, account: AccountData, challenge: PropFirmChallenge) -> bool:
+    def _check_profit(self, account: AccountData, challenge: PropFirmChallengeData) -> bool:
         """Check if account has reached the profit target."""
         # logger.info(f"CHECKING PROFIT {account.login}")
-        current_profit = account.profit
+        current_profit = Decimal(account.balance) - Decimal(challenge.account_size)
         if account.step == 2:
-            target_profit_amount = (challenge.phase_2_profit_target_percent / Decimal(100)) * challenge.account_size
+            target_profit_amount = (Decimal(challenge.phase_2_profit_target_percent) / Decimal(100)) * Decimal(challenge.account_size)
         else:
-            target_profit_amount = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
+            target_profit_amount = (Decimal(challenge.profit_target_percent) / Decimal(100)) * Decimal(challenge.account_size)
 
         # if (account.login == 4005):
         #     logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
@@ -257,3 +252,7 @@ class InMemoryRuleChecker:
 
         # Check if profit target is reached
         return current_profit >= target_profit_amount
+    
+
+    
+    

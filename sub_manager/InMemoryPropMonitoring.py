@@ -1,21 +1,21 @@
-import MT5Manager
-import traceback
+from confluent_kafka import Producer
+import MT5Manager, time, traceback
 from datetime import date
 from datetime import time as dtime
 from django.utils.timezone import now
 from typing import List, Dict, Tuple, Union
-from trading.models import *
-from trading.tasks import *
+from stanum_web.tasks import *
 from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
-from .InMemoryData import *
-from .InMemoryRuleChecker import *
-from .logging_config import get_prop_logger
-import time
+from sub_manager.InMemoryData import *
+from sub_manager.InMemoryRuleChecker import *
+from sub_manager.logging_config import get_prop_logger
+from sub_manager.producer import redis_client
+
+from confluent_kafka import Consumer, Producer
+from .USDCurrencyConverter import USDCurrencyConverter
 
 logger = get_prop_logger('monitoring')
 
-channel_layer = get_channel_layer()
 
 def decimal_default(obj):
     if isinstance(obj, Decimal):
@@ -23,16 +23,18 @@ def decimal_default(obj):
     raise TypeError
 
 class InMemoryPropMonitoring:
-    def __init__(self, bridge):
-        self.bridge = bridge
+    def __init__(self):
+        # self.bridge = bridge
         self.rule_checker = InMemoryRuleChecker()
+        self.converter = USDCurrencyConverter()
 
         self.local_accounts: Dict[int, AccountData] = {}
         self.positions: Dict[int, List[PositionData]] = {}
         self.deals: Dict[int, List[DealData]] = {}
-        self.account_challenge: Dict[int, PropFirmChallenge] = {}
+        self.account_challenge: Dict[int, PropFirmChallengeData] = {}
+        self.account_competition: Dict[int, CompetitionData] = {}
 
-        self.symbol:Dict[str, MT5Manager.MTTick] = {}
+        self.symbol:Dict[str, TickData] = {}
 
         self.daily_drawdowns: Dict[int, Dict[date, DailyDrawdownData]] = {}
         self.total_drawdown: Dict[int, AccountTotalDrawdownData] = {}
@@ -40,61 +42,43 @@ class InMemoryPropMonitoring:
 
         self.violation_counts: Dict[int, Dict[str, int]] = {} 
 
-        self._load_local_accounts()
-        self._load_positions()
-
         self.count = 0
-
+        self.last_update_time = {}
+        self.last_broadcast_time = {}
         self.lock_account: Set[int] = set()
 
         logger.info("InMemoryMonitor Initialized")
-
-    def _load_local_accounts(self):
-        for acc in MT5Account.objects.filter(active=True):
-            self.add_account(acc)
     
     def remove_account(self, login):
         self.cleanup_completed_account(login)
         logger.info(f"Account Removed {login}")
 
-    def add_account(self, acc:MT5Account):
-        try:
-            acc_state =  AccountData(
-                login=acc.login, currency_digits=acc.currency_digits, balance=acc.balance, credit=acc.credit, margin=acc.margin,
-                prev_margin=acc.prev_margin, margin_free=acc.margin_free, prev_margin_free=acc.prev_margin_free, margin_level=acc.margin_level,
-                margin_leverage=acc.margin_leverage, margin_initial=acc.margin_initial, margin_maintenance=acc.margin_maintenance,
-                profit=acc.profit, storage=acc.storage, commission=acc.commission, floating=acc.floating, equity=acc.equity, prev_equity=acc.prev_equity,
-                so_activation=acc.so_activation, so_time=acc.so_time, so_level=acc.so_level, so_equity=acc.so_equity, so_margin=acc.so_margin,
-                blocked_commission=acc.blocked_commission, blocked_profit=acc.blocked_profit, assets=acc.assets, liabilities=acc.liabilities,
-                active=acc.active, created_at=acc.created_at, updated_at=acc.updated_at, step=acc.step
-            )
-            self.local_accounts[acc.login] = acc_state
-            self.account_challenge[acc.login] = acc.mt5_user.challenge
-            logger.info(f"Added Account {acc.login}")
-            return True
-        except Exception as err:
-            logger.error(f"Error adding account {acc.login}: {str(err)}")
-            return False
     
-    def update_account(self, acc: MT5Account):
+    def update_account(self, acc: AccountData):
         try:
-            if acc.login not in self.local_accounts:
-                # Option 1: silently add it
-                self.add_account(acc)
-                return
-
-            updated = AccountData(
-                login=acc.login, currency_digits=acc.currency_digits, balance=acc.balance, credit=acc.credit, margin=acc.margin,
-                prev_margin=acc.prev_margin, margin_free=acc.margin_free, prev_margin_free=acc.prev_margin_free, margin_level=acc.margin_level,
-                margin_leverage=acc.margin_leverage, margin_initial=acc.margin_initial, margin_maintenance=acc.margin_maintenance,
-                profit=acc.profit, storage=acc.storage, commission=acc.commission, floating=acc.floating, equity=acc.equity, prev_equity=acc.prev_equity,
-                so_activation=acc.so_activation, so_time=acc.so_time, so_level=acc.so_level, so_equity=acc.so_equity, so_margin=acc.so_margin,
-                blocked_commission=acc.blocked_commission, blocked_profit=acc.blocked_profit, assets=acc.assets, liabilities=acc.liabilities,
-                active=acc.active, created_at=acc.created_at, updated_at=acc.updated_at, step=acc.step
-            )
-            self.local_accounts[acc.login] = updated
-            self.account_challenge[acc.login] = acc.mt5_user.challenge
+            self.local_accounts[acc.login] = acc
             logger.info(f"Updated Account {acc.login}")
+            challenge = self.account_challenge.get(acc.login)
+            if not challenge:
+                return
+            
+            # Check if profit target met
+            if self.rule_checker._check_profit(acc, challenge):
+                self.lock_account.add(acc.login)
+                # Both conditions met - determine next action based on phase
+                if (challenge.challenge_type == 'two_step') and (acc.step == 1):
+                    # Move to Phase 2
+                    self._move_to_step_2(acc.login, challenge)
+                    print("Reached here 1")
+
+                else:
+                    # Challenge fully completed
+                    self._challenge_passed(acc, challenge)
+                    # Now clear drawdowns since challenge is fully done
+                    print("Reached here 2")
+                    self._clear_drawdowns(acc.login)
+
+                self.lock_account.discard(acc.login)
             return True
         except Exception as err:
             logger.debug(f"Error while updating Account {str(err)}")
@@ -103,33 +87,9 @@ class InMemoryPropMonitoring:
     #############################################################################################################
     ## POSITION
     #############################################################################################################
-    def _load_positions(self):
-        positions = MT5Position.objects.filter(closed=False)
-        for pos in positions:
-            pos_state = PositionData(
-                position_id=pos.position_id, login=pos.login, symbol=pos.symbol, comment=pos.comment,
-                price_open=pos.price_open, price_current=pos.price_current, price_sl=pos.price_sl,
-                price_tp=pos.price_tp, price_gateway=pos.price_gateway, volume=pos.volume, volume_ext=pos.volume_ext,
-                volume_gateway_ext=pos.volume_gateway_ext, profit=pos.profit, storage=pos.storage, contract_size=pos.contract_size,
-                rate_margin=pos.rate_margin, rate_profit=pos.rate_profit, expert_id=pos.expert_id, expert_position_id=pos.expert_position_id,
-                dealer=pos.dealer, external_id=pos.external_id, time_create=pos.time_create, time_update=pos.time_update,
-                action=pos.action, reason=pos.reason, digits=pos.digits, digits_currency=pos.digits_currency, obsolete_value=pos.obsolete_value
-            )
-            self.positions.setdefault(pos.login, []).append(pos_state)
-        logger.info(f"Positions Loaded {len(positions)}")
-    
-    def add_position(self, pos:MT5Position):
+    def add_position(self, pos:PositionData):
         try:
-            pos_state = PositionData(
-                position_id=pos.position_id, login=pos.login, symbol=pos.symbol, comment=pos.comment,
-                price_open=pos.price_open, price_current=pos.price_current, price_sl=pos.price_sl,
-                price_tp=pos.price_tp, price_gateway=pos.price_gateway, volume=pos.volume, volume_ext=pos.volume_ext,
-                volume_gateway_ext=pos.volume_gateway_ext, profit=pos.profit, storage=pos.storage, contract_size=pos.contract_size,
-                rate_margin=pos.rate_margin, rate_profit=pos.rate_profit, expert_id=pos.expert_id, expert_position_id=pos.expert_position_id,
-                dealer=pos.dealer, external_id=pos.external_id, time_create=pos.time_create, time_update=pos.time_update,
-                action=pos.action, reason=pos.reason, digits=pos.digits, digits_currency=pos.digits_currency, obsolete_value=pos.obsolete_value
-            )
-            self.positions.setdefault(pos.login, []).append(pos_state)
+            self.positions.setdefault(pos.login, []).append(pos)
             #update equity with new position included
             self.update_account_equity(pos.login)
 
@@ -138,15 +98,15 @@ class InMemoryPropMonitoring:
             positions = self.deals.get(pos.login, [])
             challenge = self.account_challenge.get(pos.login)
 
-            violations:List[ViolationDict] = []
-            violations.extend(self.rule_checker._check_symbol_limit(pos, positions, challenge))
-            self._handle_trade_violations(pos.login, pos.symbol, violations)
-
+            if challenge:
+                violations:List[ViolationDict] = []
+                violations.extend(self.rule_checker._check_symbol_limit(pos, positions, challenge))
+                self._handle_trade_violations(pos.login, pos.symbol, violations)
 
         except Exception as err:
             logger.debug(f"Error while updating position {str(err)}")
 
-    def update_position(self, pos: MT5Position):
+    def update_position(self, pos: PositionData):
         try:
             pos_entry = self.positions.get(pos.login, None)
             if not pos_entry:
@@ -155,22 +115,13 @@ class InMemoryPropMonitoring:
             for i, existing in enumerate(pos_entry):
                 if existing.position_id == pos.position_id:
                     # overwrite with fresh data
-                    updated = PositionData(
-                        position_id=pos.position_id, login=pos.login, symbol=pos.symbol, comment=pos.comment,
-                        price_open=pos.price_open, price_current=pos.price_current, price_sl=pos.price_sl,
-                        price_tp=pos.price_tp, price_gateway=pos.price_gateway, volume=pos.volume, volume_ext=pos.volume_ext,
-                        volume_gateway_ext=pos.volume_gateway_ext, profit=pos.profit, storage=pos.storage, contract_size=pos.contract_size,
-                        rate_margin=pos.rate_margin, rate_profit=pos.rate_profit, expert_id=pos.expert_id, expert_position_id=pos.expert_position_id,
-                        dealer=pos.dealer, external_id=pos.external_id, time_create=pos.time_create, time_update=pos.time_update,
-                        action=pos.action, reason=pos.reason, digits=pos.digits, digits_currency=pos.digits_currency, obsolete_value=pos.obsolete_value
-                    )
-                    pos_entry[i] = updated
+                    pos_entry[i] = pos
                     break
             logger.info(f"Position Updated {pos.login}")
         except Exception as err:
             logger.debug(f"Error while updating position {str(err)}")
 
-    def remove_position(self, pos: MT5Position):
+    def remove_position(self, pos: PositionData):
         try:
             pos_entry = self.positions.get(pos.login, None)
             if pos_entry:
@@ -189,59 +140,26 @@ class InMemoryPropMonitoring:
     #############################################################################################################
     ## DEALS
     #############################################################################################################
-    def _load_deals(self):
-        deals = MT5Deal.objects.filter(deleted=False)
-        for deal in deals:
-            deal_state = DealData(
-                deal=deal.deal, login=deal.login, order=deal.order, external_id=deal.external_id, dealer=deal.dealer,
-                action=deal.action, entry=deal.entry, symbol=deal.symbol, comment=deal.comment, reason=deal.reason,
-                action_gateway=deal.action_gateway, gateway=deal.gateway, price=float(deal.price), price_sl=float(deal.price_sl),
-                price_tp=float(deal.price_tp), price_position=float(deal.price_position), price_gateway=float(deal.price_gateway),
-                market_bid=float(deal.market_bid), market_ask=float(deal.market_ask), market_last=float(deal.market_last),
-                volume=deal.volume, volume_ext=float(deal.volume_ext), volume_closed=deal.volume_closed, volume_closed_ext=float(deal.volume_closed_ext),
-                volume_gateway_ext=float(deal.volume_gateway_ext), profit=float(deal.profit), profit_raw=float(deal.profit_raw),
-                value=float(deal.value), storage=float(deal.storage), commission=float(deal.commission), fee=float(deal.fee),
-                contract_size=float(deal.contract_size), tick_value=float(deal.tick_value), tick_size=float(deal.tick_size),
-                rate_profit=float(deal.rate_profit), rate_margin=float(deal.rate_margin), digits=deal.digits, digits_currency=deal.digits_currency,
-                expert_id=deal.expert_id, position_id=deal.position_id, flags=deal.flags, modification_flags=deal.modification_flags,
-                deleted=deal.deleted, time=deal.time, time_msc=deal.time_msc, created_at=deal.created_at, updated_at=deal.updated_at,
-            )
-            self.deals.setdefault(deal.login, []).append(deal_state)
-        logger.info(f"Deals Loaded {len(deals)}")
     
-    def add_deal(self, deal:MT5Deal):
+    def add_deal(self, deal:DealData):
         try:
-            deal_state = DealData(
-                deal=deal.deal, login=deal.login, order=deal.order, external_id=deal.external_id, dealer=deal.dealer,
-                action=deal.action, entry=deal.entry, symbol=deal.symbol, comment=deal.comment, reason=deal.reason,
-                action_gateway=deal.action_gateway, gateway=deal.gateway, price=float(deal.price), price_sl=float(deal.price_sl),
-                price_tp=float(deal.price_tp), price_position=float(deal.price_position), price_gateway=float(deal.price_gateway),
-                market_bid=float(deal.market_bid), market_ask=float(deal.market_ask), market_last=float(deal.market_last),
-                volume=deal.volume, volume_ext=float(deal.volume_ext), volume_closed=deal.volume_closed, volume_closed_ext=float(deal.volume_closed_ext),
-                volume_gateway_ext=float(deal.volume_gateway_ext), profit=float(deal.profit), profit_raw=float(deal.profit_raw),
-                value=float(deal.value), storage=float(deal.storage), commission=float(deal.commission), fee=float(deal.fee),
-                contract_size=float(deal.contract_size), tick_value=float(deal.tick_value), tick_size=float(deal.tick_size),
-                rate_profit=float(deal.rate_profit), rate_margin=float(deal.rate_margin), digits=deal.digits, digits_currency=deal.digits_currency,
-                expert_id=deal.expert_id, position_id=deal.position_id, flags=deal.flags, modification_flags=deal.modification_flags,
-                deleted=deal.deleted, time=deal.time, time_msc=deal.time_msc, created_at=deal.created_at, updated_at=deal.updated_at,
-            )
-            self.deals.setdefault(deal.login, []).append(deal_state)
+            self.deals.setdefault(deal.login, []).append(deal)
             logger.info(f"Deal Addedd {deal.login}")
 
             deals = self.deals.get(deal.login, [])
             challenge = self.account_challenge.get(deal.login)
+            if challenge:
+                violations:List[ViolationDict] = []
+                violations.extend(self.rule_checker._check_hft(deals, challenge))
+                violations.extend(self.rule_checker._check_prohibited_strategies(deals, challenge))
 
-            violations:List[ViolationDict] = []
-            violations.extend(self.rule_checker._check_hft(deals, challenge))
-            violations.extend(self.rule_checker._check_prohibited_strategies(deals, challenge))
-
-            #Handle the Trade Violations
-            self._handle_trade_violations(deal.login, deal.symbol, violations)
+                #Handle the Trade Violations
+                self._handle_trade_violations(deal.login, deal.symbol, violations)
 
         except Exception as err:
             logger.debug(f"Error while updating deal {str(err)}")
 
-    def update_deal(self, deal: MT5Deal):
+    def update_deal(self, deal: DealData):
         try:
             deal_entry = self.deals.get(deal.login, None)
             if not deal_entry:
@@ -250,27 +168,13 @@ class InMemoryPropMonitoring:
             for i, existing in enumerate(deal_entry):
                 if existing.deal == deal.deal:
                     # overwrite with fresh data
-                    updated = DealData(
-                        deal=deal.deal, login=deal.login, order=deal.order, external_id=deal.external_id, dealer=deal.dealer,
-                        action=deal.action, entry=deal.entry, symbol=deal.symbol, comment=deal.comment, reason=deal.reason,
-                        action_gateway=deal.action_gateway, gateway=deal.gateway, price=float(deal.price), price_sl=float(deal.price_sl),
-                        price_tp=float(deal.price_tp), price_position=float(deal.price_position), price_gateway=float(deal.price_gateway),
-                        market_bid=float(deal.market_bid), market_ask=float(deal.market_ask), market_last=float(deal.market_last),
-                        volume=deal.volume, volume_ext=float(deal.volume_ext), volume_closed=deal.volume_closed, volume_closed_ext=float(deal.volume_closed_ext),
-                        volume_gateway_ext=float(deal.volume_gateway_ext), profit=float(deal.profit), profit_raw=float(deal.profit_raw),
-                        value=float(deal.value), storage=float(deal.storage), commission=float(deal.commission), fee=float(deal.fee),
-                        contract_size=float(deal.contract_size), tick_value=float(deal.tick_value), tick_size=float(deal.tick_size),
-                        rate_profit=float(deal.rate_profit), rate_margin=float(deal.rate_margin), digits=deal.digits, digits_currency=deal.digits_currency,
-                        expert_id=deal.expert_id, position_id=deal.position_id, flags=deal.flags, modification_flags=deal.modification_flags,
-                        deleted=deal.deleted, time=deal.time, time_msc=deal.time_msc, created_at=deal.created_at, updated_at=deal.updated_at,
-                    )
-                    deal_entry[i] = updated
+                    deal_entry[i] = deal
                     break
             logger.info(f"Deal Updated {deal.login}")
         except Exception as err:
             logger.debug(f"Error while updating deal {str(err)}")
 
-    def remove_deal(self, deal: MT5Deal):
+    def remove_deal(self, deal: DealData):
         try:
             deal_entry = self.deals.get(deal.login, None)
             if deal_entry:
@@ -285,7 +189,6 @@ class InMemoryPropMonitoring:
     def _clear_deals(self, login):
         self.deals[login] = []
         logger.info(f"Deals cleared for {login}")
-    
 
     def _handle_trade_violations(self, login, symbol, violations:List[ViolationDict]):
         if violations:
@@ -324,7 +227,7 @@ class InMemoryPropMonitoring:
         self.violation_counts.pop(login, None)
         logger.info(f"Cleaned up completed account {login}")
 
-    def _move_to_step_2(self, login, challenge:PropFirmChallenge):
+    def _move_to_step_2(self, login, challenge:PropFirmChallengeData):
         try:
             print("Moving account to step 2")
             # 1. First reset account on MT5 (close positions and reset account_size)
@@ -348,7 +251,7 @@ class InMemoryPropMonitoring:
         except Exception as err:
             logger.debug(f"Error processing Phase 1 pass for {login}: {str(err)}")
 
-    def _challenge_passed(self,acc:AccountData,challenge:PropFirmChallenge):
+    def _challenge_passed(self,acc:AccountData,challenge:PropFirmChallengeData):
         """Handle complete challenge success - eligible for funded account"""
         try:
             #Pass account in celery
@@ -361,7 +264,7 @@ class InMemoryPropMonitoring:
         except Exception as err:
             logger.debug(f"Error processing challenge pass for {acc.login}: {str(err)}")
 
-    def _challenge_failed(self, login: int, reasons:List[ViolationDict], challenge:PropFirmChallenge):
+    def _challenge_failed(self, login: int, reasons:List[ViolationDict], challenge:PropFirmChallengeData):
         """Handle complete challenge failure"""
         try:
             
@@ -392,7 +295,7 @@ class InMemoryPropMonitoring:
 
             # Finally cleanup (this removes all tracking data)
             self.cleanup_completed_account(login)
-            self.lock_account.remove(login)
+            self.lock_account.discard(login)
             logger.info(f"Successfully processed challenge failure {login}")
 
         except Exception as err:
@@ -428,60 +331,63 @@ class InMemoryPropMonitoring:
         self.total_drawdown.pop(login, None)       # remove total dd for this account
         self.daily_drawdowns.pop(login, None)      # remove all daily dd for this account
 
-    def OnTick(self, symbol: str, tick:MT5Manager.MTTick):
+    def OnTick(self, symbol: str, tick:TickData):
         try:
             self.symbol[symbol] = tick
+            #Update the currency conversion
+            self.converter.update_from_tick(symbol, tick.bid, tick.ask)
+
             accounts =  self.get_accounts_with_symbol(symbol)
             # print(f"ACCOUNTS WITH SYMBOL({symbol})", len(accounts))
             for acc in accounts:
                 # print("Running account", acc.login)
-                _acc = self.update_account_equity(acc.login)
-                self.update_account_watermarks(_acc.login, _acc.balance, _acc.equity)
-                dd = self.update_drawdown(acc.login)
-                total_dd = self.update_total_drawdown(acc.login)
+                if acc.login in self.lock_account:
+                    continue
                 
-                #broadcast after equity/drawdown updates
-                self._broadcast_account_stats(acc.login)
+                # Add to lock set
+                self.lock_account.add(acc.login)
 
-                challenge = self.account_challenge.get(acc.login)
-                # if self.count == 0:
-                #     self.count += 1
-                #     self._move_to_step_2(acc.login, challenge)
-                # return 
-            
-                broken_rules = self.rule_checker.check_account_rules(acc, challenge, dd, total_dd) 
-                
-                if len(broken_rules) == 0:
-                    #Check If the rules configuration is not for a funded account
-                    if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
-                        # Check if minimum days requirement met
-                        if not self.rule_checker._check_min_days(acc, challenge):
-                            # logger.info(f"NO ACCOUNT VIOLATIONS BUT MIN DAYS NOT REACHED YET {acc.login}")
-                            continue
+                try:
+                    _acc = self.update_account_equity(acc.login)
+                    self.update_account_watermarks(_acc.login, _acc.balance, _acc.equity)
+                    dd = self.update_drawdown(acc.login)
+                    total_dd = self.update_total_drawdown(acc.login)
+                    
+                    if self.should_update_leaderboard(acc.login):  # Throttle this
+                        self.update_competition_metrics(acc.login)
 
-                        # Check if profit target met
-                        if self.rule_checker._check_profit(acc, challenge):
-                            # Both conditions met - determine next action based on phase
-                            if (challenge.challenge_type == 'two_step') and (acc.step == 1):
-                                # Move to Phase 2
-                                self._move_to_step_2(acc.login, challenge)
-                                print("Reached here 1")
-                                continue
-                            else:
-                                # Challenge fully completed
-                                self._challenge_passed(acc, challenge)
-                                # Now clear drawdowns since challenge is fully done
-                                print("Reached here 2")
-                                self._clear_drawdowns(acc.login)
-                                continue
-                        # logger.info(f"NO ACCOUNT VIOLATIONS BUT TARGET PROFIT NOT YET MADE {acc.login}")
+                    challenge = self.account_challenge.get(acc.login)
+                    if not challenge:
                         continue
-                else:
-                    print("Handling account violation")
-                    self.lock_account.add(acc.login)
-                    self._handle_account_rules_violation(acc.login, broken_rules)
-                    print("Failing account")
-                    self._challenge_failed(acc.login, broken_rules, challenge)
+                    
+                    #broadcast after equity/drawdown updates
+                    if self.should_broadcast(acc.login):
+                        self._broadcast_account_stats(acc.login)
+
+                    broken_rules = self.rule_checker.check_account_rules(acc, challenge, dd, total_dd) 
+                    
+                    if len(broken_rules) == 0:
+                        #Check If the rules configuration is not for a funded account
+                        if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
+                            # Check if minimum days requirement met
+                            if not self.rule_checker._check_min_days(acc, challenge):
+                                # logger.info(f"NO ACCOUNT VIOLATIONS BUT MIN DAYS NOT REACHED YET {acc.login}")
+                                continue
+
+                            # logger.info(f"NO ACCOUNT VIOLATIONS BUT TARGET PROFIT NOT YET MADE {acc.login}")
+                            continue
+                    else:
+                        print("Handling account violation")
+                        self.lock_account.add(acc.login)
+                        self._handle_account_rules_violation(acc.login, broken_rules)
+                        print("Failing account")
+                        self._challenge_failed(acc.login, broken_rules, challenge)
+
+                except Exception as err:
+                    logger.error(f"Error processing account {acc.login}: {err}", exc_info=True)
+                
+                finally: 
+                    self.lock_account.discard(acc.login)
 
         except Exception as err:
             logger.error("Error processing OnTick", exc_info=True)
@@ -538,7 +444,17 @@ class InMemoryPropMonitoring:
                     pnl = (pos.price_open - current_ask) * volume_in_lots * contract_size
                     margin_price = current_bid
 
+                quote_currency = self.converter.get_quote_currency(pos.symbol)
+                pnl = self.converter.to_usd(pnl, quote_currency)
+
+                # print(f"Position {pos.symbol}: Action={pos.action}, Volume={pos.volume}, "
+                # f"OpenPrice={pos.price_open}, CurrentBid={current_bid}, CurrentAsk={current_ask}")
+                # print(f"Calculated PnL: {pnl}, Contract Size: {contract_size}")
+                # print(f"Volume in lots: {volume_in_lots}")
+                # print("---")
+
                 profit += pnl
+                # print(f"Profit-{profit}")
                 position_margin = (volume_in_lots * contract_size * margin_price) / leverage
                 margin += position_margin
 
@@ -593,24 +509,20 @@ class InMemoryPropMonitoring:
                 )
                 dd = self.daily_drawdowns[login][today] = state
 
-            # print('DD', dd)
-            updated = False
-
             # Update highs and lows
             if account.equity > dd.equity_high:
                 dd.equity_high = account.equity
-                updated = True
 
             if dd.equity_low == 0 or account.equity < dd.equity_low:
                 dd.equity_low = account.equity
-                updated = True
 
             # Recalculate drawdown %
             if dd.equity_high > 0:
-                dd.drawdown_percent = (
-                    (dd.equity_high - dd.equity_low) / dd.equity_high * 100
-                )
-                updated = True
+                dd.drawdown_percent = (account.equity - dd.equity_high) / dd.equity_high * 100
+            # if dd.equity_high > 0:
+            #     dd.drawdown_percent = (
+            #         (dd.equity_high - dd.equity_low) / dd.equity_high * 100
+            #     )
             # logger.info(f'Final level: HIGH-{dd.equity_high} LOW-{dd.equity_low} DRAWDOWN_PERCENT-{dd.drawdown_percent}' )
             return dd
 
@@ -629,15 +541,21 @@ class InMemoryPropMonitoring:
             if not account:
                 return None  # no account to update
             
-            challenge = self.account_challenge.get(login)
-            if not challenge:
-                return None  # no challenge info available
+            equity_peak = 0
+            challenge = self.account_challenge.get(login, None)
+            competition = self.account_competition.get(login, None)
+            if challenge:
+                equity_peak = Decimal(challenge.account_size)
+            elif competition:
+                equity_peak = Decimal(competition.starting_balance)
+            else:
+                return None
 
             td = self.total_drawdown.get(login, None)
             if not td:
                 td = self.total_drawdown[login] = AccountTotalDrawdownData(
                     login=login,
-                    equity_peak=challenge.account_size,
+                    equity_peak=equity_peak,
                     equity_low=account.equity,
                     drawdown_percent=Decimal("0"),
                 )
@@ -653,7 +571,8 @@ class InMemoryPropMonitoring:
 
             # Recalculate drawdown %
             if td.equity_peak > 0:
-                td.drawdown_percent = ((Decimal(td.equity_peak) - Decimal(td.equity_low)) / Decimal(td.equity_peak)) * 100
+                td.drawdown_percent = (Decimal(account.equity) - Decimal(td.equity_peak) / Decimal(td.equity_peak) * Decimal(100))
+                # td.drawdown_percent = ((Decimal(td.equity_peak) - Decimal(td.equity_low)) / Decimal(td.equity_peak)) * 100
 
             # print(f"FINAL: PEAK-{td.equity_peak} LOW-{td.equity_low}")
             return td
@@ -709,14 +628,14 @@ class InMemoryPropMonitoring:
             logger.debug(f"Error logging violations for {login}: {e}")
         
 
-    def _send_phase_1_success_notification(self, login, challenge: PropFirmChallenge):
+    def _send_phase_1_success_notification(self, login, challenge: PropFirmChallengeData):
         try:
             result = send_phase_1_success_task.delay(login, challenge.id)
         except Exception as err:
             logger.debug(f"Could not send phase q success notification {login} - {str(err)}")
 
 
-    def _send_challenge_failure_notification(self, login, challenge: PropFirmChallenge, reasons: List[ViolationDict]):
+    def _send_challenge_failure_notification(self, login, challenge: PropFirmChallengeData, reasons: List[ViolationDict]):
         try:
             result = send_challenge_failed_mail_task.delay(login, challenge.id, reasons)
             logger.info(f"Failure alert sent to {login} ")
@@ -898,3 +817,352 @@ class InMemoryPropMonitoring:
         except Exception as err:
             logger.info("Error while analyzing account rating")
             traceback.print_exc()
+
+
+    def update_user_metrics(self, login: int):
+        """
+        Calculate and store all user metrics in Redis
+        Called after significant events (position close, equity change, etc.)
+        """
+        try:
+            stats = self.calculate_user_metrics(login)
+            if not stats:
+                return
+            
+            # Store all metrics in Redis hash
+            redis_client.hset(f"user:{login}", mapping={
+                "username": stats["username"],
+                "starting_balance": str(stats["starting_balance"]),
+                "current_equity": str(stats["current_equity"]),
+                "profit": str(stats["profit"]),
+                "return_percent": str(stats["return_percent"]),
+                "max_drawdown": str(stats["max_drawdown"]),
+                "total_trades": str(stats["total_trades"]),
+                "winning_trades": str(stats["winning_trades"]),
+                "win_rate": str(stats["win_rate"]),
+                "score": str(stats["score"]),
+                "updated_at": str(int(time.time()))
+            })
+            
+            # If competition account, update leaderboard sorted set
+            if self.is_competition_account(login):
+                redis_client.zadd("competition:leaderboard", {login: stats["score"]})
+                
+                # Broadcast update to WebSocket
+                self.broadcast_competition_update()
+            
+            # Broadcast to individual account viewers
+            self.broadcast_account_update(login, stats)
+            
+        except Exception as e:
+            logger.error(f"Error updating metrics for {login}: {e}")
+            traceback.print_exc()
+
+
+
+    #===============================================================================================
+    # COMPETITION
+    #===============================================================================================
+    def should_update_leaderboard(self, login: int) -> bool:
+        """Check if enough time has passed since last update"""
+        now = time.time()
+        last_update = self.last_update_time.get(login, 0)
+        # Only update if 5 seconds have passed
+        if now - last_update >= 10.0:
+            self.last_update_time[login] = now
+            return True
+        return False
+    
+    def should_broadcast(self, login:int) -> bool:
+        now = time.time()
+        last_broadcast = self.last_broadcast_time.get(login, 0)
+        # Only update if 5 seconds have passed
+        if now - last_broadcast >= 10.0:
+            self.last_broadcast_time[login] = now
+            return True
+        return False
+    
+    def update_competition_metrics(self, login: int):
+        """
+        Calculate all metrics, update Redis, and broadcast to frontend
+        NO database operations here (fast path)
+        """
+        try:
+            # logger.info(f"Broadcasting: {login} ")
+            # Get competition UUID from Redis
+            competition_uuid = redis_client.hget(f"user:{login}", "competition_uuid")
+            # logger.info(f"Competition uuid: {competition_uuid}")
+            if not competition_uuid:
+                return  # Not in competition
+            
+            # Check if competition is still active
+            if not self.is_competition_active(competition_uuid):
+                logger.info(f"Competition not active")
+                return  # Ended, don't update
+            
+            # Calculate all metrics
+            stats = self.calculate_user_metrics(login)
+            # logger.info(f"User metrics: {stats}")
+            if not stats:
+                return
+            
+            # Update Redis (fast - ~0.1ms)
+            redis_client.hset(f"user:{login}", mapping={
+                k: str(v) for k, v in stats.items()
+            })
+            
+            # Update leaderboard sorted set
+            redis_client.zadd(
+                f"competition:{competition_uuid}:leaderboard",
+                {login: stats["score"]}
+            )
+            
+            # logger.info("Rounding up broadcasting")
+            # Broadcast to frontend via Channels
+            self.broadcast_competition_leaderboard(competition_uuid)
+            # logger.info("Broadcasted")
+
+        except Exception as e:
+            traceback.print_exc()
+            logger.error(f"Error updating competition metrics for {login}: {e}")
+    
+
+    def calculate_user_metrics(self, login: int) -> Optional[dict]:
+        """Calculate all competition metrics"""
+        try:
+            account = self.local_accounts.get(login)
+            competition = self.account_competition.get(login)
+            
+            if not competition:
+                return None
+            
+            # Drawdown data
+            total_dd = self.total_drawdown.get(login)
+            
+            # Calculations
+            starting_balance = Decimal(competition.starting_balance)
+            current_equity = account.equity
+            profit = current_equity - starting_balance
+            return_percent = (profit / starting_balance * 100) if starting_balance > 0 else Decimal("0")
+            
+            max_drawdown = abs(total_dd.drawdown_percent) if total_dd else Decimal("0")
+            
+            # Trade stats from Redis
+            total_trades = int(redis_client.hget(f"user:{login}", "total_trades") or 0)
+            winning_trades = int(redis_client.hget(f"user:{login}", "winning_trades") or 0)
+            win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else Decimal("0")
+            
+            # Competition score (return / drawdown ratio)
+            score = float(return_percent) / (float(max_drawdown) + 0.01)
+            
+            return {
+                "login": login,
+                "username": f"Trader_{login}",
+                "competition_uuid": str(competition.uuid),
+                "starting_balance": float(starting_balance),
+                "current_equity": float(current_equity),
+                "profit": float(profit),
+                "return_percent": float(return_percent),
+                "max_drawdown": float(max_drawdown),
+                "total_trades": total_trades,
+                "winning_trades": winning_trades,
+                "win_rate": float(win_rate),
+                "score": score,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+        except Exception as e:
+            traceback.print_exc()
+            logger.error(f"Error calculating metrics for {login}: {e}")
+            return None
+
+    def is_competition_active(self, competition_uuid: str) -> bool:
+        """Check if competition is still active"""
+        status = redis_client.hget(f"competition:{competition_uuid}:meta", "status")
+        
+        if status != "active":
+            return False
+        
+        # Check end date
+        end_date_str = redis_client.hget(f"competition:{competition_uuid}:meta", "end_date")
+        if end_date_str:
+            end_date = datetime.fromisoformat(end_date_str)
+            if datetime.now(timezone.utc) > end_date:
+                # Competition just ended, finalize it
+                finalize_competition_task.delay(competition_uuid)
+                return False
+        
+        return True
+
+
+    def broadcast_competition_leaderboard(self, competition_uuid: str):
+        """
+        Send updated leaderboard to all frontend viewers via WebSocket
+        NO database operations - only Redis reads
+        """
+        try:
+            # Get top 100 from Redis sorted set
+            top_logins = redis_client.zrevrange(
+                f"competition:{competition_uuid}:leaderboard",
+                0, 99,
+                withscores=True
+            )
+            
+            leaderboard = []
+            for rank, (login, score) in enumerate(top_logins, 1):
+                user_data = redis_client.hgetall(f"user:{login}")
+                
+                if user_data:
+                    leaderboard.append({
+                        "rank": rank,
+                        "login": int(login),
+                        "username": user_data.get("username", ""),
+                        "current_equity": float(user_data.get("current_equity", 0)),
+                        "return_percent": float(user_data.get("return_percent", 0)),
+                        "max_drawdown": float(user_data.get("max_drawdown", 0)),
+                        "winning_trades": float(user_data.get("winning_trades", 0)),
+                        "total_trades": int(user_data.get("total_trades", 0)),
+                        "win_rate": float(user_data.get("win_rate", 0)),
+                        "score": float(score)
+                    })
+            
+            async_to_sync(channel_layer.group_send)(
+                f"competition_{competition_uuid}",
+                {
+                    "type": "leaderboard_update",
+                    "data": {
+                        "leaderboard": leaderboard,
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+            )
+            
+        except Exception as e:
+            traceback.print_exc()
+            logger.error(f"Error broadcasting leaderboard for {competition_uuid}: {e}")
+
+
+
+
+
+
+c = Consumer({
+    "bootstrap.servers": "localhost:9092",
+    "group.id": "rule-engine",
+    "auto.offset.reset": "earliest",
+    "enable.auto.commit": True,
+    "auto.commit.interval.ms": 5000
+})
+
+c.subscribe([
+    "account_challenge_initiate", "account_competition_initiate", "market.ticks", 
+    "accounts.state", "accounts.load", 
+    "accounts.position", "accounts.position.remove", "accounts.position.update",
+    "accounts.deal", "accounts.deal.remove", "accounts.deal.update",
+])
+
+monitor = InMemoryPropMonitoring()
+while True:
+    msg = c.poll(1.0)
+    if msg is None:
+        continue
+    if msg.error():
+        print("Error:", msg.error())
+        continue
+    
+    try:
+        if msg.topic() == "market.ticks":
+            tick = TickData(**json.loads(msg.value().decode("utf-8")))
+            monitor.OnTick(tick.symbol, tick)
+            # print(f"Received tick {tick.symbol}")
+
+        elif msg.topic() == "accounts.state":
+            account = AccountData(**json.loads(msg.value().decode("utf-8")))
+            monitor.update_account(account)
+            print(f"Updated account {account.login}")
+
+        elif msg.topic() == 'account_competition_initiate':
+            data = json.loads(msg.value().decode("utf-8"))
+            login=data['login']
+            competition = CompetitionData.from_dict(data['competition'])
+            # print(competition)
+            monitor.account_competition[login] = competition
+
+            competition_uuid = str(competition.uuid)
+            # Store competition UUID for this account in Redis
+            redis_client.hset(f"user:{login}", "competition_uuid", competition_uuid)
+            # Initialize trade counters
+            redis_client.hset(f"user:{login}", mapping={
+                "total_trades": "0",
+                "winning_trades": "0",
+                "username": f"Trader_{login}"
+            })  
+            # Initialize competition metadata (if first participant)
+            if not redis_client.exists(f"competition:{competition_uuid}:meta"):
+                redis_client.hset(f"competition:{competition_uuid}:meta", mapping={
+                    "uuid": competition_uuid,
+                    "name": competition.name,
+                    "status": "active",
+                    "start_date": competition.start_date.isoformat(),
+                    "end_date": competition.end_date.isoformat(),
+                    "starting_balance": str(competition.starting_balance)
+                })
+
+            print(f"Account {login} registered to competition {competition_uuid}")
+
+        elif msg.topic() == "account_challenge_initiate":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=data['login']
+            account_data = data['account']
+            challenge = PropFirmChallengeData(**data['challenge'])
+
+            #Update Vital account data
+            monitor.local_accounts.get(login).created_at = account_data['created_at']
+            monitor.local_accounts.get(login).active = account_data['active']
+            monitor.local_accounts.get(login).step = account_data['step']
+            #Map the account challenge
+            monitor.account_challenge[login] = challenge
+            print(f"Account challenge received {login}")
+
+        elif msg.topic() == "accounts.position":
+            pos = PositionData(**json.loads(msg.value().decode("utf-8")))
+            monitor.add_position(pos)
+            print(f"Added Position {pos.login}")
+
+        elif msg.topic() == "accounts.position.update":
+            pos = PositionData(**json.loads(msg.value().decode("utf-8")))
+            monitor.update_position(pos)
+            print(f"Added Position {pos.login}")
+        
+        elif msg.topic() == "accounts.position.remove":
+            pos = PositionData(**json.loads(msg.value().decode("utf-8")))
+            monitor.remove_position(pos)
+
+            # 1. Update trade counters in Redis (FAST)
+            redis_client.hincrby(f"user:{pos.login}", "total_trades", 1)
+            if float(pos.profit) > 0:
+                redis_client.hincrby(f"user:{pos.login}", "winning_trades", 1)
+            # 2. Remove from local positions
+            monitor.remove_position(pos)
+
+            print(f"Position Removed {pos.position_id}, , Profit: {pos.profit}")
+
+        
+        elif msg.topic() == "accounts.deal":
+            deal = DealData(**json.loads(msg.value().decode("utf-8")))
+            monitor.add_deal(deal)
+            print(f"Added Deal {deal.login}")
+        
+        elif msg.topic() == "accounts.deal.update":
+            deal = DealData(**json.loads(msg.value().decode("utf-8")))
+            monitor.update_deal(deal)
+            print(f"Updated Deal {deal.login}")
+
+        elif msg.topic() == "accounts.deal.remove":
+            deal = DealData(**json.loads(msg.value().decode("utf-8")))
+            monitor.remove_deal(deal)
+            print(f"Deal Removed {deal.login}")
+    
+    except Exception as err:
+        print(f"ERROR OCCURED: {str(err)}")
+        traceback.print_exc()

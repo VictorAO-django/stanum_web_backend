@@ -114,7 +114,7 @@ class Mailer:
         self.html_content = render_to_string('emails/payment_failed.html', context)
         self.send_with_template()
 
-    def payment_failed(self, user, challenge: PropFirmChallenge, payment):
+    def payment_expired(self, user, challenge: PropFirmChallenge, payment):
         self.subject = "Payment Session Expired"
         context = {
             'user': user, 'challenge': challenge, 'payment': payment,
@@ -122,6 +122,36 @@ class Mailer:
         }
 
         self.html_content = render_to_string('emails/payment_expired.html', context)
+        self.send_with_template()
+
+    def contest_payment_successful(self, user, contest: Competition, payment):
+        self.subject = "Payment Received Successfully"
+        context = {
+            'user': user, 'contest': contest, 'payment': payment,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
+
+        self.html_content = render_to_string('emails/contest/payment_received.html', context)
+        self.send_with_template()
+
+    def contest_payment_failed(self, user, contest: Competition, payment):
+        self.subject = "Payment Failed"
+        context = {
+            'user': user, 'contest': contest, 'payment': payment,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
+
+        self.html_content = render_to_string('emails/contest/payment_failed.html', context)
+        self.send_with_template()
+
+    def contest_payment_expired(self, user, contest: Competition, payment):
+        self.subject = "Payment Session Expired"
+        context = {
+            'user': user, 'contest': contest, 'payment': payment,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
+
+        self.html_content = render_to_string('emails/contest/payment_expired.html', context)
         self.send_with_template()
 
     def wallet_funding_success(self, transaction: PropFirmWalletTransaction):
@@ -150,6 +180,16 @@ class Mailer:
             'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
         }
         self.html_content = render_to_string('emails/challenge_entry.html', context)
+        self.send_with_template()
+
+    def contest_entry(self, user:MT5User, contest: Competition, password):
+        self.subject = f"Welcome to {settings.GLOBAL_SERVICE_NAME} Prop Challenge"
+        context = {
+            'user': user, 'contest': contest, 'firm_name': settings.GLOBAL_SERVICE_NAME,
+            'broker_name': settings.BROKER_NAME, 'server': settings.SERVER_NAME, 'password': password,
+            'current_year': settings.CURRENT_YEAR, 'company_name': settings.GLOBAL_SERVICE_NAME
+        }
+        self.html_content = render_to_string('emails/contest/entry.html', context)
         self.send_with_template()
 
     def funded_account_issued(self, user:MT5User, challenge: PropFirmChallenge, password):

@@ -95,22 +95,32 @@ class PaymentCreateAPIView(APIView):
     def post(self, request):
         payload = request.data.copy()
         
-        challenge_id = payload.get('challenge_id', '0')
-        challenge = PropFirmChallenge.objects.filter(id=challenge_id)
-        if challenge.exists():
-            challenge = challenge.first()
-        
-        print("CHALLENGE_ID", challenge.id)
-
-
-        if payload.get('description', '') == '':
-            payload['description'] = f"Stanum payment for challenge {challenge.name}"
-
-        serializer = PaymentCreateSerializer(data=payload)
-        if serializer.is_valid():
-
-            # Create payment record
+        is_contest = payload.get('is_contest', False)
+        constest_uuid = payload.get('contest_uuid', "")
+        if is_contest:
+            contest = get_object_or_404(Competition, uuid=constest_uuid, ended=False)
+            if payload.get('description', '') == '':
+                payload['description'] = f"Stanum payment for challenge {contest.name}"
+            
+            order_id = f"STMCTX-{contest.id}-{request.user.id}"
+            ipn_url_text = '/api/v1/payment/crypto/ipn/contest/'
+            
+        else:
+            challenge_id = payload.get('challenge_id', '0')
+            challenge = get_object_or_404(PropFirmChallenge, id=challenge_id)
+            if challenge.exists():
+                challenge = challenge.first()
+            if payload.get('description', '') == '':
+                payload['description'] = f"Stanum payment for challenge {challenge.name}"
+            
             order_id = f"STMCLG-{challenge.id}-{request.user.id}"
+            ipn_url_text = '/api/v1/payment/crypto/ipn/'
+
+        print(ipn_url_text, order_id)
+        print(payload)
+        serializer = PaymentCreateSerializer(data=payload)
+        if serializer.is_valid(): 
+            # Create payment record
             payment, _ = Payment.objects.get_or_create(
                 user=request.user,
                 order_id=order_id,
@@ -124,7 +134,7 @@ class PaymentCreateAPIView(APIView):
             
             # Create payment with NOWPayments
             service = NOWPaymentsService()
-            ipn_url = request.build_absolute_uri('/api/v1/payment/crypto/ipn/')
+            ipn_url = request.build_absolute_uri(ipn_url_text)
             
             result = service.create_payment(
                 price_amount=serializer.validated_data['amount'],
@@ -313,6 +323,7 @@ class PaymentIPNAPIView(APIView):
                 'language': 'english',
                 'comment': f"{settings.GLOBAL_SERVICE_NAME} Challenge Account ({challenge.name})",
                 'challenge_name': challenge.name,
+                'challenge_id': challenge.id,
             }
         )
 
@@ -332,7 +343,7 @@ class PaymentIPNAPIView(APIView):
                     mt5_user.save()
                     #Create Account Earning
                     target_profit_amount = (challenge.profit_target_percent / Decimal(100)) * challenge.account_size
-                    AccountEarnings.objects.create(login=mt5_user.login, target=target_profit_amount)
+                    AccountEarnings.objects.get_or_create(login=mt5_user.login, target=target_profit_amount)
                     #Send email
                     mailer.challenge_entry(mt5_user, challenge, password)
 
@@ -364,6 +375,147 @@ class PaymentIPNAPIView(APIView):
             print(f"Payment {payment.order_id} expired")
         except Exception as err:
             print(f"Error while sending payment session timeout email: {str(err)}")
+
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ContestPaymentIPNAPIView(APIView):
+    """Handle IPN callbacks from NOWPayments"""
+    permission_classes = []  # No authentication required for IPN
+    
+    def post(self, request):
+        try:
+            # Verify signature
+            # signature = request.headers.get('x-nowpayments-sig')
+            # if not signature:
+            #     return Response({'error': 'Missing signature'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            service = NOWPaymentsService()
+            # if not service.verify_ipn_signature(request.body, signature):
+            #     return Response({'error': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
+            print("Payment IPN received")
+            # Parse callback data
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return Response({'error': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update payment status
+            try:
+                _, contest_id, user_id = data['order_id'].split('-')
+                contest = get_object_or_404(Competition, id=contest_id)
+                user = get_object_or_404(User, id=user_id)
+
+                payment = Payment.objects.get(order_id=data['order_id'])
+                old_status = payment.payment_status
+
+                print("Payment Status", data['payment_status'])
+                if old_status != data['payment_status']:
+                    payment.payment_status = data['payment_status']
+                    if 'pay_amount' in data:
+                        payment.pay_amount = data['pay_amount']
+                    payment.save()
+                    
+                    # Handle different payment statuses
+                    if data['payment_status'] == 'finished':
+                        # Payment completed successfully
+                        # Add your business logic here (e.g., activate subscription, send email)
+                        self.handle_payment_success(payment, contest, user)
+                    elif data['payment_status'] == 'failed':
+                        # Payment failed
+                        # Add your business logic here
+                        self.handle_payment_failure(payment)
+                    elif data['payment_status'] == 'expired':
+                        # Payment expired
+                        self.handle_payment_expired(payment)
+                
+                return Response({'status': 'ok'})
+                
+            except Payment.DoesNotExist:
+                return Response({'error': 'Payment not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        except Exception as e:
+            return Response(
+                {'error': 'Internal server error'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def handle_payment_success(self, payment: Payment, contest: Competition, user):
+        """Handle successful payment"""
+        first_name, last_name = split_full_name(user.full_name)
+        address = Address.objects.get(user=user)
+
+        balance = float(contest.starting_balance)
+
+        print("Attempt creating MT5Account")
+        result = create_mt5_account(
+            base_url=settings.BRIDGE_URL,
+            account_data={
+                'first_name': first_name,
+                'last_name': last_name,
+                'balance': balance,
+                'country': user.country,
+                'company': settings.GLOBAL_SERVICE_NAME,
+                'address': address.home_address,
+                'email': user.email,
+                'phone': user.phone_number,
+                'zip_code': address.zip_code,
+                'state': address.state,
+                'city': address.town,
+                'language': 'english',
+                'comment': f"{settings.GLOBAL_SERVICE_NAME} Competition Account ({contest.name})",
+                'challenge_name': contest.name,
+                'challenge_id': None,
+            }
+        )
+
+        # send_bridge_test_req(settings.BRIDGE_URL)
+        try:
+            mailer = Mailer(user.email)
+            mailer.contest_payment_successful(user, contest, payment)
+
+            if result:
+                mt5_user_login, password = result
+                mt5_user = MT5User.objects.filter(login=mt5_user_login).first()
+                if mt5_user:
+                    mt5_user.user = user
+                    mt5_user.competition = contest
+                    mt5_user.password = encrypt_password(password)
+                    mt5_user.account_type = 'competition'
+                    mt5_user.save()
+                    #Create Account Earning
+                    AccountEarnings.objects.get_or_create(login=mt5_user.login)
+                    #Send email
+                    mailer.contest_entry(mt5_user, contest, password)
+
+                    print("Account created:", mt5_user_login, password)
+            else:
+                print("Failed to create account")
+
+            print(f"Payment {payment.order_id} completed and account {mt5_user.login} created")
+        except Exception as err:
+            pass
+
+    
+    def handle_payment_failure(self, payment: Payment, contest: Competition, user):
+        """Handle failed payment - override this method for custom logic"""
+        try:
+            Mailer(user.email).contest_payment_failed(user, contest, payment)
+            print(f"Payment {payment.order_id} failed")
+        except Exception as err:
+            print(f"Error while sending payment failure email: {str(err)}")
+    
+    def handle_payment_expired(self, payment: Payment, contest: Competition, user):
+        """Handle expired payment - override this method for custom logic"""
+        try:
+            Mailer(user.email).contest_payment_expired(user, contest, payment)
+            print(f"Payment {payment.order_id} expired")
+        except Exception as err:
+            print(f"Error while sending payment session timeout email: {str(err)}")
+
+
+
 
 
 

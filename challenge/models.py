@@ -1,8 +1,70 @@
+import uuid
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
+
+
+class Competition(models.Model):
+    """
+    A trading competition event.
+    """
+    uuid = models.UUIDField(unique=True, default=uuid.uuid4, null=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+
+    starting_balance = models.DecimalField(max_digits=12, decimal_places=2, default=50000.00)
+    max_daily_loss = models.DecimalField(max_digits=5, decimal_places=2, help_text="Percentage e.g. 5.00 = 5%")
+    max_total_drawdown = models.DecimalField(max_digits=5, decimal_places=2, help_text="Percentage e.g. 10.00 = 10%")
+
+    entry_fee = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    price_pool_cash = models.DecimalField(default=5000.00, decimal_places=2, max_digits=12)
+    
+    ended = models.BooleanField(default=False)
+    ended_at = models.DateTimeField(null=True)
+
+    # Prize pool stored as JSON for flexibility
+    prize_structure = models.JSONField(
+        default=dict,
+        help_text="Example: {\"1\": 5000, \"2\": 3000, \"3\": 2000}"
+    )
+    
+    def __str__(self):
+        return self.name
+
+
+class CompetitionResult(models.Model):
+    """Final competition results"""
+    competition_uuid = models.CharField(max_length=100, db_index=True)
+    login = models.IntegerField()
+    rank = models.IntegerField()
+    username = models.CharField(max_length=255)
+    
+    starting_balance = models.DecimalField(max_digits=15, decimal_places=2)
+    final_equity = models.DecimalField(max_digits=15, decimal_places=2)
+    profit = models.DecimalField(max_digits=15, decimal_places=2)
+    return_percent = models.DecimalField(max_digits=10, decimal_places=2)
+    max_drawdown = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    total_trades = models.IntegerField()
+    winning_trades = models.IntegerField()
+    win_rate = models.DecimalField(max_digits=5, decimal_places=2)
+    score = models.FloatField()
+    
+    finalized_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['competition_uuid', 'login']
+        ordering = ['competition_uuid', 'rank']
+        indexes = [
+            models.Index(fields=['competition_uuid', 'rank']),
+        ]
+
 
 class PropFirmChallenge(models.Model):
     CHALLENGE_TYPES = [
@@ -31,6 +93,7 @@ class PropFirmChallenge(models.Model):
         ('challenge_funding', 'Challenge Funding'),
         ('skill_check', 'Skill check'),
         ('skill_check_funding', 'Skill Check Funding'),
+        ('competition', 'Competition'),
     ]
 
     # Basic Info
@@ -40,6 +103,8 @@ class PropFirmChallenge(models.Model):
     challenge_type = models.CharField(max_length=20, choices=CHALLENGE_TYPES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     challenge_class = models.CharField(max_length=255, choices=CHALLENGE_CLASS, default='challenge')
+
+    competition  = models.ForeignKey(Competition, null=True, on_delete=models.CASCADE)
 
     # Financial Details
     account_size = models.DecimalField(max_digits=12, decimal_places=2)
@@ -173,3 +238,4 @@ class ChallengeCertificate(models.Model):
     def __str__(self):
         return f"{self.user.full_name} - {self.challenge_class}"
 # Create your models here.
+    

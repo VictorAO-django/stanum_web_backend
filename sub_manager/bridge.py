@@ -1,4 +1,5 @@
-import os, dotenv, logging, time
+import os, dotenv, logging, time, json, traceback
+from dataclasses import asdict
 import MT5Manager
 from .sinks.position import PositionSink
 from .sinks.deal import DealSink
@@ -8,16 +9,13 @@ from .sinks.account import AccountSink, save_mt5_account
 from .sinks.summary import SummarySink
 from .sinks.daily import DailySink
 from .sinks.tick import TickSink
-from trading.models import MT5User, RuleViolationLog, MT5Position, MT5Account, MT5Deal
-from challenge.models import PropFirmChallenge
-from datetime import datetime, timedelta
-from django.utils import timezone
-from collections import defaultdict
 from enum import Enum
 from typing import List, Dict
-from .InMemoryPropMonitoring import InMemoryPropMonitoring
 
-from .logging_config import get_prop_logger
+from .transformer import *
+from .producer import p
+
+from sub_manager.logging_config import get_prop_logger
 logger = get_prop_logger('bridge')
 
 dotenv.load_dotenv()
@@ -30,8 +28,9 @@ class MetaTraderBridge:
         self.password = password
         self.user_group = user_group
         self.manager = MT5Manager.ManagerAPI()
-        self.in_memory_monitor = InMemoryPropMonitoring(self)
-
+        # self.in_memory_monitor = None
+        self.count = 0
+        self.manager.SymbolTotal()
     def connect(self):
         self._subscribe_sinks()
         connected = self.manager.Connect(
@@ -40,6 +39,9 @@ class MetaTraderBridge:
             self.password,
             MT5Manager.ManagerAPI.EnPumpModes.PUMP_MODE_FULL
         )
+        # self.in_memory_monitor = InMemoryPropMonitoring(self)
+
+        self.broadcast_accounts()
 
         if not connected:
             logger.debug(f"Failed to connect: {MT5Manager.LastError()}")
@@ -51,6 +53,10 @@ class MetaTraderBridge:
     def disconnect(self):
         logger.info("Disconnecting from MT5...")
         return self.manager.Disconnect()
+    
+    def flush(self):
+        p.flush()
+        print("Kafka flushed")
 
     def _subscribe_sinks(self):
         """Subscribe to all data sinks with bridge reference"""
@@ -82,6 +88,12 @@ class MetaTraderBridge:
     
     def get_account(self, login)->MT5Manager.MTAccount:
         return self.manager.UserAccountGet(login)
+    
+    def get_position(self, login)->List[MT5Manager.MTPosition]:
+        return self.manager.PositionGet(login)
+    
+    def get_account_list(self)->List[MT5Manager.MTAccount]:
+        self.manager.UserAccountGetByGroup(self.user_group)
     
     def _close_all_positions(self, login: int):
         """Close all open positions for an account"""
@@ -183,48 +195,109 @@ class MetaTraderBridge:
         except Exception as err:
             print(f"Failed to reset account {str(err)}")
 
-    def tick(self, symbol, tick:MT5Manager.MTTick):
-        self.in_memory_monitor.OnTick(symbol, tick)
+    def tick(self, symbol, tick:MT5Manager.MTTickShort):
+        try:
+            tick_data = transform_tick(symbol, tick)
+            p.produce(
+                "market.ticks", 
+                json.dumps(asdict(tick_data), cls=EnhancedJSONEncoder).encode("utf-8")
+            )
+        except Exception as err:
+            print("Error onTick")
+            traceback.print_exc()
 
-    def add_memory_position(self, position:MT5Position):
-        logger.info(f"calling Bridge Add position {position.login}")
-        self.in_memory_monitor.add_position(position)
+    def add_memory_position(self, position:MT5Manager.MTPosition):
+        pos_data = transform_position(position)
+        p.produce(
+            "accounts.position", 
+            json.dumps(asdict(pos_data), cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        logger.info(f"calling Bridge Add position {position.Login}")
     
-    def update_memory_position(self, position:MT5Position):
-        logger.info(f"calling Bridge Update position {position.login}")
-        self.in_memory_monitor.update_position(position)
+    def update_memory_position(self, position:MT5Manager.MTPosition):
+        pos_data = transform_position(position)
+        p.produce(
+            "accounts.position.update", 
+            json.dumps(asdict(pos_data), cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        logger.info(f"calling Bridge Update position {position.Login}")
 
-    def remove_memory_position(self, position:MT5Position):
-        logger.info(f"calling Bridge Remove position {position.login}")
-        self.in_memory_monitor.remove_position(position)
+    def remove_memory_position(self, position:MT5Manager.MTPosition):
+        pos_data = transform_position(position)
+        p.produce(
+            "accounts.position.remove", 
+            json.dumps(asdict(pos_data), cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        logger.info(f"calling Bridge Remove position {position.Login}")
 
-    def add_memory_deal(self, deal:MT5Deal):
-        logger.info(f"calling Bridge Add deal {deal.login}")
-        self.in_memory_monitor.add_deal(deal)
+    def add_memory_deal(self, deal:MT5Manager.MTDeal):
+        deal_data = transform_deal(deal)
+        p.produce(
+            "accounts.deal", 
+            json.dumps(asdict(deal_data), cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        logger.info(f"calling Bridge Add deal {deal.Login}")
     
-    def update_memory_deal(self, deal:MT5Deal):
-        logger.info(f"calling Bridge Update deal {deal.login}")
-        self.in_memory_monitor.update_deal(deal)
+    def update_memory_deal(self, deal:MT5Manager.MTDeal):
+        deal_data = transform_deal(deal)
+        p.produce(
+            "accounts.deal.update", 
+            json.dumps(asdict(deal_data), cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        logger.info(f"calling Bridge Update deal {deal.Login}")
 
-    def remove_memory_deal(self, deal:MT5Deal):
-        logger.info(f"calling Bridge Remove deal {deal.login}")
-        self.in_memory_monitor.remove_deal(deal)
+    def remove_memory_deal(self, deal:MT5Manager.MTDeal):
+        deal_data = transform_deal(deal)
+        p.produce(
+            "accounts.deal.remove", 
+            json.dumps(asdict(deal_data), cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        logger.info(f"calling Bridge Remove deal {deal.Login}")
 
-    def update_memory_account(self, account:MT5Account):
-        logger.info(f"calling Bridge Update Account {account.login}")
-        self.in_memory_monitor.update_account(account)
+    def update_memory_account(self, account:MT5Manager.MTAccount):
+        account_data = transform_account(account)
+        p.produce(
+            "accounts.state", 
+            json.dumps(asdict(account_data), cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        logger.info(f"calling Bridge Update Account {account.Login}")
     
-    def add_memory_account(self, account:MT5Account):
-        logger.info(f"calling Bridge Add Account {account.login}")
-        self.in_memory_monitor.add_account(account)
+    def add_memory_account(self, account:MT5Manager.MTAccount):
+        account_data = transform_account(account)
+        p.produce(
+            "accounts.state",
+            json.dumps(asdict(account_data), cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        logger.info(f"calling Bridge Add Account {account.Login}")
+    
+    def broadcast_accounts(self):
+        try:
+            print("dispatching accounts to kafka")
+            accounts:List[MT5Manager.MTAccount] = self.manager.UserAccountGetByGroup(self.user_group)
+            for account in accounts:
+                account_data = transform_account(account)
+                p.produce(
+                    "accounts.state", 
+                    json.dumps(asdict(account_data), cls=EnhancedJSONEncoder).encode("utf-8")
+                )
+                positions = self.manager.PositionGet(login=account.Login)
+                for pos in positions:
+                    pos_data = transform_position(pos)
+                    p.produce(
+                        "accounts.position", 
+                        json.dumps(asdict(pos_data), cls=EnhancedJSONEncoder).encode("utf-8")
+                    )
+            print("done dispatching accounts to kafka")
+        except Exception as err:
+            print(f"Failed to dispatch accounts: {str(err)}")
+            traceback.print_exc()
 
     def periodic_cleanup(self):
         logger.info("Cleaning up...")
-        self.in_memory_monitor.cleanup_unused_symbols()
+        # self.in_memory_monitor.cleanup_unused_symbols()
         logger.info("Done cleaning up")
 
     def periodic_account_rating(self):
         print("Start rating account")
-        self.in_memory_monitor.analyze_account_rating()
+        # self.in_memory_monitor.analyze_account_rating()
         print("Done rating account")
-

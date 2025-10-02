@@ -11,6 +11,7 @@ urlpatterns = [
     path('crypto/<uuid:id>/', views.PaymentDetailAPIView.as_view(), name='api_payment_detail'),
     path('crypto/<uuid:payment_id>/refresh/', views.PaymentStatusUpdateAPIView.as_view(), name='api_payment_refresh'),
     path('crypto/ipn/', views.PaymentIPNAPIView.as_view(), name='api_payment_ipn'),
+    path('crypto/ipn/contest/', views.ContestPaymentIPNAPIView.as_view(), name='api_context_payment_ipn'),
 
     path('paystack/create/', views.PaystackPaymentView.as_view(), name='create_transaction'),
     path('paystack/verify/<str:reference>/', views.PaystackVerificationView.as_view(), name='verify_transaction'),

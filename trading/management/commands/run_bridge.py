@@ -3,8 +3,9 @@ from django.conf import settings
 import time, logging, pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta, timezone
-from manager.bridge import MetaTraderBridge
-from manager.sinks.daily import save_mt5_daily
+# from manager.bridge import MetaTraderBridge
+from sub_manager.bridge import MetaTraderBridge
+from sub_manager.sinks.daily import save_mt5_daily
 from trading.models import MT5User
 
 logger = logging.getLogger(__name__)
@@ -75,5 +76,6 @@ class Command(BaseCommand):
 
             finally:
                 bridge.disconnect()
+                bridge.flush()
                 logger.warning("Reconnecting in 5s...")
                 time.sleep(5)

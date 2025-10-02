@@ -1,17 +1,52 @@
 from django.shortcuts import render
 import MT5Manager
-from manager.manager import MT5AccountService
+from dataclasses import asdict
+from sub_manager.manager import MT5AccountService
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 
 from utils.helper import *
-from manager.interface import NewAccountData
+from sub_manager.interface import NewAccountData
 from trading.models import MT5User, AccountEarnings, MT5Account
+from sub_manager.transformer import *
+from sub_manager.producer import p
 
+def broadcast_account(account:MT5Account):
+    challenge = account.mt5_user.challenge
+    competition = account.mt5_user.competition
+
+    if challenge:
+        ch_data = transform_propfirmchallenge(challenge)
+        data = {
+            'login': account.login,
+            'account': {
+                'created_at': account.created_at,
+                'active': account.active,
+                'step': account.step,
+            },
+            'challenge': asdict(ch_data),
+        }
+        p.produce(
+            "account_challenge_initiate", 
+            json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+    
+    elif competition:
+        cx_data = transform_competition(account.mt5_user.competition)
+        data = {
+            'login': account.login,
+            'competition': asdict(cx_data),
+        }
+        p.produce(
+            "account_competition_initiate", 
+            json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+    p.flush()
 
 class CreateAccountView(APIView):
     authentication_classes = []
@@ -58,7 +93,16 @@ class CreateAccountView(APIView):
             })
             # mt5_user = MT5User.objects.get(login=4002)
             # master_password='X9p!wT2@jK7z'
-            MT5Account.objects.create(mt5_user=mt5_user, login=mt5_user.login)
+            account, created = MT5Account.objects.get_or_create(mt5_user=mt5_user, login=mt5_user.login)
+
+            challenge_id = data.get("challenge_id", None)
+            if challenge_id:
+                try:
+                    challenge = PropFirmChallenge.objects.get(id=data["challenge_id"])
+                    broadcast_account(account, challenge)
+                except Exception as err:
+                    print("Error occured while broadcasting account to kafka", str(err))
+
             print(f"({mt5_user.login})password", master_password)
             
             return custom_response(
@@ -92,3 +136,44 @@ class TestView(APIView):
         secret = request.headers.get("X-BRIDGE-SECRET")
         print("Test request received", secret)
         return Response({'status':'OK'}, status=status.HTTP_200_OK)
+    
+
+
+class DispatchAccountChallenge(APIView):
+    authentication_classes=[]
+    permission_classes=[AllowAny]
+    def post(self, request, *args, **kwargs):
+        # secret = request.headers.get("X-BRIDGE-SECRET")
+        # if settings.BRIDGE_SECRET != secret:
+        #     return custom_response(
+        #         status="error",
+        #         message="Invalid secret",
+        #         data={},
+        #         http_status=status.HTTP_403_FORBIDDEN,
+        #     )
+        
+        for account in MT5Account.objects.filter(active=True):
+            broadcast_account(account)
+
+        return Response({"status": "processed"}, status=status.HTTP_200_OK)
+
+
+class EndCompetitionView(APIView):
+    authentication_classes=[]
+    permission_classes=[AllowAny]
+
+    def post(self, request, uuid, *args, **kwargs):
+        competition = get_object_or_404(Competition, uuid=uuid)
+        data = {
+            "action": "finalize_competition",
+            "competition_uuid": competition.uuid,
+            "triggered_by": "admin",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        p.produce(
+            "competition.control", 
+            json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        p.flush()
+
+        return Response({"status": "Processed"}, status=status.HTTP_200_OK)

@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import PropFirmChallenge, ChallengeCertificate
+from .models import *
+from django.utils import timezone
+from trading.models import MT5User
 
 
 class PropFirmChallengeSerializer(serializers.ModelSerializer):
@@ -46,3 +48,31 @@ class ChallengeCertificateSerializer(serializers.ModelSerializer):
     class Meta:
         model=ChallengeCertificate
         fields=['challenge_class', 'name', 'account_size', 'profit']
+
+
+class CompetitionSerializer(serializers.ModelSerializer):
+    is_active = serializers.SerializerMethodField()
+    contestants = serializers.SerializerMethodField()
+    class Meta:
+        model = Competition
+        fields = [
+            "id", "name", "description", "start_date", "end_date", "starting_balance", "price_pool_cash",
+            "max_daily_loss", "max_total_drawdown", "entry_fee", "prize_structure", "is_active", "contestants", "ended", "ended_at"
+        ]
+
+    def get_contestants(self, obj):
+        mt5_users = MT5User.objects.filter(competition=obj)
+        return mt5_users.count()
+
+    def get_is_active(self, obj):
+        now = timezone.now()
+        return obj.start_date < now <= obj.end_date
+    
+
+class CompetitionResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompetitionResult
+        fields =[
+            "id", "login", "rank", "username", "starting_balance", "final_equity", "profit", "return_percent",
+            "max_drawdown", "total_trades", "winning_trades", "win_rate", "score"
+        ]

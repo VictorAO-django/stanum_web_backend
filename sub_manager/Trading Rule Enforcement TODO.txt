@@ -1,0 +1,55 @@
+##############################################################################################################
+### TO REMOVE HEDGING (I.E MAKE A NETTING ACCOUNT)
+##############################################################################################################
+This can be done with the IMTConGroup configuration.
+IMTConGroup::EnMarginMode 
+MARGIN_MODE_RETAIL (Used for the OTC market. Margin calculation is based on the type of instrument, as well as group settings. The netting position accounting system is used.)
+
+line 359
+
+
+
+
+With Kafka:
+You publish ticks + account events into topics.
+Rule-monitoring services subscribe, process in real-time, and publish violations into another topic.
+CRM backend (Django/DRF) listens for violations and updates the user’s dashboard/account state.
+
+docker ps -a
+docker exec -it 68525cea2749 bash
+kafka-topics --list --bootstrap-server localhost:9092
+docker compose down -v
+docker volume prune -f
+
+# Market ticks
+kafka-topics --create --topic market.ticks --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+# Account state updates
+kafka-topics --create --topic accounts.state --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+# Account deals
+kafka-topics --create --topic accounts.deal --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic accounts.deal.update --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic accounts.deal.remove --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+# Position deals
+kafka-topics --create --topic accounts.position --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic accounts.position.update --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic accounts.position.remove --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+# Account loading
+kafka-topics --create --topic accounts.load --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+# Trade events
+kafka-topics --create --topic accounts.trades --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+# Rule violations (produced by the rule engine)
+kafka-topics --create --topic rules.violations --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+
+# User alerts (for CRM/frontend)
+kafka-topics --create --topic alerts.user --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+kafka-topics --create --topic account_challenge_initiate --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic account_competition_initiate --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic competition.control --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1

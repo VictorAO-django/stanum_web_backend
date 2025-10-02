@@ -16,3 +16,4 @@ class NewAccountData(TypedDict):
     comment: str
     challenge_name: str
     bridge_secret: str
+    challenge_id: int

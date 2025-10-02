@@ -1,8 +1,9 @@
 from typing import Dict, Set, List, Optional, TypedDict, Tuple
-from dataclasses import dataclass
-from datetime import datetime, time, date
+from dataclasses import dataclass, field
+import uuid as uuid_lib
+from datetime import datetime, time, date, timezone
 from decimal import Decimal
-
+import MT5Manager
 class ViolationDict(TypedDict):
     type: str
     message: str
@@ -207,3 +208,128 @@ class AccountWatermarksData:
     lwm_balance: Decimal = Decimal("0")
     hwm_equity: Decimal = Decimal("0")
     lwm_equity: Decimal = Decimal("0")
+
+
+@dataclass
+class PropFirmChallengeData:
+    # Basic Info
+    name: str
+    firm_name: str
+    description: str
+    challenge_type: str
+    account_size: float
+    challenge_fee: float
+
+    status: str = "active"
+    challenge_class: str = "challenge"
+
+    # Financial Details
+    refundable_fee: float = 0.0
+    profit_split_percent: int = 0
+
+    # Trading Rules
+    max_daily_loss_percent: float = 0.0
+    max_total_loss_percent: float = 0.0
+    additional_phase_total_loss_percent: float = 8.0
+    profit_target_percent: float = 0.0
+    min_trading_days: int = 0
+    max_trading_days: Optional[int] = None
+    additional_trading_days: Optional[int] = None
+
+    # TwoStep Configs
+    phase_2_profit_target_percent: float = 0.0
+    phase_2_min_trading_days: Optional[int] = None
+    phase_2_max_trading_days: Optional[int] = None
+
+    # Additional Rules
+    consistency_rule_percent: Optional[float] = None
+    weekend_holding: bool = True
+    news_trading_allowed: bool = True
+    ea_allowed: bool = True
+    copy_trading_allowed: bool = False
+
+    # Instruments
+    allowed_instruments: str = "all"
+
+    # Meta Info
+    duration_days: int = 0
+    max_participants: Optional[int] = None
+    current_participants: int = 0
+
+    # HFT Detection
+    max_trades_per_minute: int = 5
+    max_trades_per_hour: int = 100
+    min_trade_duration_seconds: int = 30
+
+    # Prohibited Strategies
+    grid_trading_allowed: bool = False
+    martingale_allowed: bool = False
+    hedging_within_account_allowed: bool = True
+    cross_account_hedging_allowed: bool = False
+
+    # Arbitrage Detection
+    statistical_arbitrage_allowed: bool = False
+    latency_arbitrage_allowed: bool = False
+    market_making_allowed: bool = False
+
+    # Position Rules
+    max_risk_per_trade_percent: float = 3.0
+    max_orders_per_symbol: int = 2
+    overall_risk_limit_percent: float = 10.0
+
+    # Flexibility Rules
+    stop_loss_required: bool = False
+    max_inactive_days_percent: float = 30.0
+
+    # Timestamps
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+@dataclass
+class TickData:
+    symbol: str      
+    datetime: int                 
+    bid: float                    
+    ask: float                      
+    last: float                 
+    volume: int                     
+    datetime_msc: int          
+    volume_ext: int       
+
+
+@dataclass
+class CompetitionData:
+    """
+    A data transfer object for Competition model.
+    (Ignores daily_loss / total_loss calculations)
+    """
+    uuid: uuid_lib.UUID = field(default_factory=uuid_lib.uuid4)
+    name: str = ""
+    description: Optional[str] = None
+    start_date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    end_date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    starting_balance: Decimal = Decimal("50000.00")
+    max_daily_loss: Decimal = Decimal("0.00")
+    max_total_drawdown: Decimal = Decimal("0.00")
+
+    entry_fee: Optional[Decimal] = None
+    price_pool_cash: Decimal = Decimal("5000.00")
+    prize_structure: Dict[str, Decimal] = field(default_factory=dict)
+
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            uuid=uuid_lib.UUID(data["uuid"]),
+            name=data["name"],
+            description=data.get("description"),
+            start_date=datetime.fromisoformat(data["start_date"]),
+            end_date=datetime.fromisoformat(data["end_date"]),
+            starting_balance=Decimal(str(data["starting_balance"])),
+            max_daily_loss=Decimal(str(data["max_daily_loss"])),
+            max_total_drawdown=Decimal(str(data["max_total_drawdown"])),
+            entry_fee=Decimal(str(data["entry_fee"])) if data.get("entry_fee") else None,
+            price_pool_cash=Decimal(str(data["price_pool_cash"])),
+            prize_structure={k: Decimal(str(v)) for k, v in data.get("prize_structure", {}).items()},
+        )

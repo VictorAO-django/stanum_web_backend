@@ -4,7 +4,7 @@ from django.utils import timezone
 from decimal import Decimal
 import json
 from django.contrib.auth import get_user_model
-from challenge.models import PropFirmChallenge
+from challenge.models import PropFirmChallenge, Competition
 
 User = get_user_model()
 
@@ -29,6 +29,7 @@ class MT5User(models.Model):
         ('challenge', 'Challenge Account'),
         ('funded', 'Funded Account'),
         ('live', 'Live Account'),
+        ('competition', 'Competition'),
     )
     
     STATUS_CHOICES = (
@@ -41,6 +42,7 @@ class MT5User(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     challenge = models.ForeignKey(PropFirmChallenge, null=True, on_delete=models.CASCADE)
+    competition = models.ForeignKey(Competition, null=True, on_delete=models.CASCADE)
     account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES, default='challenge')
     account_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     password = models.CharField(max_length=255, null=True)

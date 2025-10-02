@@ -44,5 +44,5 @@ urlpatterns = [
     
     path('ticket', TicketListCreateAPIView.as_view()),
     path('ticket/<str:ticket_id>/messages', MessageListCreateAPIView.as_view()),
-    path('ticket/<str:ticket_id>/close', CloseTicketApiView.as_view())
+    path('ticket/<str:ticket_id>/close', CloseTicketApiView.as_view()),
 ]
