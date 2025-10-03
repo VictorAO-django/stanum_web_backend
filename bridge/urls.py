@@ -6,5 +6,7 @@ urlpatterns = [
     path('account/create', CreateAccountView.as_view()),
 
     path('dispatch-account-challenge', DispatchAccountChallenge.as_view()),
+    
+    path('dispatch-competition/<uuid:uuid>', DispatchAccountCompetition.as_view()),
     path('end-competiton/<uuid:uuid>', EndCompetitionView.as_view()),
 ]

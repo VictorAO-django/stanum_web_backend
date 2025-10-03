@@ -185,26 +185,54 @@ class DispatchAccountChallenge(APIView):
     authentication_classes=[]
     permission_classes=[AllowAny]
     def post(self, request, *args, **kwargs):
-        # secret = request.headers.get("X-BRIDGE-SECRET")
-        # if settings.BRIDGE_SECRET != secret:
-        #     return custom_response(
-        #         status="error",
-        #         message="Invalid secret",
-        #         data={},
-        #         http_status=status.HTTP_403_FORBIDDEN,
-        #     )
+        secret = request.headers.get("X-BRIDGE-SECRET")
+        if settings.BRIDGE_SECRET != secret:
+            return custom_response(
+                status="error",
+                message="Invalid secret",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN,
+            )
         
-        for account in MT5Account.objects.filter(active=True):
+        for account in MT5Account.objects.filter(active=True, competition__isnull=True):
             broadcast_account(account)
 
         return Response({"status": "processed"}, status=status.HTTP_200_OK)
 
+class DispatchAccountCompetition(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    def post(self, request, uuid, *args, **kwargs):
+        secret = request.headers.get("X-BRIDGE-SECRET")
+        if settings.BRIDGE_SECRET != secret:
+            return custom_response(
+                status="error",
+                message="Invalid secret",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        ctx = get_object_or_404(Competition, uuid=uuid, ended=False)
+        accounts = MT5Account.objects.filter(competition=ctx)
+        for account in accounts:
+            broadcast_account_with_competition(account, ctx)
+        
+        return Response({"status": "processed"}, status=status.HTTP_200_OK)
 
 class EndCompetitionView(APIView):
     authentication_classes=[]
     permission_classes=[AllowAny]
 
     def post(self, request, uuid, *args, **kwargs):
+        secret = request.headers.get("X-BRIDGE-SECRET")
+        if settings.BRIDGE_SECRET != secret:
+            return custom_response(
+                status="error",
+                message="Invalid secret",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN,
+            )
+        
         competition = get_object_or_404(Competition, uuid=uuid)
         data = {
             "action": "finalize_competition",
