@@ -213,7 +213,7 @@ class DispatchAccountCompetition(APIView):
             )
         
         ctx = get_object_or_404(Competition, uuid=uuid, ended=False)
-        accounts = MT5Account.objects.filter(competition=ctx)
+        accounts = MT5Account.objects.filter(mt5_user__competition=ctx)
         for account in accounts:
             broadcast_account_with_competition(account, ctx)
         
