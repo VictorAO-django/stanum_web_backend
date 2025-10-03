@@ -33,9 +33,9 @@ class Competition(models.Model):
         help_text="Example: {\"1\": 5000, \"2\": 3000, \"3\": 2000}"
     )
 
-    def is_active(self, obj):
+    def is_active(self):
         now = timezone.now()
-        return obj.start_date < now <= obj.end_date
+        return self.start_date < now <= self.end_date
     
     def __str__(self):
         return self.name
