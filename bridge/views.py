@@ -194,7 +194,7 @@ class DispatchAccountChallenge(APIView):
                 http_status=status.HTTP_403_FORBIDDEN,
             )
         
-        for account in MT5Account.objects.filter(active=True, competition__isnull=True):
+        for account in MT5Account.objects.filter(active=True, mt5_user__competition__isnull=True):
             broadcast_account(account)
 
         return Response({"status": "processed"}, status=status.HTTP_200_OK)
