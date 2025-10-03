@@ -99,6 +99,14 @@ class PaymentCreateAPIView(APIView):
         constest_uuid = payload.get('contest_uuid', "")
         if is_contest:
             contest = get_object_or_404(Competition, uuid=constest_uuid, ended=False)
+            if not contest.is_active():
+                return custom_response(
+                    status="error",
+                    message = "Contest is yet to start",
+                    data={},
+                    http_status=status.HTTP_403_FORBIDDEN
+                )
+            
             existing_account = MT5User.objects.filter(user=request.user, competition=contest)
             if existing_account.exists():
                 return custom_response(
