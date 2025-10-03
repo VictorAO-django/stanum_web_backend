@@ -254,14 +254,14 @@ def create_mt5_account(
         return None
     
 
-def send_bridge_test_req(base_url):
+def send_bridge_test_req(base_url, data: dict):
     url = f"{base_url}/test"
     headers = {
         "X-BRIDGE-SECRET": settings.BRIDGE_SECRET,
         "Content-Type": "application/json",
     }
     try:
-        response = requests.post(url, headers=headers)
+        response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
         print("Successfull req")
         return

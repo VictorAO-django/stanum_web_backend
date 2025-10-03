@@ -176,6 +176,7 @@ class TestView(APIView):
 
     def post(self, request, *args, **kwargs):
         secret = request.headers.get("X-BRIDGE-SECRET")
+        print("Request data", request.data)
         print("Test request received", secret)
         return Response({'status':'OK'}, status=status.HTTP_200_OK)
     

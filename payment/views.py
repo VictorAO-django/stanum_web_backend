@@ -99,6 +99,15 @@ class PaymentCreateAPIView(APIView):
         constest_uuid = payload.get('contest_uuid', "")
         if is_contest:
             contest = get_object_or_404(Competition, uuid=constest_uuid, ended=False)
+            existing_account = MT5User.objects.filter(user=request.user, competition=contest)
+            if existing_account.exists():
+                custom_response(
+                    status="error",
+                    message = "You can't purchase a contest account twice",
+                    data={},
+                    http_status=status.HTTP_403_FORBIDDEN
+                )
+                
             if payload.get('description', '') == '':
                 payload['description'] = f"Stanum payment for challenge {contest.name}"
             
@@ -450,52 +459,56 @@ class ContestPaymentIPNAPIView(APIView):
         balance = float(contest.starting_balance)
 
         print("Attempt creating MT5Account")
+        account_data={
+            'first_name': first_name,
+            'last_name': last_name,
+            'balance': balance,
+            'country': user.country,
+            'company': settings.GLOBAL_SERVICE_NAME,
+            'address': address.home_address,
+            'email': user.email,
+            'phone': user.phone_number,
+            'zip_code': address.zip_code,
+            'state': address.state,
+            'city': address.town,
+            'language': 'english',
+            'comment': f"{settings.GLOBAL_SERVICE_NAME} Competition Account ({contest.name})",
+            'challenge_name': contest.name,
+            'challenge_id': None,
+            'competition_id': contest.id
+        }
         result = create_mt5_account(
             base_url=settings.BRIDGE_URL,
-            account_data={
-                'first_name': first_name,
-                'last_name': last_name,
-                'balance': balance,
-                'country': user.country,
-                'company': settings.GLOBAL_SERVICE_NAME,
-                'address': address.home_address,
-                'email': user.email,
-                'phone': user.phone_number,
-                'zip_code': address.zip_code,
-                'state': address.state,
-                'city': address.town,
-                'language': 'english',
-                'comment': f"{settings.GLOBAL_SERVICE_NAME} Competition Account ({contest.name})",
-                'challenge_name': contest.name,
-                'challenge_id': None,
-                'competition_id': contest.id
-            }
+            account_data=account_data,
         )
 
-        # send_bridge_test_req(settings.BRIDGE_URL)
+        result = send_bridge_test_req(settings.BRIDGE_URL, account_data)
+
         try:
             mailer = Mailer(user.email)
             mailer.contest_payment_successful(user, contest, payment)
 
             if result:
-                mt5_user_login, password = result
-                mt5_user = MT5User.objects.filter(login=mt5_user_login).first()
-                if mt5_user:
-                    mt5_user.user = user
-                    mt5_user.competition = contest
-                    mt5_user.password = encrypt_password(password)
-                    mt5_user.account_type = 'competition'
-                    mt5_user.save()
-                    #Create Account Earning
-                    AccountEarnings.objects.get_or_create(login=mt5_user.login)
+                # mt5_user_login, password = result
+                # mt5_user = MT5User.objects.filter(login=mt5_user_login).first()
+                # if mt5_user:
+                #     mt5_user.user = user
+                #     mt5_user.competition = contest
+                #     mt5_user.password = encrypt_password(password)
+                #     mt5_user.account_type = 'competition'
+                #     mt5_user.save()
+                #     #Create Account Earning
+                #     AccountEarnings.objects.get_or_create(login=mt5_user.login)
                     #Send email
-                    mailer.contest_entry(mt5_user, contest, password)
+                    # mailer.contest_entry(mt5_user, contest, password)
 
-                    print("Account created:", mt5_user_login, password)
+                    # print("Account created:", mt5_user_login, password)
+                    print("Account created:")
             else:
                 print("Failed to create account")
 
-            print(f"Payment {payment.order_id} completed and account {mt5_user.login} created")
+            # print(f"Payment {payment.order_id} completed and account {mt5_user.login} created")
+            print(f"Payment {payment.order_id} completed and account created")
         except Exception as err:
             pass
 

@@ -64,7 +64,7 @@ class IsAParticipantView(APIView):
         ctx = get_object_or_404(Competition, uuid=uuid)
         mt5_users = MT5User.objects.filter(user=user)
         if not mt5_users.exists():
-            return Response({"status": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"status": False}, status=status.HTTP_200_OK)
 
         in_challenge = False
         for i in mt5_users:
