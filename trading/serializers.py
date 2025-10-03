@@ -7,7 +7,7 @@ from challenge.serializers import PropFirmChallengeSerializer
 
 class MT5UserSerializer(serializers.ModelSerializer):
     challenge_name = serializers.SerializerMethodField()
-    challenge_class = serializers.CharField(source='challenge.challenge_class')
+    challenge_class = serializers.SerializerMethodField()
     free_margin = serializers.SerializerMethodField()
     net_profit = serializers.SerializerMethodField()
     account_size = serializers.SerializerMethodField()
@@ -20,6 +20,11 @@ class MT5UserSerializer(serializers.ModelSerializer):
             'login', 'server', 'balance', 'account_type', 'account_status', 'password', 'created_at',
             'free_margin', 'net_profit', 'account_size', 'equity', 'challenge_name', 'challenge_class'
         ]
+
+    def get_challenge_class(self, obj):
+        if(obj.challenge):
+            return obj.challenge.challenge_class
+        return ""
 
     def get_password(self, obj):
         if obj.password:

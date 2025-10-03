@@ -101,7 +101,7 @@ class PaymentCreateAPIView(APIView):
             contest = get_object_or_404(Competition, uuid=constest_uuid, ended=False)
             existing_account = MT5User.objects.filter(user=request.user, competition=contest)
             if existing_account.exists():
-                custom_response(
+                return custom_response(
                     status="error",
                     message = "You can't purchase a contest account twice",
                     data={},
