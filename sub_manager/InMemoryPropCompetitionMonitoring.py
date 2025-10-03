@@ -180,7 +180,7 @@ class InMemoryPropCompetitionMonitoring:
                     pnl = (current_bid - Decimal(pos.price_open)) * volume_in_lots * contract_size
                     margin_price = current_ask
                 else:  # SELL
-                    pnl = (pos.price_open - current_ask) * volume_in_lots * contract_size
+                    pnl = (Decimal(pos.price_open) - current_ask) * volume_in_lots * contract_size
                     margin_price = current_bid
 
                 quote_currency = self.converter.get_quote_currency(pos.symbol)

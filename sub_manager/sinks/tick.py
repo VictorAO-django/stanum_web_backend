@@ -9,6 +9,6 @@ class TickSink:
         now = time.time()
         last_time = self.last_tick_time.get(symbol, 0)
 
-        if now - last_time >= 4:
+        if now - last_time >= 30:
             self.last_tick_time[symbol] = now
             self.bridge.tick(symbol, tick)

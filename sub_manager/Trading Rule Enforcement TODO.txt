@@ -53,3 +53,8 @@ kafka-topics --create --topic alerts.user --bootstrap-server localhost:9092 --pa
 kafka-topics --create --topic account_challenge_initiate --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 kafka-topics --create --topic account_competition_initiate --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 kafka-topics --create --topic competition.control --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+
+
+
+
+Rank, Trader name, return,
