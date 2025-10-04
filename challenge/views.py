@@ -76,6 +76,7 @@ class IsAParticipantView(APIView):
 
 
 class CompetitionView(generics.RetrieveAPIView):
+    authentication_classes=[]
     permission_classes=[AllowAny]
     serializer_class=CompetitionSerializer
     
