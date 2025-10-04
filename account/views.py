@@ -497,7 +497,7 @@ class AccountVerificationView(APIView):
         }
     )
     def get(self, request, id, otp):
-        user = get_object_or_404(User, id=id)
+        user = get_object_or_404(User, id=id, email_verified=False)
         if not verify_otp(user, 'registration', otp):
             return custom_response(
                 status="error",
@@ -509,6 +509,18 @@ class AccountVerificationView(APIView):
         user.email_verified = True #This toogles to True
         user.save()
 
+        ctx = Competition.objects.all().last()
+        if ctx.is_active():
+            Notification.objects.create(
+                recipient=user,
+                sender=None,  # system-generated
+                title=f"A context \"{ctx.name}\" is going on.",
+                message=f"{ctx.description}",
+                url=f"/context/{ctx.uuid}",
+                type="success",
+                metadata={},
+            )
+        
         # refresh = CustomRefreshToken(user_id=user.id, email=user.email, user_type='buyer')
         token, created = CustomAuthToken.objects.get_or_create(
             user_type=ContentType.objects.get_for_model(user),
