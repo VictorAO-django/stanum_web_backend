@@ -37,7 +37,7 @@ class BalanceListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        challenges = PropFirmChallenge.objects.order_by('account_size')
+        challenges = PropFirmChallenge.objects.filter(status='active').order_by('account_size')
         skill_check = list(
            challenges.filter(challenge_class='skill_check').values_list('account_size', flat=True)
         )

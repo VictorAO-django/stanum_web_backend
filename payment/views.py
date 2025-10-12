@@ -124,7 +124,7 @@ class PaymentCreateAPIView(APIView):
             
         else:
             challenge_id = payload.get('challenge_id', '0')
-            challenge = get_object_or_404(PropFirmChallenge, id=challenge_id)
+            challenge = get_object_or_404(PropFirmChallenge, id=challenge_id, status='active')
             if challenge.exists():
                 challenge = challenge.first()
             if payload.get('description', '') == '':
