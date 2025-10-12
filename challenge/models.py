@@ -185,7 +185,7 @@ class PropFirmChallenge(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.firm_name} - {self.name} (${self.account_size})"
+        return f"{self.firm_name} - {self.name} (${self.account_size}) - {self.challenge_fee}"
     
     @property
     def is_available(self):
