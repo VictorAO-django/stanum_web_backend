@@ -108,7 +108,7 @@ class PropFirmChallenge(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     challenge_class = models.CharField(max_length=255, choices=CHALLENGE_CLASS, default='challenge')
 
-    competition  = models.ForeignKey(Competition, null=True, on_delete=models.CASCADE)
+    competition  = models.ForeignKey(Competition, blank=True, null=True, on_delete=models.CASCADE)
 
     # Financial Details
     account_size = models.DecimalField(max_digits=12, decimal_places=2)
