@@ -21,7 +21,7 @@ class PropFirmChallengeListView(generics.ListAPIView):
     authentication_classes = []
     permission_classes = [AllowAny]
     serializer_class = PropFirmChallengeSerializer
-    queryset = PropFirmChallenge.objects.filter(competition=None).exclude(challenge_class__in=['skill_check_funding', 'challenge_funding'])
+    queryset = PropFirmChallenge.objects.filter(competition=None, status='active').exclude(challenge_class__in=['skill_check_funding', 'challenge_funding'])
     filterset_class = PropFirmChallengeFilter
     filter_backends = [DjangoFilterBackend]
 
