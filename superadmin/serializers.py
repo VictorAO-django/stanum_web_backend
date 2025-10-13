@@ -148,3 +148,24 @@ class AdminMT5UserSerializer(serializers.ModelSerializer):
             representation['net_profit'] = account.profit
             representation['equity'] = account.equity
         return representation
+    
+
+class CompetitionStatusSerializer(serializers.ModelSerializer):
+    is_active = serializers.SerializerMethodField()
+    contestants = serializers.SerializerMethodField()
+    class Meta:
+        model = Competition
+        fields = ["id", "starting_balance", "is_active", "start_date", "end_date", "contestants"]
+
+    def get_is_active(self, obj):
+        return obj.is_active()
+    
+    def get_contestants(self, obj):
+        mt5_users = MT5User.objects.filter(competition=obj)
+        return mt5_users.count()
+
+class ChallengeLogSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="user.user.full_name")
+    class Meta:
+        model = ChallengeLog
+        fields = ["id", "name", "timestamp", "details", "action"]

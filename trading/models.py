@@ -171,8 +171,8 @@ class AccountWatermarks(models.Model):
     hwm_equity = models.DecimalField(max_digits=20, decimal_places=2)
     lwm_balance = models.DecimalField(max_digits=20, decimal_places=2)
     lwm_equity = models.DecimalField(max_digits=20, decimal_places=2)
-    hwm_date = models.DateTimeField()  # When HWM was reached
-    lwm_date = models.DateTimeField()  # When LWM was reached
+    # hwm_date = models.DateTimeField()  # When HWM was reached
+    # lwm_date = models.DateTimeField()  # When LWM was reached
     
     # Calculate current drawdown from peaks
     @property

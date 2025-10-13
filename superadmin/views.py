@@ -495,4 +495,26 @@ class IssueFundedAccountAPIView(APIView):
                 data={},
                 http_status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+
+class AdminDashboard(APIView):
+    authentication_classes = []
+    permission_classes=[permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        users = User.objects.filter(is_deleted=False)
+        competitions = Competition.objects.filter(ended=False)
+        pending_withdrawal = PropFirmWalletTransaction.objects.filter(type='debit', status='pending')
+        volume = 0
+        recent_activity = ChallengeLog.objects.all().order_by("-id")[:10]
+
+        competition_status = CompetitionStatusSerializer(competitions, many=True)
+        recent_activity = ChallengeLogSerializer(recent_activity, many=True)
+        return Response({
+            "users": users.count(),
+            "competitions": competitions.count(),
+            "volume": volume,
+            "pending_withdrawal": pending_withdrawal.count(),
+            "competition_status": competition_status.data,
+            "recent_activity": recent_activity.data
+        })
