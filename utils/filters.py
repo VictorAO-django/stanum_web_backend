@@ -86,3 +86,14 @@ class MT5AccountFilter(django_filters.FilterSet):
         return queryset.filter(
             Q(login__icontains=value)
         )
+    
+
+class CompetitionFilter(django_filters.FilterSet):
+    # Date filters
+    start_date = django_filters.DateTimeFilter(field_name="start_date", lookup_expr="gte")
+    end_date = django_filters.DateTimeFilter(field_name="end_date", lookup_expr="lte")
+    starting_balance = django_filters.CharFilter(field_name="starting_balance", lookup_expr="lte")
+    class Meta:
+        model = Competition
+        fields = ["start_date", "end_date", "starting_balance"]
+        

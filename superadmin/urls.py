@@ -50,4 +50,8 @@ urlpatterns = [
     path('ticket/<str:ticket_id>/close', CloseTicketApiView.as_view()),
 
     path("dashboard", AdminDashboardView.as_view()),
+
+    path("competitions", CompetitionListAPIView.as_view()),
+    path("competition/<uuid:uuid>/end", EndCompetitionView.as_view()),
+    path("competition/create", CompetitionCreateView.as_view())
 ]

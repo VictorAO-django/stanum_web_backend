@@ -35,6 +35,7 @@ from utils.otp import *
 from utils.filters import *
 from utils.pagination import *
 from service.now_payment import NOWPaymentsService
+from utils.bridge_api import BridgeApi
 
 from challenge.models import *
 from trading.serializers import MT5UserSerializer
@@ -584,3 +585,48 @@ class AdminDashboardView(APIView):
             "recent_activity": recent_activity.data
         }, status=status.HTTP_200_OK)
     
+
+
+class CompetitionListAPIView(generics.ListAPIView):
+    authentication_classes=[]
+    permission_classes=[permissions.AllowAny]
+    # permission_classes = [permissions.IsAdminUser]
+    queryset=Competition.objects.all().order_by("-id")
+    serializer_class=AdminCompetitionSerializer
+    filterset_class = CompetitionFilter
+    filter_backends = [DjangoFilterBackend]
+    pagination_class = LargeResultsSetPagination
+
+    def get(self, request, *args, **kwargs):
+        res = super().get(request, *args, **kwargs)
+        competitions = self.queryset
+        active = competitions.filter(ended=False)
+        contestants = MT5User.objects.filter(competition__isnull=False)
+        total_prize_pool = competitions.aggregate(total=Sum("price_pool_cash"))["total"] or 0
+
+        return Response({
+            "active": active.count(),
+            "participants": contestants.count(),
+            "total_prize": total_prize_pool,
+            "results": res.data
+        })
+    
+    
+
+class EndCompetitionView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    def post(self, request, uuid, *args, **kwargs):
+        competition = get_object_or_404(Competition, uuid=uuid, ended=False)
+        # bridge = BridgeApi() 
+        # bridge.post(f'end-competiton/{competition.uuid}', {})
+
+        return Response({"message": "processed"}, status=status.HTTP_200_OK)
+
+
+class CompetitionCreateView(generics.CreateAPIView):
+    authentication_classes=[]
+    permission_classes=[permissions.AllowAny]
+    # permission_classes = [permissions.IsAdminUser]
+    serializer_class=CreateCompetitionSerializer
+    queryset=Competition.objects.all()
+

@@ -198,3 +198,33 @@ class ChallengeLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChallengeLog
         fields = ["id", "name", "timestamp", "details", "action"]
+
+
+class AdminCompetitionSerializer(serializers.ModelSerializer):
+    contestants = serializers.SerializerMethodField()
+    is_active = serializers.SerializerMethodField()
+    contest_link = serializers.SerializerMethodField()
+    class Meta:
+        model=Competition
+        fields=["id", "contestants", "starting_balance", "price_pool_cash", "start_date", "end_date", "prize_structure", "contest_link", "is_active"]
+
+    def get_is_active(self, obj):
+        return obj.ended
+    
+    def get_contestants(self, obj):
+        mt5_users = MT5User.objects.filter(competition=obj)
+        return mt5_users.count()
+    
+    def get_contest_link(self, obj):
+        return f"{settings.FRONTEND_BASE_URL}/contest/{obj.uuid}"
+    
+
+class CreateCompetitionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Competition
+        fields=["id", "starting_balance", "price_pool_cash", "prize_structure", "start_date", "end_date"]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["contest_link"] = f"{settings.FRONTEND_BASE_URL}/contest/{instance.uuid}"
+        return representation

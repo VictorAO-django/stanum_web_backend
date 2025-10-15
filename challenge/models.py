@@ -13,16 +13,16 @@ class Competition(models.Model):
     """
     uuid = models.UUIDField(unique=True, default=uuid.uuid4, null=True)
     name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
+    description = models.TextField(blank=False)
+    start_date = models.DateTimeField(blank=False)
+    end_date = models.DateTimeField(blank=False)
 
     starting_balance = models.DecimalField(max_digits=12, decimal_places=2, default=50000.00)
-    max_daily_loss = models.DecimalField(max_digits=5, decimal_places=2, help_text="Percentage e.g. 5.00 = 5%")
-    max_total_drawdown = models.DecimalField(max_digits=5, decimal_places=2, help_text="Percentage e.g. 10.00 = 10%")
+    max_daily_loss = models.DecimalField(max_digits=5, decimal_places=2, help_text="Percentage e.g. 5.00 = 5%", null=True, blank=True)
+    max_total_drawdown = models.DecimalField(max_digits=5, decimal_places=2, help_text="Percentage e.g. 10.00 = 10%", null=True, blank=True)
 
-    entry_fee = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    price_pool_cash = models.DecimalField(default=5000.00, decimal_places=2, max_digits=12)
+    entry_fee = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=False)
+    price_pool_cash = models.DecimalField(default=5000.00, decimal_places=2, max_digits=12, blank=False)
     
     ended = models.BooleanField(default=False)
     ended_at = models.DateTimeField(null=True)

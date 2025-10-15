@@ -67,8 +67,7 @@ class CompetitionSerializer(serializers.ModelSerializer):
         return mt5_users.count()
 
     def get_is_active(self, obj):
-        now = timezone.now()
-        return obj.start_date < now <= obj.end_date
+        return obj.is_active()
     
 
 class CompetitionResultSerializer(serializers.ModelSerializer):

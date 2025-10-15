@@ -256,6 +256,15 @@ class UpdateAccountbalance(APIView):
     permission_classes=[AllowAny]
 
     def post(self, request, *args, **kwargs):
+        secret = request.headers.get("X-BRIDGE-SECRET")
+        if settings.BRIDGE_SECRET != secret:
+            return custom_response(
+                status="error",
+                message="Invalid secret",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN,
+            )
+        
         data = request.data
         login = data.get("login", None)
         amount = data.get("amount", None)
