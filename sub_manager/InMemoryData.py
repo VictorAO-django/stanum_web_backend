@@ -212,6 +212,7 @@ class AccountWatermarksData:
 
 @dataclass
 class PropFirmChallengeData:
+    id: str
     # Basic Info
     name: str
     firm_name: str

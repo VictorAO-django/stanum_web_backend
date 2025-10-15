@@ -186,17 +186,18 @@ class DispatchAccountChallenge(APIView):
     authentication_classes=[]
     permission_classes=[AllowAny]
     def post(self, request, *args, **kwargs):
-        secret = request.headers.get("X-BRIDGE-SECRET")
-        if settings.BRIDGE_SECRET != secret:
-            return custom_response(
-                status="error",
-                message="Invalid secret",
-                data={},
-                http_status=status.HTTP_403_FORBIDDEN,
-            )
-        
-        for account in MT5Account.objects.filter(active=True, mt5_user__competition__isnull=True):
-            broadcast_account(account)
+        # secret = request.headers.get("X-BRIDGE-SECRET")
+        # if settings.BRIDGE_SECRET != secret:
+        #     return custom_response(
+        #         status="error",
+        #         message="Invalid secret",
+        #         data={},
+        #         http_status=status.HTTP_403_FORBIDDEN,
+        #     )
+        p.produce("persist_valid_data")
+        p.flush()
+        # for account in MT5Account.objects.filter(active=True, mt5_user__competition__isnull=True):
+        #     broadcast_account(account)
 
         return Response({"status": "processed"}, status=status.HTTP_200_OK)
 
@@ -246,5 +247,23 @@ class EndCompetitionView(APIView):
             json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
         )
         p.flush()
+
+        return Response({"status": "Processed"}, status=status.HTTP_200_OK)
+    
+
+class UpdateAccountbalance(APIView):
+    authentication_classes=[]
+    permission_classes=[AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        login = data.get("login", None)
+        amount = data.get("amount", None)
+        if login and amount:
+            p.produce(
+                "update_balance", 
+                json.dumps({"login": login, "amount_to_add":amount}, cls=EnhancedJSONEncoder).encode("utf-8")
+            )
+            p.flush()
 
         return Response({"status": "Processed"}, status=status.HTTP_200_OK)

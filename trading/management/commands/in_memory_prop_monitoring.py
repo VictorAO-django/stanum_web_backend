@@ -12,5 +12,4 @@ class Command(BaseCommand):
         from sub_manager.InMemoryPropMonitoring import InMemoryPropMonitoring
         monitor = InMemoryPropMonitoring()
         monitor.run()   # or whatever entry method you had
-
         self.stdout.write(self.style.SUCCESS("InMemoryPropMonitoring finished."))

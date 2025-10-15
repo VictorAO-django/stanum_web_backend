@@ -88,55 +88,36 @@ class UserWalletTransactionSerializer(serializers.ModelSerializer):
 
 
 class AdminMT5UserSerializer(serializers.ModelSerializer):
-    challenge_name = serializers.SerializerMethodField()
-    challenge_class = serializers.CharField(source='challenge.challenge_class')
-    free_margin = serializers.SerializerMethodField()
-    net_profit = serializers.SerializerMethodField()
     account_size = serializers.SerializerMethodField()
-    equity = serializers.SerializerMethodField()
-    password = serializers.SerializerMethodField()
-    email = serializers.SerializerMethodField()
-    user_id = serializers.SerializerMethodField()
+    name = serializers.CharField(source="user.full_name", read_only=True)
+    email = serializers.CharField(source="user.email", read_only=True)
+    balance = serializers.SerializerMethodField()
+    is_active = serializers.SerializerMethodField()
+    funded_eligible = serializers.SerializerMethodField()
+    funded = serializers.SerializerMethodField()
     class Meta:
         model = MT5User
         fields = [
-            'login', 'server', 'balance', 'account_type', 'account_status', 'password', 'created_at',
-            'free_margin', 'net_profit', 'account_size', 'equity', 'challenge_name', 'challenge_class', 'email', 'user_id'
+            'login', 'balance', 'created_at', 'email', 'account_size',
+            "name", "is_active", "balance", "funded_eligible", "funded"
         ]
-    
-    def get_email(self, obj):
-        if obj.user:
-            return obj.user.email
-        return ""
-    
-    def get_user_id(self, obj):
-        if obj.user:
-            return obj.user.id
-        return 0
-    
-    def get_password(self, obj):
-        if obj.password:
-            return decrypt_password(obj.password)
-        return ""
-    
-    def get_challenge_name(self, obj):
-        if obj.challenge:
-            return obj.challenge.name
-        return ""
     
     def get_account_size(self, obj):
         if obj.challenge:
             return obj.challenge.account_size
         return 0.0000
     
-    def get_free_margin(self, obj):
-        return 0.0000
+    def get_funded_eligible(self, obj):
+        return False
     
-    def get_net_profit(self, obj):
-        return 0.0000
+    def get_funded(self, obj):
+        return False
     
-    def get_equity(self, obj):
-        return 0.0000
+    def get_is_active(self, obj):
+        return False
+    
+    def get_balance(self, obj):
+        return 0.0
     
     def to_representation(self, instance):
         representation =  super().to_representation(instance)
@@ -144,11 +125,59 @@ class AdminMT5UserSerializer(serializers.ModelSerializer):
         # print("Got account instancr", account)
         if account.exists():
             account = account.first()
-            representation['free_margin'] = account.margin_free
-            representation['net_profit'] = account.profit
-            representation['equity'] = account.equity
+            representation['balance'] = account.balance
+            representation['funded_eligible'] = account.is_funded_eligible
+            representation['funded'] = account.funded
+            representation['is_active'] = account.active
         return representation
     
+
+class AdminMT5AccountSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+    challenge_name = serializers.SerializerMethodField()
+    account_size = serializers.SerializerMethodField()
+    positions = serializers.SerializerMethodField()
+    class Meta:
+        model=MT5Account
+        fields = ["login", "name", "email", "step", "balance", "equity", "challenge_name", "account_size", "positions"]
+    
+    def get_name(self, obj):
+        return ""
+    
+    def get_email(self, obj):
+        return ""
+    
+    def get_challenge_name(self, obj):
+        return ""
+    
+    def get_account_size(self, obj):
+        return 0.0000
+    
+    def get_positions(self, obj):
+        positions = MT5Position.objects.filter(login=obj.login, closed=False)
+        return positions.count()
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        mt5_user = MT5User.objects.filter(login=instance.login)
+        if mt5_user.exists():
+            mt5_user = mt5_user.first()
+            challenge= mt5_user.challenge
+            if mt5_user.user:
+                representation['name'] = mt5_user.user.full_name
+                representation["email"] = mt5_user.user.email
+            if challenge:
+                representation["account_size"] = challenge.account_size
+                representation['challenge_name'] = challenge.name
+        return representation
+
+
+class AdminMT5PositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MT5Position
+        fields = ["login", "symbol", "action", "price_open", "price_current", "volume", "profit"]
+
 
 class CompetitionStatusSerializer(serializers.ModelSerializer):
     is_active = serializers.SerializerMethodField()

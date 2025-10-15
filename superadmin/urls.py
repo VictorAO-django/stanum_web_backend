@@ -30,8 +30,11 @@ urlpatterns = [
     path('users/<str:id>/wallet', UserWalletView.as_view()),
     path('users/<str:id>/wallet/transactions', UserWalletTransactionView.as_view()),
 
-    path('accounts', TradingAccountListView.as_view()),
-    path('accounts/<str:login>/issue-funded-account', IssueFundedAccountAPIView.as_view()),
+    path('mt5/users', TradingUserListView.as_view()),
+    path('mt5/user/<str:login>/issue-funded-account', IssueFundedAccountAPIView.as_view()),
+
+    path("mt5/accounts", TradingAccountListView.as_view()),
+    path("mt5/account/<int:login>/positions", PositionsListView.as_view()),
 
     path('challenges', ChallengeListView.as_view()),
     path('challenges/create/', ChallengeCreateView.as_view()),
@@ -46,5 +49,5 @@ urlpatterns = [
     path('ticket/<str:ticket_id>/messages', MessageListCreateAPIView.as_view()),
     path('ticket/<str:ticket_id>/close', CloseTicketApiView.as_view()),
 
-    path("dashboard", AdminDashboard.as_view()),
+    path("dashboard", AdminDashboardView.as_view()),
 ]

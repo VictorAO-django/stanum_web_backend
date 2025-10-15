@@ -260,7 +260,7 @@ class MT5Account(models.Model):
     failure_reason = models.JSONField(null=True, blank=True)
     
     is_funded_eligible = models.BooleanField(default=False)
-    
+    funded = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

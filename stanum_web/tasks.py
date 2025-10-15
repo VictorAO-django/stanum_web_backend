@@ -1,4 +1,5 @@
 import traceback
+from django.db.models.functions import TruncDate
 from asgiref.sync import async_to_sync
 from django.utils.dateparse import parse_datetime
 from django.db import transaction
@@ -483,6 +484,24 @@ def save_mt5_user(user_data: dict):
     )
     return user.login
 
+@shared_task
+def save_mt5_daily(daily_data):
+    print(daily_data)
+    def convert_time(epoch):
+        return datetime.fromtimestamp(epoch, tz=timezone.utc) if epoch else None
+    try:
+        daily_data["datetime"] = convert_time(daily_data["datetime"])  # convert back to datetime
+        daily_data["datetime_prev"] = convert_time(daily_data["datetime_prev"]) # convert back to datetime
+        daily, _ = MT5Daily.objects.update_or_create(
+            login=daily_data["login"],
+            datetime=daily_data["datetime"],
+            defaults=daily_data
+        )
+        return daily.id
+
+    except Exception as err:
+        traceback.print_exc()
+        print("Failed to save daily")
 
 @shared_task
 def delete_user(login):
@@ -577,3 +596,170 @@ def persist_competition_results_task(competition_uuid: str, participants_data: l
             "success": False,
             "error": str(e)
         }
+    
+
+@shared_task
+def check_min_and_max_trading_days():
+    today = now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+
+    users = (
+        MT5User.objects
+        .exclude(challenge=None)
+        .filter(account_status='active')
+    )
+
+    for user in users:
+        try:
+            challenge = user.challenge
+            max_days = challenge.max_trading_days or 0
+            additional_days = challenge.additional_trading_days or 0
+            total_allowed_days = max_days + additional_days
+
+            account_created_at = user.created_at.date()
+            days_elapsed = (today - account_created_at).days
+
+            # 🔸 MAX TRADING DAYS CHECK
+            if days_elapsed >= total_allowed_days:
+                with transaction.atomic():
+                    user.account_status = 'expired'
+                    user.save(update_fields=['account_status'])
+
+                    violation = [
+                        {"type": "MAX_DAYS_EXCEEDED", "message": f"{days_elapsed} > allowed {total_allowed_days}"}
+                    ]
+                    mt5_account = MT5Account.objects.filter(login=user.login).first()
+                    if mt5_account:
+                        mt5_account.challenge_failed = True
+                        mt5_account.challenge_failure_date = now()
+                        mt5_account.active = False
+                        mt5_account.failure_reason = violation
+                        mt5_account.save()
+
+                    send_challenge_failed_mail_task.delay(user.login, challenge.id, violation)
+                continue
+
+            # 🔸 WEEKLY MINIMUM TRADING DAYS CHECK (only run on Sundays)
+            if today.weekday() == 6:
+                weekly_days = (
+                    MT5Position.objects.filter(
+                        login=user.login,
+                        time_create__date__range=(start_of_week, end_of_week)
+                    )
+                    .annotate(day=TruncDate('time_create'))
+                    .values('day')
+                    .distinct()
+                    .count()
+                )
+
+                if weekly_days < (challenge.min_trading_days or 0):
+                    with transaction.atomic():
+                        user.account_status = 'failed'
+                        user.save(update_fields=['account_status'])
+                        
+                        violation = [
+                            {"type": "WEEKLY_TRADING_DAYS_NOT_MET", "message": f"Traded {weekly_days} < required {challenge.min_trading_days}"}
+                        ]
+                        mt5_account = MT5Account.objects.filter(login=user.login).first()
+                        if mt5_account:
+                            mt5_account.challenge_failed = True
+                            mt5_account.challenge_failure_date = now()
+                            mt5_account.active = False
+                            mt5_account.failure_reason = violation
+                            mt5_account.save()
+                        send_challenge_failed_mail_task.delay(user.login, challenge.id, violation)
+        except Exception:
+            traceback.print_exc()
+
+
+
+@shared_task
+def process_drawdowns_task(serialized_json: str):
+    """
+    Process serialized daily drawdown data and upsert into AccountDrawdown table.
+    """
+    data = json.loads(serialized_json)
+    print("DAILY DRAWDOWN", data)
+    # Loop through all accounts and their daily drawdown data
+    for login, daily_map in data.items():
+        for day_str, dd in daily_map.items():
+            try:
+                drawdown_date = date.fromisoformat(dd["date"])
+                equity_high = Decimal(str(dd["equity_high"]))
+                equity_low = Decimal(str(dd["equity_low"]))
+                drawdown_percent = Decimal(str(dd["drawdown_percent"]))
+
+                # Upsert logic — update if exists, otherwise create new record
+                with transaction.atomic():
+                    obj, created = AccountDrawdown.objects.update_or_create(
+                        login=login,
+                        date=drawdown_date,
+                        defaults={
+                            "equity_high": equity_high,
+                            "equity_low": equity_low,
+                            "drawdown_percent": drawdown_percent,
+                        },
+                    )
+
+                    # Optional: print or log for debugging
+                    action = "Created" if created else "Updated"
+                    print(f"[{action}] {login} {drawdown_date} → DD {drawdown_percent}%")
+
+            except Exception as e:
+                # Avoid breaking entire loop if one record fails
+                traceback.print_exc()
+                continue
+
+
+@shared_task
+def process_total_drawdowns_task(serialized_json: str):
+    """
+    Upsert AccountTotalDrawdown records from serialized dataclass dict.
+    """
+    data = json.loads(serialized_json)
+
+    for login, dd in data.items():
+        try:
+            with transaction.atomic():
+                obj, created = AccountTotalDrawdown.objects.update_or_create(
+                    login=login,
+                    defaults={
+                        "equity_peak": Decimal(str(dd["equity_peak"])),
+                        "equity_low": Decimal(str(dd["equity_low"])),
+                        "drawdown_percent": Decimal(str(dd["drawdown_percent"])),
+                    },
+                )
+                action = "Created" if created else "Updated"
+                print(f"[{action}] Total drawdown → {login}: {obj.drawdown_percent}%")
+        except Exception:
+            traceback.print_exc()
+            continue
+
+
+
+@shared_task
+def process_account_watermarks_task(serialized_json: str):
+    """
+    Upsert AccountWatermarks records from serialized dataclass dict.
+    """
+    data = json.loads(serialized_json)
+    for login, wm in data.items():
+        try:
+            with transaction.atomic():
+                obj, created = AccountWatermarks.objects.update_or_create(
+                    login=login,
+                    defaults={
+                        "hwm_balance": Decimal(str(wm["hwm_balance"])),
+                        "hwm_equity": Decimal(str(wm["hwm_equity"])),
+                        "lwm_balance": Decimal(str(wm["lwm_balance"])),
+                        "lwm_equity": Decimal(str(wm["lwm_equity"])),
+                        # "hwm_date": datetime.fromisoformat(wm["hwm_date"]),
+                        # "lwm_date": datetime.fromisoformat(wm["lwm_date"]),
+                    },
+                )
+                action = "Created" if created else "Updated"
+                print(f"[{action}] Watermark → {login}")
+        except Exception:
+            traceback.print_exc()
+            continue

@@ -141,13 +141,72 @@ class UserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     lookup_field='id'
 
-class TradingAccountListView(generics.ListAPIView):
+class TradingUserListView(generics.ListAPIView):
     permission_classes=[permissions.IsAdminUser]
     serializer_class = AdminMT5UserSerializer
     queryset = MT5User.objects.all().order_by('-created_at')
     pagination_class = StandardResultsSetPagination
     filterset_class = MT5UserFilter
     filter_backends = [DjangoFilterBackend]
+
+    def get(self, request, *args, **kwargs):
+        users = MT5User.objects.all()
+        pending_withdrawal = PropFirmWalletTransaction.objects.filter(type='debit', status='pending')
+        total_referrals = Referral.objects.exclude(referred_by=None)
+        res = super().get(request, *args, **kwargs)
+        return Response({
+            "total_trading_users": users.count(),
+            "pending_withdrawal": pending_withdrawal.count(),
+            "total_referrals": total_referrals.count(),
+            "result": res.data
+        }, status=status.HTTP_200_OK)
+
+class TradingAccountListView(generics.ListAPIView):
+    permission_classes=[permissions.IsAdminUser]
+    serializer_class = AdminMT5AccountSerializer
+    queryset = MT5Account.objects.all().order_by("-created_at")
+    pagination_class = LargeResultsSetPagination
+    filterset_class = MT5AccountFilter
+    filter_backends = [DjangoFilterBackend]
+
+    def get(self, request, *args, **kwargs):
+        accounts = MT5Account.objects.all()
+        positions = MT5Position.objects.filter(closed=False)
+        funded = accounts.filter(funded=True)
+        total_equity = accounts.aggregate(total=Sum("equity"))['total'] or 0
+
+        res = super().get(request, *args, **kwargs)
+        return Response({
+            "total_accounts": accounts.count(),
+            "active_positions": positions.count(),
+            "total_equity": total_equity,
+            "funded_account": funded.count(),
+            "result": res.data
+        }, status=status.HTTP_200_OK)
+
+
+class PositionsListView(generics.ListAPIView):
+    # authentication_classes=[]
+    # permission_classes=[permissions.AllowAny]
+    permission_classes=[permissions.IsAdminUser]
+    serializer_class=AdminMT5PositionSerializer
+
+    def get_queryset(self):
+        login = self.kwargs.get("login")
+        querysets = MT5Position.objects.filter(login=login, closed=False)
+        self.query_count = querysets.count()
+        return querysets
+    
+    def get(self, request, login, *args, **kwargs):
+        account = MT5Account.objects.get(login=login)
+
+        res = super().get(request, *args, **kwargs)
+        return Response({
+            'balance':account.balance,
+            'equity': account.equity,
+            'total_positions': self.query_count,
+            'result': res.data
+        })
 
 class ChallengeListView(generics.ListAPIView):
     permission_classes=[permissions.IsAdminUser]
@@ -397,7 +456,14 @@ class CloseTicketApiView(APIView):
     
 
 class IssueFundedAccountAPIView(APIView):
+    permission_classes=[permissions.IsAdminUser]
     def post(self, request, login, *args, **kwargs):
+        return custom_response(
+                status="Forbidden",
+                message="Funded Account Already issues for this completed challenge account",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
+            )
         challenge_mt5_user = get_object_or_404(MT5User, login=login, account_type='challenge')
         if challenge_mt5_user.funded_account_issued:
             return custom_response(
@@ -497,9 +563,8 @@ class IssueFundedAccountAPIView(APIView):
             )
 
 
-class AdminDashboard(APIView):
-    authentication_classes = []
-    permission_classes=[permissions.AllowAny]
+class AdminDashboardView(APIView):
+    permission_classes=[permissions.IsAdminUser]
 
     def get(self, request, *args, **kwargs):
         users = User.objects.filter(is_deleted=False)
@@ -517,4 +582,5 @@ class AdminDashboard(APIView):
             "pending_withdrawal": pending_withdrawal.count(),
             "competition_status": competition_status.data,
             "recent_activity": recent_activity.data
-        })
+        }, status=status.HTTP_200_OK)
+    

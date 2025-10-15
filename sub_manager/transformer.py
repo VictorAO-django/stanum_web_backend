@@ -1,16 +1,33 @@
 import MT5Manager, json, uuid
 from sub_manager.InMemoryData import *
 from challenge.models import PropFirmChallenge, Competition
+from dataclasses import asdict, is_dataclass
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
             return float(obj)
-        if isinstance(obj, datetime):
+        if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         if isinstance(obj, uuid.UUID):
-            return str(obj) 
+            return str(obj)
+        if is_dataclass(obj):
+            return asdict(obj)
         return super().default(obj)
+    
+def make_json_safe(data):
+    if isinstance(data, dict):
+        new_dict = {}
+        for k, v in data.items():
+            # Convert datetime.date keys to iso string
+            if isinstance(k, (datetime, date)):
+                k = k.isoformat()
+            new_dict[str(k)] = make_json_safe(v)
+        return new_dict
+    elif isinstance(data, list):
+        return [make_json_safe(i) for i in data]
+    else:
+        return data
 
 def transform_position(pos:MT5Manager.MTPosition):
     pos_state = PositionData(
@@ -62,7 +79,7 @@ def transform_tick(symbol, tick:MT5Manager.MTTickShort):
 
 def transform_propfirmchallenge(ch:PropFirmChallenge):
     data = PropFirmChallengeData(
-        name=ch.name, firm_name=ch.firm_name, description=ch.description, challenge_type=ch.challenge_type,
+        id=ch.id, name=ch.name, firm_name=ch.firm_name, description=ch.description, challenge_type=ch.challenge_type,
         account_size=ch.account_size, challenge_fee=ch.challenge_fee, status=ch.status, challenge_class=ch.challenge_class,
         refundable_fee=ch.refundable_fee, profit_split_percent=ch.profit_split_percent, max_daily_loss_percent=ch.max_daily_loss_percent,
         max_total_loss_percent=ch.max_total_loss_percent, additional_phase_total_loss_percent=ch.additional_phase_total_loss_percent,

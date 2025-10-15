@@ -12,3 +12,5 @@ app.conf.broker_connection_retry_on_startup = True
 
 # Force-load tasks from settings module
 app.autodiscover_tasks(['stanum_web'])
+
+# import stanum_web.task_schedules

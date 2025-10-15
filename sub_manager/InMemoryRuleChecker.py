@@ -19,7 +19,7 @@ class InMemoryRuleChecker:
             return violations
         
         try:
-            #Check if the challenge class is a funded or not
+            #Check if the challenge is not funded phase
             if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
                 violations.extend(self._check_max_days(account, challenge))
             if account.step != 2:
@@ -246,10 +246,7 @@ class InMemoryRuleChecker:
         else:
             target_profit_amount = (Decimal(challenge.profit_target_percent) / Decimal(100)) * Decimal(challenge.account_size)
 
-        # if (account.login == 4005):
-        #     logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
-        
-
+        logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
         # Check if profit target is reached
         return current_profit >= target_profit_amount
     

@@ -1,5 +1,4 @@
-from confluent_kafka import Producer
-import MT5Manager, time, traceback
+import MT5Manager, time, traceback, json
 from datetime import date
 from datetime import time as dtime
 from django.utils.timezone import now
@@ -10,6 +9,8 @@ from sub_manager.InMemoryData import *
 from sub_manager.InMemoryRuleChecker import *
 from sub_manager.logging_config import get_prop_logger
 from sub_manager.producer import redis_client
+from .producer import p
+from .transformer import *
 
 from confluent_kafka import Consumer, Producer
 from .USDCurrencyConverter import USDCurrencyConverter
@@ -231,10 +232,14 @@ class InMemoryPropMonitoring:
         try:
             print("Moving account to step 2")
             # 1. First reset account on MT5 (close positions and reset account_size)
-            # self.bridge.reset_account(login, challenge.account_size)
+            p.produce(
+                "return_balance", 
+                json.dumps({"login":login, "balance":float(challenge.account_size)}, cls=EnhancedJSONEncoder).encode("utf-8")
+            )
+            p.flush()
             # 2. Then clear from memory
-            self._clear_positions(login)
-            self._clear_deals(login)
+            # self._clear_positions(login)
+            # self._clear_deals(login)
             # 4. Update database and memory state
             acc = self.local_accounts.get(login)
             acc.step = 2
@@ -243,7 +248,7 @@ class InMemoryPropMonitoring:
             move_account_to_step_2.delay(login)
 
             # 5. Reset tracking for new phase
-            self._reset_phase_tracking(login)
+            # self._reset_phase_tracking(login)
             # 6. Send notification
             self._send_phase_1_success_notification(login, challenge)
 
@@ -256,8 +261,10 @@ class InMemoryPropMonitoring:
         try:
             #Pass account in celery
             pass_account.delay(acc.login, challenge.id)
-
-            # self.bridge.disable_challenge_account_trading(acc.login)
+            p.produce(
+                "disable_trading", 
+                json.dumps({"login":login}, cls=EnhancedJSONEncoder).encode("utf-8")
+            )
             self.cleanup_completed_account(acc.login)
             logger.info(f"Challenge PASSED for account {acc.login}")
 
@@ -281,7 +288,10 @@ class InMemoryPropMonitoring:
             try:
                 #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
                 logger.info("Start disabling account")
-                # self.bridge.disable_challenge_account_trading(login)
+                p.produce(
+                    "disable_trading", 
+                    json.dumps({"login":login}, cls=EnhancedJSONEncoder).encode("utf-8")
+                )
             except Exception as disable_error:
                 logger.error(f"Failed to disable trading for {login}: {disable_error}")
                 # Continue anyway - account is marked as failed in database
@@ -352,33 +362,31 @@ class InMemoryPropMonitoring:
                     self.update_account_watermarks(_acc.login, _acc.balance, _acc.equity)
                     dd = self.update_drawdown(acc.login)
                     total_dd = self.update_total_drawdown(acc.login)
-                    
-                    if self.should_update_leaderboard(acc.login):  # Throttle this
-                        self.update_competition_metrics(acc.login)
 
                     challenge = self.account_challenge.get(acc.login)
                     if not challenge:
                         continue
                     
                     #broadcast after equity/drawdown updates
-                    if self.should_broadcast(acc.login):
-                        self._broadcast_account_stats(acc.login)
+                    # if self.should_broadcast(acc.login):
+                    #     self._broadcast_account_stats(acc.login)
 
                     broken_rules = self.rule_checker.check_account_rules(acc, challenge, dd, total_dd) 
                     
                     if len(broken_rules) == 0:
                         #Check If the rules configuration is not for a funded account
-                        if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
-                            # Check if minimum days requirement met
-                            if not self.rule_checker._check_min_days(acc, challenge):
-                                # logger.info(f"NO ACCOUNT VIOLATIONS BUT MIN DAYS NOT REACHED YET {acc.login}")
-                                continue
+                        # if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
+                        #     # Check if minimum days requirement met
+                        #     if not self.rule_checker._check_min_days(acc, challenge):
+                        #         logger.info(f"NO ACCOUNT VIOLATIONS BUT MIN DAYS NOT REACHED YET {acc.login}")
+                        #         continue
 
                             # logger.info(f"NO ACCOUNT VIOLATIONS BUT TARGET PROFIT NOT YET MADE {acc.login}")
                             continue
                     else:
                         print("Handling account violation")
                         self.lock_account.add(acc.login)
+                        self.persist_account_data(acc.login)
                         self._handle_account_rules_violation(acc.login, broken_rules)
                         print("Failing account")
                         self._challenge_failed(acc.login, broken_rules, challenge)
@@ -632,7 +640,7 @@ class InMemoryPropMonitoring:
         try:
             result = send_phase_1_success_task.delay(login, challenge.id)
         except Exception as err:
-            logger.debug(f"Could not send phase q success notification {login} - {str(err)}")
+            logger.debug(f"Could not send phaseq success notification {login} - {str(err)}")
 
 
     def _send_challenge_failure_notification(self, login, challenge: PropFirmChallengeData, reasons: List[ViolationDict]):
@@ -641,17 +649,6 @@ class InMemoryPropMonitoring:
             logger.info(f"Failure alert sent to {login} ")
         except Exception as err:
             logger.debug(f"Could not send challenge failure notification {login} - {str(err)}")
-
-
-    def cleanup_old_daily_drawdowns(self, days_to_keep: int = 30):
-        """Remove daily drawdown data older than specified days"""
-        cutoff_date = (now() - timedelta(days=days_to_keep)).date()
-        
-        for login in self.daily_drawdowns:
-            dates_to_remove = [date for date in self.daily_drawdowns[login] 
-                            if date < cutoff_date]
-            for date in dates_to_remove:
-                del self.daily_drawdowns[login][date]
 
 
     def cleanup_unused_symbols(self):
@@ -673,6 +670,39 @@ class InMemoryPropMonitoring:
                 del self.symbol[symbol]
             logger.info(f"Cleaned up {len(symbols_to_remove[:50])} unused symbols")
 
+
+    def should_broadcast(self, login: int) -> bool:
+        """Check if enough time has passed since last update"""
+        now = time.time()
+        last_update = self.last_update_time.get(login, 0)
+        # Only update if 30 minutes (1800 seconds) have passed
+        if now - last_update >= 1800.0:
+            self.last_update_time[login] = now
+            return True
+        return False
+    
+    def persist_account_data(self, login: int):
+        # --- Daily Drawdowns ---
+        dds = self.daily_drawdowns.get(login)
+        if dds:
+            latest_date = max(dds.keys())
+            latest_dd = {login: {latest_date: dds[latest_date]}}
+            serialized_dd = json.dumps(make_json_safe(latest_dd), cls=EnhancedJSONEncoder)
+            process_drawdowns_task.delay(serialized_dd)
+
+        # --- Total Drawdown ---
+        td = self.total_drawdown.get(login)
+        if td:
+            total_dd = {login: td}
+            serialized_total_dd = json.dumps(make_json_safe(total_dd), cls=EnhancedJSONEncoder)
+            process_total_drawdowns_task.delay(serialized_total_dd)
+
+        # --- Account Watermarks ---
+        wm = self.account_watermarks.get(login)
+        if wm:
+            watermarks = {login: wm}
+            serialized_watermarks = json.dumps(make_json_safe(watermarks), cls=EnhancedJSONEncoder)
+            process_account_watermarks_task.delay(serialized_watermarks)
 
 
 
@@ -819,227 +849,8 @@ class InMemoryPropMonitoring:
             traceback.print_exc()
 
 
-    def update_user_metrics(self, login: int):
-        """
-        Calculate and store all user metrics in Redis
-        Called after significant events (position close, equity change, etc.)
-        """
-        try:
-            stats = self.calculate_user_metrics(login)
-            if not stats:
-                return
-            
-            # Store all metrics in Redis hash
-            redis_client.hset(f"user:{login}", mapping={
-                "username": stats["username"],
-                "starting_balance": str(stats["starting_balance"]),
-                "current_equity": str(stats["current_equity"]),
-                "profit": str(stats["profit"]),
-                "return_percent": str(stats["return_percent"]),
-                "max_drawdown": str(stats["max_drawdown"]),
-                "total_trades": str(stats["total_trades"]),
-                "winning_trades": str(stats["winning_trades"]),
-                "win_rate": str(stats["win_rate"]),
-                "score": str(stats["score"]),
-                "updated_at": str(int(time.time()))
-            })
-            
-            # If competition account, update leaderboard sorted set
-            if self.is_competition_account(login):
-                redis_client.zadd("competition:leaderboard", {login: stats["score"]})
-                
-                # Broadcast update to WebSocket
-                self.broadcast_competition_update()
-            
-            # Broadcast to individual account viewers
-            self.broadcast_account_update(login, stats)
-            
-        except Exception as e:
-            logger.error(f"Error updating metrics for {login}: {e}")
-            traceback.print_exc()
 
 
-
-    #===============================================================================================
-    # COMPETITION
-    #===============================================================================================
-    def should_update_leaderboard(self, login: int) -> bool:
-        """Check if enough time has passed since last update"""
-        now = time.time()
-        last_update = self.last_update_time.get(login, 0)
-        # Only update if 5 seconds have passed
-        if now - last_update >= 10.0:
-            self.last_update_time[login] = now
-            return True
-        return False
-    
-    def should_broadcast(self, login:int) -> bool:
-        now = time.time()
-        last_broadcast = self.last_broadcast_time.get(login, 0)
-        # Only update if 5 seconds have passed
-        if now - last_broadcast >= 10.0:
-            self.last_broadcast_time[login] = now
-            return True
-        return False
-    
-    def update_competition_metrics(self, login: int):
-        """
-        Calculate all metrics, update Redis, and broadcast to frontend
-        NO database operations here (fast path)
-        """
-        try:
-            # logger.info(f"Broadcasting: {login} ")
-            # Get competition UUID from Redis
-            competition_uuid = redis_client.hget(f"user:{login}", "competition_uuid")
-            # logger.info(f"Competition uuid: {competition_uuid}")
-            if not competition_uuid:
-                return  # Not in competition
-            
-            # Check if competition is still active
-            if not self.is_competition_active(competition_uuid):
-                logger.info(f"Competition not active")
-                return  # Ended, don't update
-            
-            # Calculate all metrics
-            stats = self.calculate_user_metrics(login)
-            # logger.info(f"User metrics: {stats}")
-            if not stats:
-                return
-            
-            # Update Redis (fast - ~0.1ms)
-            redis_client.hset(f"user:{login}", mapping={
-                k: str(v) for k, v in stats.items()
-            })
-            
-            # Update leaderboard sorted set
-            redis_client.zadd(
-                f"competition:{competition_uuid}:leaderboard",
-                {login: stats["score"]}
-            )
-            
-            # logger.info("Rounding up broadcasting")
-            # Broadcast to frontend via Channels
-            self.broadcast_competition_leaderboard(competition_uuid)
-            # logger.info("Broadcasted")
-
-        except Exception as e:
-            traceback.print_exc()
-            logger.error(f"Error updating competition metrics for {login}: {e}")
-    
-
-    def calculate_user_metrics(self, login: int) -> Optional[dict]:
-        """Calculate all competition metrics"""
-        try:
-            account = self.local_accounts.get(login)
-            competition = self.account_competition.get(login)
-            
-            if not competition:
-                return None
-            
-            # Drawdown data
-            total_dd = self.total_drawdown.get(login)
-            
-            # Calculations
-            starting_balance = Decimal(competition.starting_balance)
-            current_equity = account.equity
-            profit = current_equity - starting_balance
-            return_percent = (profit / starting_balance * 100) if starting_balance > 0 else Decimal("0")
-            
-            max_drawdown = abs(total_dd.drawdown_percent) if total_dd else Decimal("0")
-            
-            # Trade stats from Redis
-            total_trades = int(redis_client.hget(f"user:{login}", "total_trades") or 0)
-            winning_trades = int(redis_client.hget(f"user:{login}", "winning_trades") or 0)
-            win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else Decimal("0")
-            
-            # Competition score (return / drawdown ratio)
-            score = float(return_percent) / (float(max_drawdown) + 0.01)
-            
-            return {
-                "login": login,
-                "username": f"Trader_{login}",
-                "competition_uuid": str(competition.uuid),
-                "starting_balance": float(starting_balance),
-                "current_equity": float(current_equity),
-                "profit": float(profit),
-                "return_percent": float(return_percent),
-                "max_drawdown": float(max_drawdown),
-                "total_trades": total_trades,
-                "winning_trades": winning_trades,
-                "win_rate": float(win_rate),
-                "score": score,
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }
-            
-        except Exception as e:
-            traceback.print_exc()
-            logger.error(f"Error calculating metrics for {login}: {e}")
-            return None
-
-    def is_competition_active(self, competition_uuid: str) -> bool:
-        """Check if competition is still active"""
-        status = redis_client.hget(f"competition:{competition_uuid}:meta", "status")
-        
-        if status != "active":
-            return False
-        
-        # Check end date
-        end_date_str = redis_client.hget(f"competition:{competition_uuid}:meta", "end_date")
-        if end_date_str:
-            end_date = datetime.fromisoformat(end_date_str)
-            if datetime.now(timezone.utc) > end_date:
-                # Competition just ended, finalize it
-                finalize_competition_task.delay(competition_uuid)
-                return False
-        
-        return True
-
-
-    def broadcast_competition_leaderboard(self, competition_uuid: str):
-        """
-        Send updated leaderboard to all frontend viewers via WebSocket
-        NO database operations - only Redis reads
-        """
-        try:
-            # Get top 100 from Redis sorted set
-            top_logins = redis_client.zrevrange(
-                f"competition:{competition_uuid}:leaderboard",
-                0, 99,
-                withscores=True
-            )
-            
-            leaderboard = []
-            for rank, (login, score) in enumerate(top_logins, 1):
-                user_data = redis_client.hgetall(f"user:{login}")
-                
-                if user_data:
-                    leaderboard.append({
-                        "rank": rank,
-                        "login": int(login),
-                        "username": user_data.get("username", ""),
-                        "current_equity": float(user_data.get("current_equity", 0)),
-                        "return_percent": float(user_data.get("return_percent", 0)),
-                        "max_drawdown": float(user_data.get("max_drawdown", 0)),
-                        "winning_trades": float(user_data.get("winning_trades", 0)),
-                        "total_trades": int(user_data.get("total_trades", 0)),
-                        "win_rate": float(user_data.get("win_rate", 0)),
-                        "score": float(score)
-                    })
-            
-            async_to_sync(channel_layer.group_send)(
-                f"competition_{competition_uuid}",
-                {
-                    "type": "leaderboard_update",
-                    "data": {
-                        "leaderboard": leaderboard,
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
-                }
-            )
-            
-        except Exception as e:
-            traceback.print_exc()
-            logger.error(f"Error broadcasting leaderboard for {competition_uuid}: {e}")
 
 
 
@@ -1055,10 +866,11 @@ c = Consumer({
 })
 
 c.subscribe([
-    "account_challenge_initiate", "account_competition_initiate", "market.ticks", 
+    "account_challenge_initiate", "market.ticks", 
     "accounts.state", "accounts.load", 
     "accounts.position", "accounts.position.remove", "accounts.position.update",
     "accounts.deal", "accounts.deal.remove", "accounts.deal.update",
+    "account.to.phase2", "account.clear", "persist_valid_data",
 ])
 
 monitor = InMemoryPropMonitoring()
@@ -1080,35 +892,6 @@ while True:
             account = AccountData(**json.loads(msg.value().decode("utf-8")))
             monitor.update_account(account)
             print(f"Updated account {account.login}")
-
-        elif msg.topic() == 'account_competition_initiate':
-            data = json.loads(msg.value().decode("utf-8"))
-            login=data['login']
-            competition = CompetitionData.from_dict(data['competition'])
-            # print(competition)
-            monitor.account_competition[login] = competition
-
-            competition_uuid = str(competition.uuid)
-            # Store competition UUID for this account in Redis
-            redis_client.hset(f"user:{login}", "competition_uuid", competition_uuid)
-            # Initialize trade counters
-            redis_client.hset(f"user:{login}", mapping={
-                "total_trades": "0",
-                "winning_trades": "0",
-                "username": f"Trader_{login}"
-            })  
-            # Initialize competition metadata (if first participant)
-            if not redis_client.exists(f"competition:{competition_uuid}:meta"):
-                redis_client.hset(f"competition:{competition_uuid}:meta", mapping={
-                    "uuid": competition_uuid,
-                    "name": competition.name,
-                    "status": "active",
-                    "start_date": competition.start_date.isoformat(),
-                    "end_date": competition.end_date.isoformat(),
-                    "starting_balance": str(competition.starting_balance)
-                })
-
-            print(f"Account {login} registered to competition {competition_uuid}")
 
         elif msg.topic() == "account_challenge_initiate":
             data = json.loads(msg.value().decode("utf-8"))
@@ -1137,16 +920,7 @@ while True:
         elif msg.topic() == "accounts.position.remove":
             pos = PositionData(**json.loads(msg.value().decode("utf-8")))
             monitor.remove_position(pos)
-
-            # 1. Update trade counters in Redis (FAST)
-            redis_client.hincrby(f"user:{pos.login}", "total_trades", 1)
-            if float(pos.profit) > 0:
-                redis_client.hincrby(f"user:{pos.login}", "winning_trades", 1)
-            # 2. Remove from local positions
-            monitor.remove_position(pos)
-
             print(f"Position Removed {pos.position_id}, , Profit: {pos.profit}")
-
         
         elif msg.topic() == "accounts.deal":
             deal = DealData(**json.loads(msg.value().decode("utf-8")))
@@ -1162,6 +936,47 @@ while True:
             deal = DealData(**json.loads(msg.value().decode("utf-8")))
             monitor.remove_deal(deal)
             print(f"Deal Removed {deal.login}")
+
+        elif msg.topic() == "account.to.phase2":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=data['login']
+            challenge = monitor.account_challenge.get(login)
+            monitor._move_to_step_2(login, challenge)
+            print(f"Account moved to phase 2 {login}")
+        
+        elif msg.topic() == "account.clear":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=data['login']
+            monitor.cleanup_completed_account(login)
+            print(f"Cleared account details {login}")
+        
+        elif msg.topic() == "persist_valid_data":
+            today = date.today()
+            yesterday = today - timedelta(days=1)
+
+            # Prepare only today and yesterday's drawdowns for each account
+            filtered_dds = {}
+            for login, dd_data in monitor.daily_drawdowns.items():
+                if not dd_data:
+                    continue
+
+                filtered_dds[login] = {}
+                for dd_date, dd in dd_data.items():
+                    if dd_date in (yesterday, today):
+                        filtered_dds[login][dd_date] = dd
+
+                # If no entries match, skip that account
+                if not filtered_dds[login]:
+                    del filtered_dds[login]
+
+            # Persist filtered data
+            serialized_dd = json.dumps(make_json_safe(filtered_dds), cls=EnhancedJSONEncoder)
+            process_drawdowns_task.delay(serialized_dd)
+            # Still persist total drawdown and watermarks for all accounts
+            serialized_total_dd = json.dumps(make_json_safe(monitor.total_drawdown), cls=EnhancedJSONEncoder)
+            process_total_drawdowns_task.delay(serialized_total_dd)
+            serialized_watermarks = json.dumps(make_json_safe(monitor.account_watermarks), cls=EnhancedJSONEncoder)
+            process_account_watermarks_task.delay(serialized_watermarks)
     
     except Exception as err:
         print(f"ERROR OCCURED: {str(err)}")

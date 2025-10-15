@@ -56,7 +56,33 @@ class PropFirmChallengeFilter(django_filters.FilterSet):
 class MT5UserFilter(django_filters.FilterSet):
     account_status = django_filters.CharFilter(field_name='account_status', lookup_expr='iexact')
     account_type = django_filters.CharFilter(field_name='account_type', lookup_expr='iexact')
-    login = django_filters.CharFilter(field_name='login', lookup_expr='icontains')
+    
+    # Unified search field
+    search = django_filters.CharFilter(method='filter_search', label='Search')
+
     class Meta:
-        model =  MT5User
-        fields = ['account_status', 'account_type', 'login']
+        model = MT5User
+        fields = ['account_status', 'account_type', 'search']
+
+    def filter_search(self, queryset, name, value):
+        """Search across user full name, login, and email"""
+        return queryset.filter(
+            Q(login__icontains=value) |
+            Q(user__email__icontains=value) |
+            Q(user__full_name__icontains=value)
+        )
+    
+
+class MT5AccountFilter(django_filters.FilterSet):
+    phase = django_filters.CharFilter(field_name='phase', lookup_expr='iexact')   
+    # Unified search field
+    search = django_filters.CharFilter(method='filter_search', label='Search')
+    class Meta:
+        model = MT5Account
+        fields = ['phase', 'search']
+
+    def filter_search(self, queryset, name, value):
+        """Search across user full name, login, and email"""
+        return queryset.filter(
+            Q(login__icontains=value)
+        )

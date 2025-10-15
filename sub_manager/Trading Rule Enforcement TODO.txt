@@ -15,8 +15,9 @@ You publish ticks + account events into topics.
 Rule-monitoring services subscribe, process in real-time, and publish violations into another topic.
 CRM backend (Django/DRF) listens for violations and updates the user’s dashboard/account state.
 
-docker ps -a
-docker exec -it 68525cea2749 bash
+docker compose up -d
+docker ps
+docker exec -it 295bd97dfbb0 bash
 kafka-topics --list --bootstrap-server localhost:9092
 docker compose down -v
 docker volume prune -f
@@ -55,6 +56,15 @@ kafka-topics --create --topic account_competition_initiate --bootstrap-server lo
 kafka-topics --create --topic competition.control --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 
 
+kafka-topics --create --topic account.to.phase2 --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic account.clear --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic reset_account --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic persist_valid_data --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 
+kafka-topics --create --topic disable_trading --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic enable_trading --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic return_balance --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic update_balance --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic close_positions --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 
 Rank, Trader name, return,

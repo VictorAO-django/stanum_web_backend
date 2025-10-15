@@ -68,13 +68,13 @@ class MetaTraderBridge:
 
         if not self.manager.DealSubscribe(DealSink(self)):
             logger.debug(f"DealSubscribe failed: {MT5Manager.LastError()}")
-
+        
         # if not self.manager.OrderSubscribe(OrderSink()):
         #     logger.debug(f"OrderSubscribe failed: {MT5Manager.LastError()}")
 
         # if not self.manager.UserAccountSubscribe(AccountSink(self)):
         #     logger.debug(f"AccountSubscribe failed: {MT5Manager.LastError()}")
-
+        
         if not self.manager.TickSubscribe(TickSink(self)):
             logger.debug(f"TickSubscribe failed: {MT5Manager.LastError()}")
 
@@ -93,7 +93,7 @@ class MetaTraderBridge:
         return self.manager.PositionGet(login)
     
     def get_account_list(self)->List[MT5Manager.MTAccount]:
-        self.manager.UserAccountGetByGroup(self.user_group)
+        return self.manager.UserAccountGetByGroup(self.user_group)
     
     def _close_all_positions(self, login: int):
         """Close all open positions for an account"""
@@ -273,7 +273,7 @@ class MetaTraderBridge:
     def broadcast_accounts(self):
         try:
             print("dispatching accounts to kafka")
-            accounts:List[MT5Manager.MTAccount] = self.manager.UserAccountGetByGroup(self.user_group)
+            accounts:List[MT5Manager.MTAccount] = self.get_account_list()
             for account in accounts:
                 account_data = transform_account(account)
                 p.produce(

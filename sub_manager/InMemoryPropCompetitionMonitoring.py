@@ -355,8 +355,8 @@ class InMemoryPropCompetitionMonitoring:
         """Check if enough time has passed since last update"""
         now = time.time()
         last_update = self.last_update_time.get(login, 0)
-        # Only update if 5 seconds have passed
-        if now - last_update >= 10.0:
+        # Only update if 30 minutes (1800 seconds) have passed
+        if now - last_update >= 1800.0:
             self.last_update_time[login] = now
             return True
         return False
@@ -721,14 +721,13 @@ while True:
         
         elif msg.topic() == "accounts.position.remove":
             pos = PositionData(**json.loads(msg.value().decode("utf-8")))
+            # 2. Remove from local positions
             monitor.remove_position(pos)
 
             # 1. Update trade counters in Redis (FAST)
             redis_client.hincrby(f"user:{pos.login}", "total_trades", 1)
             if float(pos.profit) > 0:
                 redis_client.hincrby(f"user:{pos.login}", "winning_trades", 1)
-            # 2. Remove from local positions
-            monitor.remove_position(pos)
 
             print(f"Position Removed {pos.position_id}, , Profit: {pos.profit}")
 
