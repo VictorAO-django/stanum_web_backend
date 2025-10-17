@@ -77,9 +77,10 @@ class Transaction(models.Model):
 class PropFirmWallet(models.Model):
     user = models.OneToOneField( User, on_delete=models.CASCADE, related_name="propfirm_wallet")
     wallet_id = models.CharField(max_length=20, unique=True, editable=False)
-    withdrawal_profit = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    pending_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    disbursed_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    currency_id=models.CharField(max_length=50, blank=True, null=True)
+    pay_currency = models.CharField(max_length=10, help_text="e.g. USDT, BTC, ETH", null=True, blank=True)
+    pay_network = models.CharField(max_length=10, null=True, blank=True)
+    pay_address = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -144,3 +145,17 @@ class PropFirmWalletTransaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_id} - {self.status} - {self.price_amount}"
+    
+
+class WithdrawalRequest(models.Model):
+    STATUS=(
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    )
+    login=models.BigIntegerField()
+    status=models.CharField(choices=STATUS, default="pending")
+    rejected_reasons=models.TextField(blank=True, null=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+    approved_at=models.DateTimeField(null=True, blank=True)
+    rejected_at=models.DateTimeField(null=True, blank=True)

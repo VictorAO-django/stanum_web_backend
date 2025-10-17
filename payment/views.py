@@ -15,6 +15,7 @@ from .models import *
 from .serializers import *
 from service.now_payment import NOWPaymentsService
 from utils.mailer import Mailer
+from utils.decorators import require_account_owner
 
 from asgiref.sync import async_to_sync
 
@@ -720,22 +721,90 @@ class PaystackWebhookView(APIView):
         
 
 
-class PropFirmWalletView(generics.RetrieveAPIView):
+class PropFirmWalletView(APIView):
     serializer_class = PropFirmWalletSerializer
     permission_classes = [ permissions.IsAuthenticated, Is2FAEnabled]
-
-    def get_object(self):
-        user = self.request.user
-        obj, _ = PropFirmWallet.objects.get_or_create(user=user)
-        return obj
     
+    def get(self, request, *args, **kwargs):
+        wallet, _ = PropFirmWallet.objects.get_or_create(user=request.user)
+        data = self.serializer_class(wallet)
+        return Response(data.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data.copy()
+
+        # --- OTP check ---
+        code = data.pop('code', None)
+        if not code:
+            return custom_response(
+                status="Error",
+                message="OTP code required!",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # --- Ensure OTP secret exists ---
+        if not getattr(user, "otp_secret", None):
+            return custom_response(
+                status="Error",
+                message="OTP not configured for this account.",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
+        serializer = self.serializer_class(wallet, data=data, partial=True)
+
+        if serializer.is_valid():
+            # --- Verify OTP ---
+            totp = pyotp.TOTP(user.otp_secret)
+            if not totp.verify(code):
+                return custom_response(
+                    status="Error",
+                    message="Invalid OTP code!",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # --- Verify wallet via NOWPayments ---
+            pay_address = serializer.validated_data.get('pay_address')
+            pay_currency = serializer.validated_data.get('pay_currency')
+
+            service = NOWPaymentsService()
+            validity = service.verify_wallet_address(pay_address, pay_currency)
+
+            if validity.get('success') is True:
+                serializer.save()
+                return custom_response(
+                    status="success",
+                    message="Details updated successfully.",
+                    data=serializer.data,
+                    http_status=status.HTTP_200_OK
+                )
+
+            error = validity.get("message", "Wallet address is invalid")
+        else:
+            error = next(iter(serializer.errors.values()))[0]
+
+        return custom_response(
+            status="Error",
+            message=str(error),
+            data={},
+            http_status=status.HTTP_400_BAD_REQUEST
+        )
 
 class PropFirmWalletTransactionView(generics.ListAPIView):
+    permission_classes = [ permissions.IsAuthenticated, Is2FAEnabled]
     serializer_class = PropFirmWalletTransactionSerializer
     filterset_class = PropFirmWalletTransactionFilter
     filter_backends = [DjangoFilterBackend]
     pagination_class = LargeResultsSetPagination
 
+    @require_account_owner
+    def get(self, request, login, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
     def get_queryset(self):
         login = self.kwargs.get('login')
         user = self.request.user
@@ -746,6 +815,7 @@ class PropFirmWalletTransactionView(generics.ListAPIView):
 
 
 class WithdrawView(APIView):
+    permission_classes = [ permissions.IsAuthenticated, Is2FAEnabled]
     def post(self, request, *args, **kwargs):
         user = request.user
         payload = request.data
@@ -862,153 +932,184 @@ class WithdrawView(APIView):
                 data={},
                 http_status=status.HTTP_400_BAD_REQUEST
             )
-        
 
-class WalletFundingAPIView(APIView):
-    """Create a new payment"""
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def post(self, request):
-        user=request.user
-        payload = request.data.copy()
-        if payload.get('description', '') == '':
-            payload['description'] = f"Stanum wallet funding"
+class WithdrawAPIView(APIView):
+    permission_classes = [ permissions.IsAuthenticated, Is2FAEnabled]
 
-        wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
-        serializer = PropFirmWalletTransactionCreateSerializer(data=payload)
-        if serializer.is_valid():
-
-            # Create payment record
-            order_id = f"STMWFD-{request.user.id}-{int(time.time())}{random.randint(100, 999)}"
-            transaction = PropFirmWalletTransaction.objects.create(
-                wallet=wallet,
-                order_id=order_id,
-                type='credit',
-                order_description=serializer.validated_data['description'],
-                price_amount=serializer.validated_data['amount'],
-                price_currency=serializer.validated_data['price_currency'],
-                pay_currency=serializer.validated_data['currency']
-            )
-            
-            # Create payment with NOWPayments
-            service = NOWPaymentsService()
-            ipn_url = request.build_absolute_uri('/api/v1/payment/wallet/fund/ipn')
-            
-            result = service.create_payment(
-                price_amount=serializer.validated_data['amount'],
-                price_currency=serializer.validated_data['price_currency'],
-                pay_currency=serializer.validated_data['currency'],
-                order_id=order_id,
-                order_description=serializer.validated_data['description'],
-                ipn_callback_url=ipn_url
-            )
-            
-            if 'error' in result:
-                transaction.delete()  # Clean up failed payment
-                return Response(
-                    {'error': result['error']}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Update payment record with NOWPayments response
-            transaction.payment_id = result['payment_id']
-            transaction.pay_amount = result.get('pay_amount')
-            transaction.pay_address = result.get('pay_address')
-            transaction.save()
-            
-            # Return created payment
-            response_serializer = PropFirmWalletTransactionSerializer(transaction)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        
-        return custom_response(
-            status="error",
-            message = str(next(iter(serializer.errors.values()))[0]),
-            data=serializer.errors,
-            http_status=status.HTTP_403_FORBIDDEN
-        )
-    
-
-
-@method_decorator(csrf_exempt, name="dispatch")
-class WalletFundingIPNAPIView(APIView):
-    """Webhook for NOWPayments IPN"""
-    authentication_classes = []
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        # Always capture raw body for debugging
-        try:
-            payload = json.loads(request.body)
-            print(f"Webhook received:\n{json.dumps(payload, indent=2)}")
-        except json.JSONDecodeError:
-            return Response({'error': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
-
-        payment_id = payload.get("payment_id")
-        payment_status = payload.get("payment_status")
-        pay_amount = payload.get("actually_paid")
-
-        if not payment_id:
-            print(f"Webhook missing payment_id: {payload}")
-            return Response({"error": "Missing payment_id"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            transaction = PropFirmWalletTransaction.objects.get(payment_id=payment_id)
-        except PropFirmWalletTransaction.DoesNotExist:
-            print(f"Transaction not found for payment_id={payment_id}")
-            return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        print(f"Transaction {payment_id} updated with status {payment_status}")
-
-        if payment_status == "finished":
-            self.handle_success(transaction)
-        elif payment_status == "failed":
-            self.handle_payment_failure(transaction)
-        elif payment_status == "expired":
-            self.handle_payment_expired(transaction)
-
-        return Response({"message": "IPN processed"}, status=status.HTTP_200_OK)
-    
-    def handle_success(self, transaction: PropFirmWalletTransaction):
-        wallet = transaction.wallet
-        user = wallet.user
-        wallet.withdrawal_profit += transaction.price_amount
-        wallet.save()
-        transaction.updated_at = timezone.now()
-        transaction.status = "completed"
-        transaction.save()
-        Mailer(user.email).wallet_funding_success(transaction)
-        print(f"Wallet {wallet.id} credited with {transaction.price_amount}")
-    
-    def handle_payment_failure(self, transaction: PropFirmWalletTransaction):
-        wallet = transaction.wallet
-        user = wallet.user
-        transaction.updated_at = timezone.now()
-        transaction.status = "failed"
-        transaction.save()
-        Mailer(user.email).wallet_funding_failed(transaction)
-        print(f"Wallet {wallet.id} funding failed with {transaction.price_amount}")
-    
-    def handle_payment_expired(self, transaction: PropFirmWalletTransaction):
-        wallet = transaction.wallet
-        user = wallet.user
-        transaction.updated_at = timezone.now()
-        transaction.status = "expired"
-        transaction.save()
-        print(f"Wallet {wallet.id} funding expired for {transaction.price_amount}")
-
-class ConfirmTransactionSuccess(APIView):
-    def get(self, request, *args, **kwargs):
-        id = request.query_params.get('id', 0)
-        trx = get_object_or_404(PropFirmWalletTransaction, id=id)
-        if trx.status == 'completed':
+    @require_account_owner
+    def post(self, request, login, *args, **kwargs):   
+        mt5_user = request.mt5_user
+        if not mt5_user.funded:
             return custom_response(
-                status='success',
-                message='completed',
-                data={"status": "completed"}
+                status="error",
+                message="You can only withdraw on a funded account",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN
             )
-        return custom_response(
-            status='error',
-            message=trx.status,
-            data={"status": trx.status},
-            http_status=status.HTTP_400_BAD_REQUEST
+        
+        req, created = WithdrawalRequest.objects.get_or_create(
+            login=login, status="pending"
         )
+        message = (
+            "Request sent to the admin, the admin will check."
+            if created
+            else "You have a pending request which the admin is reviewing."
+        )
+
+        return custom_response(
+            status="success",
+            message=message,
+            data={"request_id": req.id, "status": req.status},
+            http_status=status.HTTP_200_OK
+        )
+
+
+
+# class WalletFundingAPIView(APIView):
+#     """Create a new payment"""
+#     permission_classes = [permissions.IsAuthenticated]
+    
+#     def post(self, request):
+#         user=request.user
+#         payload = request.data.copy()
+#         if payload.get('description', '') == '':
+#             payload['description'] = f"Stanum wallet funding"
+
+#         wallet, _ = PropFirmWallet.objects.get_or_create(user=user)
+#         serializer = PropFirmWalletTransactionCreateSerializer(data=payload)
+#         if serializer.is_valid():
+
+#             # Create payment record
+#             order_id = f"STMWFD-{request.user.id}-{int(time.time())}{random.randint(100, 999)}"
+#             transaction = PropFirmWalletTransaction.objects.create(
+#                 wallet=wallet,
+#                 order_id=order_id,
+#                 type='credit',
+#                 order_description=serializer.validated_data['description'],
+#                 price_amount=serializer.validated_data['amount'],
+#                 price_currency=serializer.validated_data['price_currency'],
+#                 pay_currency=serializer.validated_data['currency']
+#             )
+            
+#             # Create payment with NOWPayments
+#             service = NOWPaymentsService()
+#             ipn_url = request.build_absolute_uri('/api/v1/payment/wallet/fund/ipn')
+            
+#             result = service.create_payment(
+#                 price_amount=serializer.validated_data['amount'],
+#                 price_currency=serializer.validated_data['price_currency'],
+#                 pay_currency=serializer.validated_data['currency'],
+#                 order_id=order_id,
+#                 order_description=serializer.validated_data['description'],
+#                 ipn_callback_url=ipn_url
+#             )
+            
+#             if 'error' in result:
+#                 transaction.delete()  # Clean up failed payment
+#                 return Response(
+#                     {'error': result['error']}, 
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+            
+#             # Update payment record with NOWPayments response
+#             transaction.payment_id = result['payment_id']
+#             transaction.pay_amount = result.get('pay_amount')
+#             transaction.pay_address = result.get('pay_address')
+#             transaction.save()
+            
+#             # Return created payment
+#             response_serializer = PropFirmWalletTransactionSerializer(transaction)
+#             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        
+#         return custom_response(
+#             status="error",
+#             message = str(next(iter(serializer.errors.values()))[0]),
+#             data=serializer.errors,
+#             http_status=status.HTTP_403_FORBIDDEN
+#         )
+    
+
+
+# @method_decorator(csrf_exempt, name="dispatch")
+# class WalletFundingIPNAPIView(APIView):
+#     """Webhook for NOWPayments IPN"""
+#     authentication_classes = []
+#     permission_classes = [permissions.AllowAny]
+
+#     def post(self, request):
+#         # Always capture raw body for debugging
+#         try:
+#             payload = json.loads(request.body)
+#             print(f"Webhook received:\n{json.dumps(payload, indent=2)}")
+#         except json.JSONDecodeError:
+#             return Response({'error': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         payment_id = payload.get("payment_id")
+#         payment_status = payload.get("payment_status")
+#         pay_amount = payload.get("actually_paid")
+
+#         if not payment_id:
+#             print(f"Webhook missing payment_id: {payload}")
+#             return Response({"error": "Missing payment_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             transaction = PropFirmWalletTransaction.objects.get(payment_id=payment_id)
+#         except PropFirmWalletTransaction.DoesNotExist:
+#             print(f"Transaction not found for payment_id={payment_id}")
+#             return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
+
+#         print(f"Transaction {payment_id} updated with status {payment_status}")
+
+#         if payment_status == "finished":
+#             self.handle_success(transaction)
+#         elif payment_status == "failed":
+#             self.handle_payment_failure(transaction)
+#         elif payment_status == "expired":
+#             self.handle_payment_expired(transaction)
+
+#         return Response({"message": "IPN processed"}, status=status.HTTP_200_OK)
+    
+#     def handle_success(self, transaction: PropFirmWalletTransaction):
+#         wallet = transaction.wallet
+#         user = wallet.user
+#         wallet.withdrawal_profit += transaction.price_amount
+#         wallet.save()
+#         transaction.updated_at = timezone.now()
+#         transaction.status = "completed"
+#         transaction.save()
+#         Mailer(user.email).wallet_funding_success(transaction)
+#         print(f"Wallet {wallet.id} credited with {transaction.price_amount}")
+    
+#     def handle_payment_failure(self, transaction: PropFirmWalletTransaction):
+#         wallet = transaction.wallet
+#         user = wallet.user
+#         transaction.updated_at = timezone.now()
+#         transaction.status = "failed"
+#         transaction.save()
+#         Mailer(user.email).wallet_funding_failed(transaction)
+#         print(f"Wallet {wallet.id} funding failed with {transaction.price_amount}")
+    
+#     def handle_payment_expired(self, transaction: PropFirmWalletTransaction):
+#         wallet = transaction.wallet
+#         user = wallet.user
+#         transaction.updated_at = timezone.now()
+#         transaction.status = "expired"
+#         transaction.save()
+#         print(f"Wallet {wallet.id} funding expired for {transaction.price_amount}")
+
+# class ConfirmTransactionSuccess(APIView):
+#     def get(self, request, *args, **kwargs):
+#         id = request.query_params.get('id', 0)
+#         trx = get_object_or_404(PropFirmWalletTransaction, id=id)
+#         if trx.status == 'completed':
+#             return custom_response(
+#                 status='success',
+#                 message='completed',
+#                 data={"status": "completed"}
+#             )
+#         return custom_response(
+#             status='error',
+#             message=trx.status,
+#             data={"status": trx.status},
+#             http_status=status.HTTP_400_BAD_REQUEST
+#         )

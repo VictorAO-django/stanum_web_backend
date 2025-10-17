@@ -22,7 +22,6 @@ class AccountEarnings(models.Model):
     def __str__(self):
         return f"{self.login} - {self.profit} ({'Paid' if self.paid_all else 'Unpaid'})"
 
-    
 
 class MT5User(models.Model):
     ACCOUNT_TYPES = (
@@ -48,7 +47,7 @@ class MT5User(models.Model):
     password = models.CharField(max_length=255, null=True)
     fail_reason = models.TextField(blank=True)
     
-    funded_account_issued = models.BooleanField(default=False)
+    funded = models.BooleanField(default=False)
 
     # Core identifiers
     login = models.BigIntegerField(primary_key=True)  # MT5 account login
@@ -191,6 +190,7 @@ class AccountDrawdown(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        get_latest_by = "created_at"
         unique_together = ("login", "date")  # one record per account per day
 
     def __str__(self):

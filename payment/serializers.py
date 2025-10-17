@@ -72,7 +72,9 @@ class TransactionSerializer(serializers.ModelSerializer):
 class PropFirmWalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropFirmWallet
-        fields = ['id', 'wallet_id', 'withdrawal_profit', 'pending_amount', 'disbursed_amount']
+        fields = ['id', 'wallet_id', 'currency_id', 'pay_network', 'pay_address', 'pay_currency']
+    
+
 
 class PropFirmWalletTransactionCreateSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=20, decimal_places=2, min_value=0.01)

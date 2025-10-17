@@ -334,3 +334,8 @@ def calculate_win_ratio(login=None):
         return 0  # avoid division by zero
 
     return (winning_trades / total_trades) * 100
+
+
+def confirm_account_owner(login, user):
+    user = MT5User.objects.filter(login=login, user=user)
+    return (user.exists(), user.first())
