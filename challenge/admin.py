@@ -3,6 +3,7 @@ from .models import *
 
 class CompetitionAdmin(admin.ModelAdmin):
     readonly_fields=['uuid']
+    list_display=["uuid", "name"]
 
 admin.site.register(ChallengeCertificate)
 admin.site.register(PropFirmChallenge)

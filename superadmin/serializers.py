@@ -66,7 +66,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 class UserWalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropFirmWallet
-        fields = ['id', 'wallet_id', 'withdrawal_profit', 'pending_amount', 'disbursed_amount']
+        fields = ['id', 'wallet_id', 'currency_id', 'pay_network', 'pay_address', 'pay_currency']
 
 
 class UserWalletTransactionSerializer(serializers.ModelSerializer):
@@ -222,9 +222,102 @@ class AdminCompetitionSerializer(serializers.ModelSerializer):
 class CreateCompetitionSerializer(serializers.ModelSerializer):
     class Meta:
         model=Competition
-        fields=["id", "starting_balance", "price_pool_cash", "prize_structure", "start_date", "end_date"]
+        fields=["id", "name", "description", "starting_balance", "price_pool_cash", "prize_structure", "start_date", "end_date"]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation["contest_link"] = f"{settings.FRONTEND_BASE_URL}/contest/{instance.uuid}"
+        return representation
+    
+
+class CompetitionStatSerializer(serializers.ModelSerializer):
+    return_percent = serializers.SerializerMethodField()
+    score = serializers.SerializerMethodField()
+    trader_name = serializers.SerializerMethodField()
+    rank=serializers.SerializerMethodField()
+    profit=serializers.SerializerMethodField()
+    losing_trade=serializers.SerializerMethodField()
+    winning_trade=serializers.SerializerMethodField()
+    win_rate=serializers.SerializerMethodField()
+
+    class Meta:
+        model=MT5User
+        fields = ["login", "return_percent", "score", "profit", "trader_name", "rank", "win_rate", "losing_trade", "winning_trade"]
+    
+    def get_return_percent(self, obj):
+        0
+
+    def get_profit(self, obj):
+        return 0
+    
+    def get_score(self, obj):
+        return 0
+    
+    def get_trader_name(self, obj):
+        full_name = (obj.user.full_name or '').strip()
+        return full_name if full_name else f"Trader {obj.login}"
+    
+    def get_rank(self, obj):
+        return 0
+    
+    def get_profit(self, obj):
+        return 0
+    
+    def get_losing_trade(self, obj):
+        return 0
+
+    def get_winning_trade(self, obj):
+        return 0
+    
+    def get_win_rate(self, obj):
+        return 0
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        competition: Competition = instance.competition
+        starting_balance = competition.starting_balance or Decimal("0")
+
+        account = MT5Account.objects.filter(login=instance.login).first()
+        if not account:
+            # Return zeroed stats if account not found
+            representation.update({
+                "profit": Decimal("0"),
+                "return_percent": Decimal("0"),
+                "score": 0,
+                "winning_trade": 0,
+                "losing_trade": 0,
+                "win_rate": Decimal("0"),
+            })
+            return representation
+
+        # Compute profit and return %
+        profit = account.balance - starting_balance
+        return_percent = (profit / starting_balance * 100) if starting_balance > 0 else Decimal("0")
+
+        # Compute trades
+        positions = MT5Position.objects.filter(login=instance.login)
+        winning = positions.filter(closed=True, profit__gt=0)
+        losing = positions.filter(closed=True, profit__lte=0)
+
+        win_rate = (
+            (winning.count() / positions.count()) * 100
+            if positions.exists()
+            else Decimal("0")
+        )
+
+        # Compute drawdown score
+        td, _ = AccountTotalDrawdown.objects.get_or_create(login=instance.login)
+        score = float(return_percent) / (float(td.drawdown_percent) + 0.01)
+
+        # Attach all to representation
+        representation.update({
+            "profit": profit,
+            "return_percent": return_percent,
+            "score": score,
+            "winning_trade": winning.count(),
+            "losing_trade": losing.count(),
+            "win_rate": win_rate,
+        })
+
         return representation

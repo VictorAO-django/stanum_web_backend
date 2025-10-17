@@ -624,9 +624,31 @@ class EndCompetitionView(APIView):
 
 
 class CompetitionCreateView(generics.CreateAPIView):
-    authentication_classes=[]
-    permission_classes=[permissions.AllowAny]
-    # permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAdminUser]
     serializer_class=CreateCompetitionSerializer
     queryset=Competition.objects.all()
 
+
+class CompetitionStatsAPIView(generics.ListAPIView):
+    permission_classes=[permissions.IsAdminUser]
+    serializer_class=CompetitionStatSerializer
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs).data
+        # Sort by profit descending
+        ranked_res = sorted(response, key=lambda t: t["profit"], reverse=True)
+        # Assign rank
+        for idx, trader in enumerate(ranked_res, start=1):
+            trader["rank"] = idx
+
+        ctx_data = AdminCompetitionSerializer(self.competition).data
+        return Response({
+            **ctx_data,
+            "results": ranked_res
+        })
+
+    def get_queryset(self):
+        uuid=self.kwargs.get("uuid")
+        self.competition = Competition.objects.get(uuid=uuid)
+        return MT5User.objects.filter(competition=self.competition)
+    
