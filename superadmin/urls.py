@@ -52,7 +52,7 @@ urlpatterns = [
     path("dashboard", AdminDashboardView.as_view()),
 
     path("competitions", CompetitionListAPIView.as_view()),
-    path("competition/<uuid:uuid>/end", EndCompetitionView.as_view()),
+    path("competition/<int:id>/end", EndCompetitionView.as_view()),
     path("competition/create", CompetitionCreateView.as_view()),
-    path("competition/<uuid:uuid>", CompetitionStatsAPIView.as_view()),
+    path("competition/<int:id>", CompetitionStatsAPIView.as_view()),
 ]

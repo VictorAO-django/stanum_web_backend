@@ -588,9 +588,7 @@ class AdminDashboardView(APIView):
 
 
 class CompetitionListAPIView(generics.ListAPIView):
-    authentication_classes=[]
-    permission_classes=[permissions.AllowAny]
-    # permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAdminUser]
     queryset=Competition.objects.all().order_by("-id")
     serializer_class=AdminCompetitionSerializer
     filterset_class = CompetitionFilter
@@ -615,8 +613,8 @@ class CompetitionListAPIView(generics.ListAPIView):
 
 class EndCompetitionView(APIView):
     permission_classes = [permissions.IsAdminUser]
-    def post(self, request, uuid, *args, **kwargs):
-        competition = get_object_or_404(Competition, uuid=uuid, ended=False)
+    def post(self, request, id, *args, **kwargs):
+        competition = get_object_or_404(Competition, id=id, ended=False)
         # bridge = BridgeApi() 
         # bridge.post(f'end-competiton/{competition.uuid}', {})
 
@@ -630,7 +628,9 @@ class CompetitionCreateView(generics.CreateAPIView):
 
 
 class CompetitionStatsAPIView(generics.ListAPIView):
-    permission_classes=[permissions.IsAdminUser]
+    authentication_classes=[]
+    permission_classes=[permissions.AllowAny]
+    # permission_classes=[permissions.IsAdminUser]
     serializer_class=CompetitionStatSerializer
 
     def get(self, request, *args, **kwargs):
@@ -648,7 +648,7 @@ class CompetitionStatsAPIView(generics.ListAPIView):
         })
 
     def get_queryset(self):
-        uuid=self.kwargs.get("uuid")
-        self.competition = Competition.objects.get(uuid=uuid)
+        id=self.kwargs.get("id")
+        self.competition = Competition.objects.get(id=id)
         return MT5User.objects.filter(competition=self.competition)
     

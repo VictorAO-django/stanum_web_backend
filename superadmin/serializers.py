@@ -206,7 +206,7 @@ class AdminCompetitionSerializer(serializers.ModelSerializer):
     contest_link = serializers.SerializerMethodField()
     class Meta:
         model=Competition
-        fields=["id", "contestants", "starting_balance", "price_pool_cash", "start_date", "end_date", "prize_structure", "contest_link", "is_active"]
+        fields=["id", "name", "description", "contestants", "starting_balance", "price_pool_cash", "start_date", "end_date", "prize_structure", "contest_link", "is_active"]
 
     def get_is_active(self, obj):
         return obj.ended
