@@ -114,6 +114,7 @@ class User(AbstractUser):
 
     lock_count = models.PositiveIntegerField(default=0)
     lock_duration = models.DateTimeField(blank=True, null=True)
+    last_email_change = models.DateTimeField(null=True, blank=True)
     
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

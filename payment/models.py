@@ -147,6 +147,8 @@ class PropFirmWalletTransaction(models.Model):
         return f"{self.transaction_id} - {self.status} - {self.price_amount}"
     
 
+def generate_withdrawal_id():
+    return f"WD-{uuid.uuid4().hex[:8].upper()}"
 class WithdrawalRequest(models.Model):
     STATUS=(
         ("pending", "Pending"),
@@ -154,8 +156,18 @@ class WithdrawalRequest(models.Model):
         ("rejected", "Rejected"),
     )
     login=models.BigIntegerField()
+    withdrawal_id = models.CharField(max_length=20, unique=True, default=generate_withdrawal_id, editable=False)
     status=models.CharField(choices=STATUS, default="pending")
     rejected_reasons=models.TextField(blank=True, null=True)
+    disbursed_amount=models.DecimalField(decimal_places=2, max_digits=12, blank=True, null=True)
+    currency_id=models.CharField(max_length=50, blank=True, null=True)
+    pay_currency = models.CharField(max_length=10, help_text="e.g. USDT, BTC, ETH", null=True, blank=True)
+    pay_network = models.CharField(max_length=10, null=True, blank=True)
+    pay_address = models.CharField(max_length=255, null=True, blank=True)
+
     created_at=models.DateTimeField(auto_now_add=True)
     approved_at=models.DateTimeField(null=True, blank=True)
     rejected_at=models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.login} - {self.withdrawal_id} - {self.created_at} - {self.status}"

@@ -1,6 +1,6 @@
 import json, io, base64, qrcode, pyotp
 from decimal import Decimal
-from django.utils.decorators import method_decorator
+from django.core.validators import validate_email
 from django.http import Http404
 from django.utils.http import urlencode
 from django.db.models import Sum, Avg, Count, Max, Min
@@ -9,14 +9,10 @@ from django.utils.dateparse import parse_datetime
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.reverse import reverse
 from django.shortcuts import get_object_or_404, render, redirect
-from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.utils.decorators import method_decorator
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
-from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
-from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import generics
@@ -698,7 +694,6 @@ class PasswordResetView(APIView):
                 user.set_password(new_password)
                 user.save()
 
-                # refresh = CustomRefreshToken(user_id=user.id, email=user.email, user_type='buyer')
                 token, created = CustomAuthToken.objects.get_or_create(
                     user_type=ContentType.objects.get_for_model(user),
                     user_id=user.id,
@@ -874,6 +869,92 @@ class CloseAccountView(APIView):
             data={},
         )
     
+
+class ChangeEmailView(APIView):
+    def post(self, request):
+        user = request.user
+        data = request.data
+        otp = data.get('otp')
+        new_email = data.get('new_email').lower()
+        now = timezone.now()
+
+        #Restrict change frequency
+        if user.last_email_change and now - user.last_email_change < timedelta(days=30):
+            return custom_response(
+                status="error",
+                message="You can only change your email once every 30 days.",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        #Validate email format (simple example)
+        try:
+            validate_email(new_email)
+        except ValidationError:
+            return custom_response(
+                status="error",
+                message="Please provide a valid email address.",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if the new email already exists
+        if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+            return custom_response(
+                status="error",
+                message="This email is already associated with another account.",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+        #OTP verification
+        if otp:
+            if len(otp) != 6:
+                return custom_response(
+                    status="error",
+                    message="Invalid OTP length.",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not verify_otp(user, 'email change', otp):
+                return custom_response(
+                    status="error",
+                    message="Invalid or expired OTP.",
+                    data={},
+                    http_status=status.HTTP_403_FORBIDDEN
+                )
+
+            #OTP valid: update email
+            user.email = new_email
+            user.last_email_change = now
+            user.save()
+
+            token, created = CustomAuthToken.objects.get_or_create(
+                user_type=ContentType.objects.get_for_model(user),
+                user_id=user.id,
+            )
+            if not created:
+                token.refresh()
+
+            return custom_response(
+                status="success",
+                message="Email updated successfully.",
+                data={"step": 2},
+                http_status=status.HTTP_200_OK
+            )
+
+        #If no OTP: send new one
+        otp_instance = UserOtp(user.email, 'email change')
+        otp_instance.generate_otp()
+        otp_instance.send_otp(user)
+
+        return custom_response(
+            status="success",
+            message="Verification OTP sent to your current email.",
+            data={"step": 1},
+            http_status=status.HTTP_200_OK
+        )
 
 
 class UserDataView(generics.RetrieveUpdateAPIView):

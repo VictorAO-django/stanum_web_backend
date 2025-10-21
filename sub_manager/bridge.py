@@ -75,7 +75,7 @@ class MetaTraderBridge:
         # if not self.manager.UserAccountSubscribe(AccountSink(self)):
         #     logger.debug(f"AccountSubscribe failed: {MT5Manager.LastError()}")
         
-        if not self.manager.TickSubscribe(TickSink(self)):
+        if not self.manager.TickSubscribe(TickSink(self, 5)):
             logger.debug(f"TickSubscribe failed: {MT5Manager.LastError()}")
 
         logger.info("All sinks subscribed successfully")

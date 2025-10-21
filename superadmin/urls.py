@@ -42,7 +42,6 @@ urlpatterns = [
 
     path('payouts', PayoutsView.as_view()),
     path('payouts/<str:id>/accept', ApprovePayoutView.as_view()),
-    path('payouts/<str:id>/ipn', ApprovePayoutView.as_view()),
     path('payouts/<str:id>/reject', RejectPayoutView.as_view()),
     
     path('ticket', TicketListCreateAPIView.as_view()),

@@ -276,3 +276,30 @@ class UpdateAccountbalance(APIView):
             p.flush()
 
         return Response({"status": "Processed"}, status=status.HTTP_200_OK)
+    
+
+class ReturnAccountbalance(APIView):
+    authentication_classes=[]
+    permission_classes=[AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        secret = request.headers.get("X-BRIDGE-SECRET")
+        if settings.BRIDGE_SECRET != secret:
+            return custom_response(
+                status="error",
+                message="Invalid secret",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        data = request.data
+        login = data.get("login", None)
+        amount = data.get("initial_balance", None)
+        if login and amount:
+            p.produce(
+                "return_balance", 
+                json.dumps({"login": login, "initial_balance":amount}, cls=EnhancedJSONEncoder).encode("utf-8")
+            )
+            p.flush()
+
+        return Response({"status": "Processed"}, status=status.HTTP_200_OK)

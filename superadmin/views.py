@@ -328,9 +328,9 @@ class DeleteUserView(APIView):
     
 class PayoutsView(generics.ListAPIView):
     permission_classes=[permissions.IsAdminUser]
-    serializer_class=UserWalletTransactionSerializer
-    queryset=PropFirmWalletTransaction.objects.filter(type='debit').exclude(pay_address="").order_by('-id')
-    filterset_class = PropFirmWalletTransactionFilter
+    serializer_class=AdminWithdrawalRequestSerializer
+    queryset=WithdrawalRequest.objects.all()
+    filterset_class = WithdrawalRequestFilter
     filter_backends = [DjangoFilterBackend]
     pagination_class = LargeResultsSetPagination
 
@@ -339,38 +339,37 @@ class ApprovePayoutView(APIView):
     permission_classes=[permissions.IsAdminUser]
 
     def post(self, request, id, *args, **kwargs):
-        service = NOWPaymentsService()
+        data = request.data
+        amount = data.get("amount", None)
         try:
             with transaction.atomic():
-                trx = PropFirmWalletTransaction.objects.select_for_update().get(id=id)
+                req = WithdrawalRequest.objects.get(id=id)
+                assert req.status == 'pending', "Payout already processed"
+                assert amount is not None, "Please provide the amount you want to disburse after reviewing account."
 
-                assert trx.type == 'debit', "Only a debit transaction can be approved"
-                assert trx.status == 'pending', "Payout already processed"
-                withdrawals = [{
-                    'address': trx.pay_address,
-                    'currency': trx.pay_currency,
-                    'amount': float(trx.price_amount),
-                    'ipn_callback_url':  request.build_absolute_uri(f'/api/v1/admin/payouts/{trx.id}/ipn')
-                }]
-                # result = service.create_payout(
-                #     withdrawals,
-                #     '',
-                #     f'Withdrawal ${trx.transaction_id} for user {trx.wallet.user.email} approved by {request.user.email}'
-                # )
-                # print(result)
+                try:
+                    amount = float(amount)
+                except (TypeError, ValueError):
+                    raise AssertionError("Amount provided is not a valid number.")
                 
-                # Now mark it approved
-                # trx.payment_id = 
-                trx.status = 'approved'
-                trx.save()
+                req.status = 'approved'
+                req.disbursed_amount = amount
+                req.approved_at = timezone.now()
+                req.save()
 
+                mt5_user = MT5User.objects.get(login=req.login)
+                starting_balance = mt5_user.challenge.account_size
+                
+                bridge = BridgeApi() 
+                bridge.return_balance(req.login, starting_balance)
+                
             return custom_response(
                 status="success",
                 message="Transaction Processed.",
                 data={}
             )
 
-        except PropFirmWalletTransaction.DoesNotExist:
+        except WithdrawalRequest.DoesNotExist:
             return custom_response(
                 status="error",
                 message="Transaction not found",
@@ -390,16 +389,18 @@ class RejectPayoutView(APIView):
     permission_classes=[permissions.IsAdminUser]
 
     def post(self, request, id, *args, **kwargs):
+        data = request.data
+        rejected_reason = data.get("reason", None)
         try:
             with transaction.atomic():
-                trx = PropFirmWalletTransaction.objects.select_for_update().get(id=id)
-
-                assert trx.type == 'debit', "Only a debit transaction can be approved"
-                assert trx.status == 'pending', "Payout already processed"
-
-                # Now mark it approved
-                trx.status = 'rejected'
-                trx.save()
+                req = WithdrawalRequest.objects.get(id=id)
+                assert req.status == 'pending', "Payout already processed"
+                assert rejected_reason != None, "Provide reason for rejection"
+                # Now mark it rejected
+                req.status = 'rejected'
+                req.rejected_reasons = rejected_reason
+                req.rejected_at = timezone.now()
+                req.save()
 
             return custom_response(
                 status="success",
@@ -616,7 +617,7 @@ class EndCompetitionView(APIView):
     def post(self, request, id, *args, **kwargs):
         competition = get_object_or_404(Competition, id=id, ended=False)
         # bridge = BridgeApi() 
-        # bridge.post(f'end-competiton/{competition.uuid}', {})
+        # bridge.end_competition(competition.uuid)
 
         return Response({"message": "processed"}, status=status.HTTP_200_OK)
 

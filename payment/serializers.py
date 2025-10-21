@@ -96,3 +96,9 @@ class PropFirmWalletTransactionSerializer(serializers.ModelSerializer):
         if obj.pay_address:
             return f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={obj.pay_address}"
         return None
+    
+
+class WithdrawalRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=WithdrawalRequest
+        fields = "__all__"

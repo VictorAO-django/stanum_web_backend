@@ -814,6 +814,22 @@ class PropFirmWalletTransactionView(generics.ListAPIView):
         return queryset
 
 
+class WithdrawalRequestHistory(generics.ListAPIView):
+    permission_classes = [ permissions.IsAuthenticated, Is2FAEnabled]
+    serializer_class = WithdrawalRequestSerializer
+    filterset_class = WithdrawalRequestFilter
+    filter_backends = [DjangoFilterBackend]
+    pagination_class = LargeResultsSetPagination
+
+    @require_account_owner
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        login = self.kwargs.get("login")
+        queryset = WithdrawalRequest.objects.filter(login=login).order_by("-created_at")
+        return queryset
+
 class WithdrawView(APIView):
     permission_classes = [ permissions.IsAuthenticated, Is2FAEnabled]
     def post(self, request, *args, **kwargs):
@@ -950,18 +966,22 @@ class WithdrawAPIView(APIView):
         req, created = WithdrawalRequest.objects.get_or_create(
             login=login, status="pending"
         )
-        message = (
-            "Request sent to the admin, the admin will check."
-            if created
-            else "You have a pending request which the admin is reviewing."
-        )
+        if created:
+            data = WithdrawalRequestSerializer(req).data
+            return custom_response(
+                status="success",
+                message="Request sent to the admin, the admin will check.",
+                data=data,
+                http_status=status.HTTP_200_OK
+            )
+        else:
+            return custom_response(
+                status="error",
+                message="You have a pending request which the admin is reviewing.",
+                data=data,
+                http_status=status.HTTP_403_FORBIDDEN
+            )
 
-        return custom_response(
-            status="success",
-            message=message,
-            data={"request_id": req.id, "status": req.status},
-            http_status=status.HTTP_200_OK
-        )
 
 
 

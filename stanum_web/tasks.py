@@ -13,6 +13,7 @@ from django.conf import settings
 from sub_manager.InMemoryData import *
 from utils.helper import encrypt_password
 from sub_manager.producer import *
+from sub_manager.transformer import EnhancedJSONEncoder
 
 def to_int(value, default=0):
     try:
@@ -607,7 +608,7 @@ def check_min_and_max_trading_days():
     users = (
         MT5User.objects
         .exclude(challenge=None)
-        .filter(account_status='active')
+        .filter(funded=False, account_status='active')
     )
 
     for user in users:
@@ -637,7 +638,14 @@ def check_min_and_max_trading_days():
                         mt5_account.failure_reason = violation
                         mt5_account.save()
 
-                    send_challenge_failed_mail_task.delay(user.login, challenge.id, violation)
+                    data = {
+                        "login": user.login,
+                        "broken_rules": violation
+                    }
+                    p.produce(
+                        "accounts.fail", 
+                        json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+                    )
                 continue
 
             # 🔸 WEEKLY MINIMUM TRADING DAYS CHECK (only run on Sundays)
@@ -668,8 +676,17 @@ def check_min_and_max_trading_days():
                             mt5_account.active = False
                             mt5_account.failure_reason = violation
                             mt5_account.save()
-                        send_challenge_failed_mail_task.delay(user.login, challenge.id, violation)
+
+                        data = {
+                            "login": user.login,
+                            "broken_rules": violation
+                        }
+                        p.produce(
+                            "accounts.fail", 
+                            json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+                        )
         except Exception:
+            p.flush()
             traceback.print_exc()
 
 

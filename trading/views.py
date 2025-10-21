@@ -94,7 +94,6 @@ class AccountEarningsView(generics.RetrieveAPIView):
         login = self.kwargs.get('login', None)
         user=self.request.user
         get_object_or_404(MT5User, user=user, login=login)
-        print("LOGIN", login)
         if login and login.isdigit():
             return AccountEarnings.objects.get(login=login)
         return None
@@ -155,19 +154,26 @@ class TopTradersView(APIView):
         # Build results with ROI
         results = []
         for trader in monthly_profits:
-            acc = account_map.get(trader["login"])
-            if not acc:
-                continue
-            starting_balance = acc.mt5_user.challenge.account_size
-            profit = float(trader["total_profit"] or 0)
+            try:
+                acc = account_map.get(trader["login"])
+                if not acc:
+                    continue
+                starting_balance = (
+                    acc.mt5_user.challenge.account_size
+                    if acc.mt5_user.challenge
+                    else acc.mt5_user.competition.starting_balance
+                )
+                profit = float(trader["total_profit"] or 0)
 
-            roi = (Decimal(profit) / starting_balance * Decimal(100)) if starting_balance > 0 else 0
+                roi = (Decimal(profit) / starting_balance * Decimal(100)) if starting_balance > 0 else 0
 
-            results.append({
-                "login": trader["login"],
-                "name": acc.mt5_user.user.full_name,
-                "roi": round(roi, 2),
-            })
+                results.append({
+                    "login": trader["login"],
+                    "name": acc.mt5_user.user.full_name,
+                    "roi": round(roi, 2),
+                })
+            except Exception as err:
+                pass
 
         # Sort by ROI descending and limit top 10
         results = sorted(results, key=lambda x: x["roi"], reverse=True)[:10]

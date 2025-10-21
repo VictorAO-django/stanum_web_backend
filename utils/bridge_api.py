@@ -1,4 +1,5 @@
 import requests
+from typing import Literal
 from django.conf import settings
 import logging
 
@@ -25,3 +26,50 @@ class BridgeApi:
         except requests.exceptions.RequestException as e:
             logger.error(f"[BridgeApi] Request failed: {e}")
         return None
+    
+    def end_competition(self, uuid: str):
+        """
+        End a competition by its unique identifier.
+
+        Args:
+            uuid (str): The UUID of the competition to end.
+
+        Returns:
+            dict: The API response or an error message if something fails.
+        """
+        if not uuid:
+            raise ValueError("Competition UUID is required.")
+        endpoint = f"end-competition/{uuid}"
+        try:
+            response = self.post(endpoint, {})
+            return response
+        except Exception as e:
+            raise RuntimeError(f"Failed to end competition {uuid}: {e}")
+
+
+    def update_balance(self, login, amount, operation:Literal["add", "subtract"] = "add"):
+        try:
+            amount = float(amount)
+            if operation == "subtract":
+                amount = -amount
+            payload = {
+                "login": login,
+                "amount": amount,
+            }
+            response = self.post("update_balance", payload)
+            return response
+
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Invalid amount value: {amount!r}. Error: {e}")
+        
+    def return_balance(self, login, initial_balance):
+        try:
+            payload = {
+                "login": login,
+                "initial_balance": float(initial_balance),
+            }
+            response = self.post("return_balance", payload)
+            return response
+
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Invalid initial value: {initial_balance!r}. Error: {e}")

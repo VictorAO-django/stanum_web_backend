@@ -19,15 +19,10 @@ class InMemoryRuleChecker:
             return violations
         
         try:
-            #Check if the challenge is not funded phase
-            if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
-                violations.extend(self._check_max_days(account, challenge))
             if account.step != 2:
                 violations.extend(self._check_daily_drawdown(account, challenge, daily_drawdown))
             # print("checking")
             violations.extend(self._check_total_drawdown(account, challenge, total_drawdown))
-            # print("checking2")
-            # print("Done Checking Violations", account.login, violations)
             return violations
         except Exception as err:
             print("Error", str(err))
@@ -131,63 +126,6 @@ class InMemoryRuleChecker:
 
         return violations
     
-    
-    def _check_min_days(self, account: AccountData, challenge: PropFirmChallengeData) -> list[str]:
-        """Check if minimum trading days have been met."""
-
-        min_days = challenge.min_trading_days or 0
-        account_created_at = account.created_at.date()
-        today = now().date()
-        days_elapsed = (today - account_created_at).days
-
-        return days_elapsed > min_days
-    
-    def _check_challenge_period(self, account: AccountData, challenge: PropFirmChallengeData):
-        """Check if challenge period has exceeded allocated days."""
-        violations = []
-
-        # Allowed duration
-        max_days = challenge.max_trading_days
-        additional_days = challenge.additional_trading_days or 0
-        total_allowed_days = max_days + additional_days
-        # print("CHALLENGE PERIOD", max_days)
-        # When the account started
-        account_created_at = account.created_at.date()
-        today = now().date()
-
-        # Days passed since creation
-        days_elapsed = (today - account_created_at).days
-
-        # Checks
-        if days_elapsed > total_allowed_days:
-            violations.append(
-                f"MAX_DAYS_EXCEEDED: {days_elapsed} > allowed {total_allowed_days}"
-            )
-        elif days_elapsed < challenge.min_trading_days:
-            violations.append(
-                f"MIN_DAYS_NOT_REACHED: {days_elapsed}/{challenge.min_trading_days}"
-            )
-        # print("DONE CHECKING PERIOD")
-        return violations
-
-    def _check_max_days(self, account: AccountData, challenge: PropFirmChallengeData) -> list[ViolationDict]:
-        """Check if account has exceeded max trading days (including extensions)."""
-        violations:List[ViolationDict] = []
-
-        max_days = challenge.max_trading_days or 0
-        additional_days = challenge.additional_trading_days or 0
-        total_allowed_days = max_days + additional_days
-
-        account_created_at = account.created_at.date()
-        today = now().date()
-        days_elapsed = (today - account_created_at).days
-
-        if days_elapsed > total_allowed_days:
-            violations.append(
-                {"type": "MAX_DAYS_EXCEEDED", "message": f"{days_elapsed} > allowed {total_allowed_days}"}
-            )
-
-        return violations
 
     def _check_daily_drawdown(self, account: AccountData, challenge: PropFirmChallengeData, dd: DailyDrawdownData) -> list[ViolationDict]:
         """Check drawdown limits using tracked high-watermark equity."""
@@ -225,7 +163,7 @@ class InMemoryRuleChecker:
             if account.step == 1
             else float(challenge.additional_phase_total_loss_percent)
         )
-
+        
         if current_dd_percent > max_dd:
             violations.append(
                 {
@@ -249,7 +187,3 @@ class InMemoryRuleChecker:
         logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
         # Check if profit target is reached
         return current_profit >= target_profit_amount
-    
-
-    
-    

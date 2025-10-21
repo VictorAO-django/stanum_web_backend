@@ -321,3 +321,9 @@ class CompetitionStatSerializer(serializers.ModelSerializer):
         })
 
         return representation
+    
+
+class AdminWithdrawalRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=WithdrawalRequest
+        fields = "__all__"

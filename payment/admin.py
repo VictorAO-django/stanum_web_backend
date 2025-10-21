@@ -6,4 +6,5 @@ admin.site.register(Transaction)
 
 admin.site.register(PropFirmWallet)
 admin.site.register(PropFirmWalletTransaction)
+admin.site.register(WithdrawalRequest)
 # Register your models here.

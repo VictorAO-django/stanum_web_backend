@@ -10,4 +10,5 @@ urlpatterns = [
     path('dispatch-competition/<uuid:uuid>', DispatchAccountCompetition.as_view()),
     path('end-competiton/<uuid:uuid>', EndCompetitionView.as_view()),
     path("update_balance", UpdateAccountbalance.as_view()),
+    path("return_balance", ReturnAccountbalance.as_view()),
 ]

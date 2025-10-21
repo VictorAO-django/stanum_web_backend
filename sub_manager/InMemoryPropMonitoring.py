@@ -2,7 +2,7 @@ import MT5Manager, time, traceback, json
 from datetime import date
 from datetime import time as dtime
 from django.utils.timezone import now
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Set
 from stanum_web.tasks import *
 from asgiref.sync import async_to_sync
 from sub_manager.InMemoryData import *
@@ -41,7 +41,22 @@ class InMemoryPropMonitoring:
         self.total_drawdown: Dict[int, AccountTotalDrawdownData] = {}
         self.account_watermarks: Dict[int, AccountWatermarksData] = {}
 
-        self.violation_counts: Dict[int, Dict[str, int]] = {} 
+        # --- Trackers ---
+        # login -> set of active account rule types (for drawdowns etc.)
+        self.active_account_violations: Dict[int, Set[str]] = {}
+        # login -> set of active trade rule types (GRID, HFT, MARTINGALE)
+        self.active_trade_violations: Dict[int, Set[str]] = {}
+        # login -> {rule_type: last_trigger_timestamp}
+        self.last_trade_violation_time: Dict[int, Dict[str, float]] = {}
+        # login -> {rule_type: count}
+        self.violation_counts: Dict[int, Dict[str, int]] = {}
+        
+        # --- Configurable thresholds ---
+        self.trade_violation_cooldown = 60        # seconds between repeated same alerts
+        self.account_violation_resolution_delay = 10  # seconds before marking cleared
+
+        self.trade_violation_cooldown=900 #15 minute
+        self.account_violation_cooldown=3600 #1 hour
 
         self.count = 0
         self.last_update_time = {}
@@ -53,7 +68,6 @@ class InMemoryPropMonitoring:
     def remove_account(self, login):
         self.cleanup_completed_account(login)
         logger.info(f"Account Removed {login}")
-
     
     def update_account(self, acc: AccountData):
         try:
@@ -141,7 +155,6 @@ class InMemoryPropMonitoring:
     #############################################################################################################
     ## DEALS
     #############################################################################################################
-    
     def add_deal(self, deal:DealData):
         try:
             self.deals.setdefault(deal.login, []).append(deal)
@@ -156,7 +169,6 @@ class InMemoryPropMonitoring:
 
                 #Handle the Trade Violations
                 self._handle_trade_violations(deal.login, deal.symbol, violations)
-
         except Exception as err:
             logger.debug(f"Error while updating deal {str(err)}")
 
@@ -191,30 +203,99 @@ class InMemoryPropMonitoring:
         self.deals[login] = []
         logger.info(f"Deals cleared for {login}")
 
-    def _handle_trade_violations(self, login, symbol, violations:List[ViolationDict]):
-        if violations:
-            compiled_violations:List[Tuple[ViolationDict, Literal['warning', 'severe', 'critical']]] = []
-            for violation in violations:
-                violation_type =violation['type']
-                if login not in self.violation_counts:
-                    self.violation_counts[login] = {}
-                if violation_type not in self.violation_counts[login]:
-                    self.violation_counts[login][violation_type] = 0
-                    
-                # Increment count
-                self.violation_counts[login][violation_type] += 1
-                count = self.violation_counts[login][violation_type]
-                severity:Literal['warning', 'severe', 'critical'] = 'warning'
-                if count == 1:
-                    severity = 'warning'
-                elif count == 2:
-                    severity = 'severe'  
-                elif count >= 3:
-                    severity = 'critical'
+    def _handle_trade_violations(self, login: int, symbol: str, violations: List[ViolationDict]):
+        """Handle trade-based violations (GRID, MARTINGALE, HFT) with cooldown and escalation."""
+        try:
+            now = time.time()
+            cooldown = self.trade_violation_cooldown  # 5 minutes
 
-                compiled_violations.append((violation, severity))
-            #Send email notification about the violation
-            trade_rule_violation_alert.delay(login, compiled_violations, symbol,)
+            # Ensure data structures exist for this account
+            self.active_trade_violations.setdefault(login, set())
+            self.last_trade_violation_time.setdefault(login, {})
+            self.violation_counts.setdefault(login, {})
+
+            compiled_violations: List[Tuple[ViolationDict, Literal['warning', 'severe', 'critical']]] = []
+
+            for violation in violations:
+                vtype = violation["type"]
+        
+                # Get last trigger timestamp
+                last_trigger = self.last_trade_violation_time[login].get(vtype, 0)
+                elapsed = now - last_trigger
+
+                # Only trigger if violation is new or cooldown expired
+                if vtype not in self.active_trade_violations[login] or elapsed >= cooldown:
+                    self.active_trade_violations[login].add(vtype)
+                    self.last_trade_violation_time[login][vtype] = now
+
+                    # Escalation logic
+                    count = self.violation_counts[login].get(vtype, 0) + 1
+                    self.violation_counts[login][vtype] = count
+
+                    severity: Literal['warning', 'severe', 'critical'] = (
+                        'warning' if count == 1 else 'severe' if count == 2 else 'critical'
+                    )
+
+                    compiled_violations.append((violation, severity))
+
+            # Send notifications if new violations compiled
+            if compiled_violations:
+                trade_rule_violation_alert.delay(login, compiled_violations, symbol)
+                logger.info(f"[TRADE VIOLATION] {login}: {compiled_violations}")
+
+        except Exception as e:
+            logger.error(f"Error handling trade violations for {login}: {e}")
+
+
+    def _handle_account_rules_violation(self, login: int, violations: List[ViolationDict]):
+        """Handle ongoing account rule violations (drawdown, etc.) without spamming notifications."""
+        try:
+            now = time.time()
+            cooldown = self.account_violation_cooldown  # 1 hour – minimum gap before resending same violation
+            compiled_violations: List[Tuple[ViolationDict, Literal['warning', 'severe', 'critical']]] = []
+
+            # Ensure per-account structures exist
+            self.active_account_violations.setdefault(login, set())
+            self.last_trade_violation_time.setdefault(login, {})
+            self.violation_counts.setdefault(login, {})
+
+            # Get violation types currently active
+            current_types = {v["type"] for v in violations}
+            previously_active = self.active_account_violations[login]
+
+            # Handle new or re-triggered violations
+            for violation in violations:
+                vtype = violation["type"]
+                last_trigger = self.last_trade_violation_time[login].get(vtype, 0)
+                elapsed = now - last_trigger
+
+                if vtype not in previously_active or elapsed >= cooldown:
+                    self.active_account_violations[login].add(vtype)
+                    self.last_trade_violation_time[login][vtype] = now
+
+                    # Severity can be fixed or escalate with repeated breaches
+                    count = self.violation_counts[login].get(vtype, 0) + 1
+                    self.violation_counts[login][vtype] = count
+
+                    severity: Literal['warning', 'severe', 'critical'] = (
+                        'warning' if count == 1 else 'severe' if count == 2 else 'critical'
+                    )
+
+                    compiled_violations.append((violation, severity))
+
+            # Handle cleared conditions (rule no longer violated)
+            cleared = previously_active - current_types
+            if cleared:
+                for vtype in cleared:
+                    self.active_account_violations[login].remove(vtype)
+
+            # Send notification only for new/retiggered violations
+            if compiled_violations:
+                account_rule_violation_log.delay(login, compiled_violations)
+                logger.info(f"[ACCOUNT VIOLATION] {login}: {compiled_violations}")
+
+        except Exception as e:
+            logger.error(f"Error handling account violations for {login}: {e}")
 
 
     def cleanup_completed_account(self, login: int):
@@ -231,25 +312,19 @@ class InMemoryPropMonitoring:
     def _move_to_step_2(self, login, challenge:PropFirmChallengeData):
         try:
             print("Moving account to step 2")
-            # 1. First reset account on MT5 (close positions and reset account_size)
-            p.produce(
-                "return_balance", 
-                json.dumps({"login":login, "balance":float(challenge.account_size)}, cls=EnhancedJSONEncoder).encode("utf-8")
-            )
-            p.flush()
-            # 2. Then clear from memory
-            # self._clear_positions(login)
-            # self._clear_deals(login)
-            # 4. Update database and memory state
+            #CLOSE ALL RUNNING POSITION ON MT5
+            self.close_running_position(login)
+            #RETURN ACCOUNT BALANCE ON MT5
+            self.return_balance(login, challenge.account_size)
+            #UPDATE TO STEP 2
             acc = self.local_accounts.get(login)
             acc.step = 2
-
-            #Move the DB account to phase 2 on celery
+            
+            #UPDATE THE PHASE THROUGH CELERY
             move_account_to_step_2.delay(login)
-
-            # 5. Reset tracking for new phase
-            # self._reset_phase_tracking(login)
-            # 6. Send notification
+            #RESET TRACKING FOR NEW PHASE
+            self._reset_phase_tracking(login)
+            #SEND THE NOTIFICATION
             self._send_phase_1_success_notification(login, challenge)
 
             logger.info(f"Account {login} successfully moved to Phase 2")
@@ -259,13 +334,17 @@ class InMemoryPropMonitoring:
     def _challenge_passed(self,acc:AccountData,challenge:PropFirmChallengeData):
         """Handle complete challenge success - eligible for funded account"""
         try:
-            #Pass account in celery
+            #LOCK ACCOUNT
+            self.lock_account.add(acc.login)
+            #PERSIST ACCOUNT DATA
+            self.persist_account_data(acc.login)
+            #PASS ACCOUNT THROUGH CELERY
             pass_account.delay(acc.login, challenge.id)
-            p.produce(
-                "disable_trading", 
-                json.dumps({"login":login}, cls=EnhancedJSONEncoder).encode("utf-8")
-            )
-            self.cleanup_completed_account(acc.login)
+            #DISABLE TRADING ACCESS
+            self.disable_trading_account(acc.login)
+            #RESET PHASE TRACKING
+            self._reset_phase_tracking(acc.login)
+            #Lock account so there wont be a rule monitoring for it
             logger.info(f"Challenge PASSED for account {acc.login}")
 
         except Exception as err:
@@ -274,37 +353,23 @@ class InMemoryPropMonitoring:
     def _challenge_failed(self, login: int, reasons:List[ViolationDict], challenge:PropFirmChallengeData):
         """Handle complete challenge failure"""
         try:
-            
             # Update user status
             failure_type = "failed"
-            if any("MAX_DAYS_EXCEEDED" == reason['type'] for reason in reasons):
-                failure_type = "expired"
             logger.info(f"Decided failure type: {failure_type}")
             
-            #Update DB in Celery
+            monitor.lock_account.add(login)
+
+            #FAIL ACCOUNT THROUGH CELERY
             fail_account.delay(login, failure_type, reasons)
-
-            # Try to disable account - if this fails, we still have the data
-            try:
-                #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
-                logger.info("Start disabling account")
-                p.produce(
-                    "disable_trading", 
-                    json.dumps({"login":login}, cls=EnhancedJSONEncoder).encode("utf-8")
-                )
-            except Exception as disable_error:
-                logger.error(f"Failed to disable trading for {login}: {disable_error}")
-                # Continue anyway - account is marked as failed in database
-
-            #CLEAR IN MEMORY POSITION
-            self._clear_positions(login)
-            #CLEAR IN MEMORY DEAL
-            self._clear_deals(login)
+            #DISABLE TRADING ACCOUNT
+            self.disable_trading_account(login)
+            #FIRST PERSIST ACCOUNT DATA
+            self.persist_account_data(login)
+            #THEN RESET THE PHASE TRACKING
+            self._reset_phase_tracking(login)
             #SEND NOTIFICATION ALERT
             self._send_challenge_failure_notification(login, challenge, reasons)
 
-            # Finally cleanup (this removes all tracking data)
-            self.cleanup_completed_account(login)
             self.lock_account.discard(login)
             logger.info(f"Successfully processed challenge failure {login}")
 
@@ -346,18 +411,15 @@ class InMemoryPropMonitoring:
             self.symbol[symbol] = tick
             #Update the currency conversion
             self.converter.update_from_tick(symbol, tick.bid, tick.ask)
-
             accounts =  self.get_accounts_with_symbol(symbol)
-            # print(f"ACCOUNTS WITH SYMBOL({symbol})", len(accounts))
             for acc in accounts:
                 # print("Running account", acc.login)
                 if acc.login in self.lock_account:
                     continue
-                
-                # Add to lock set
-                self.lock_account.add(acc.login)
 
                 try:
+                    # Add to lock set
+                    self.lock_account.add(acc.login)
                     _acc = self.update_account_equity(acc.login)
                     self.update_account_watermarks(_acc.login, _acc.balance, _acc.equity)
                     dd = self.update_drawdown(acc.login)
@@ -366,34 +428,14 @@ class InMemoryPropMonitoring:
                     challenge = self.account_challenge.get(acc.login)
                     if not challenge:
                         continue
-                    
-                    #broadcast after equity/drawdown updates
-                    # if self.should_broadcast(acc.login):
-                    #     self._broadcast_account_stats(acc.login)
-
+                
                     broken_rules = self.rule_checker.check_account_rules(acc, challenge, dd, total_dd) 
-                    
-                    if len(broken_rules) == 0:
-                        #Check If the rules configuration is not for a funded account
-                        # if challenge.challenge_class not in ['skill_check_funding', 'challenge_funding']:
-                        #     # Check if minimum days requirement met
-                        #     if not self.rule_checker._check_min_days(acc, challenge):
-                        #         logger.info(f"NO ACCOUNT VIOLATIONS BUT MIN DAYS NOT REACHED YET {acc.login}")
-                        #         continue
-
-                            # logger.info(f"NO ACCOUNT VIOLATIONS BUT TARGET PROFIT NOT YET MADE {acc.login}")
-                            continue
-                    else:
-                        print("Handling account violation")
-                        self.lock_account.add(acc.login)
-                        self.persist_account_data(acc.login)
+                    if broken_rules:
+                        print(f"Handling account violation - {acc.login}")
                         self._handle_account_rules_violation(acc.login, broken_rules)
-                        print("Failing account")
-                        self._challenge_failed(acc.login, broken_rules, challenge)
 
                 except Exception as err:
                     logger.error(f"Error processing account {acc.login}: {err}", exc_info=True)
-                
                 finally: 
                     self.lock_account.discard(acc.login)
 
@@ -454,12 +496,6 @@ class InMemoryPropMonitoring:
 
                 quote_currency = self.converter.get_quote_currency(pos.symbol)
                 pnl = self.converter.to_usd(pnl, quote_currency)
-
-                # print(f"Position {pos.symbol}: Action={pos.action}, Volume={pos.volume}, "
-                # f"OpenPrice={pos.price_open}, CurrentBid={current_bid}, CurrentAsk={current_ask}")
-                # print(f"Calculated PnL: {pnl}, Contract Size: {contract_size}")
-                # print(f"Volume in lots: {volume_in_lots}")
-                # print("---")
 
                 profit += pnl
                 # print(f"Profit-{profit}")
@@ -619,21 +655,6 @@ class InMemoryPropMonitoring:
 
         # Save back
         self.account_watermarks[login] = watermark
-
-
-    def _handle_account_rules_violation(self, login: int, violations: List[ViolationDict]):
-        """Handle rule violations - warnings or account restrictions"""
-        try:
-            compiled_violations:List[Tuple[ViolationDict, Literal['warning', 'severe', 'critical']]] =  []
-            for violation in violations:
-                compiled_violations.append((violation, 'severe'))
-            
-            #Send email notification about the violation
-            account_rule_violation_log.delay(login, compiled_violations)
-            # logger.info(f"Violations logged for {login}: {violations}")
-            
-        except Exception as e:
-            logger.debug(f"Error logging violations for {login}: {e}")
         
 
     def _send_phase_1_success_notification(self, login, challenge: PropFirmChallengeData):
@@ -705,7 +726,31 @@ class InMemoryPropMonitoring:
             process_account_watermarks_task.delay(serialized_watermarks)
 
 
+    def disable_trading_account(self, login):
+        try:
+            #DISABLE ACCOUNT AND CLOSE POSITIONS ON MT5
+            logger.info("Start disabling account")
+            p.produce(
+                "disable_trading", 
+                json.dumps({"login":login}, cls=EnhancedJSONEncoder).encode("utf-8")
+            )
+            p.flush()
+        except Exception as disable_error:
+            logger.error(f"Failed to disable trading for {login}: {disable_error}")
 
+    def return_balance(self, login, target_balance):
+        p.produce(
+            "return_balance", 
+            json.dumps({"login":login, "balance":target_balance}, cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        p.flush()
+
+    def close_running_position(self, login):
+        p.produce(
+            "close_positions",
+            json.dumps({"login": login}, cls=EnhancedJSONEncoder).encode("utf-8")
+        )
+        p.flush()
 
     ###############################################################################################################################
     ################# WEBSOCKET USAGE
@@ -866,11 +911,10 @@ c = Consumer({
 })
 
 c.subscribe([
-    "account_challenge_initiate", "market.ticks", 
-    "accounts.state", "accounts.load", 
-    "accounts.position", "accounts.position.remove", "accounts.position.update",
-    "accounts.deal", "accounts.deal.remove", "accounts.deal.update",
-    "account.to.phase2", "account.clear", "persist_valid_data",
+    "account_challenge_initiate", "market.ticks", "accounts.state", "accounts.load", 
+    "accounts.position", "accounts.position.remove", "accounts.position.update", "accounts.deal", 
+    "accounts.deal.remove", "accounts.deal.update", "account.to.phase2", "account.clear", 
+    "persist_valid_data", "account.fail", "account.lock", "account.unlock", "account.fund"
 ])
 
 monitor = InMemoryPropMonitoring()
@@ -950,6 +994,42 @@ while True:
             monitor.cleanup_completed_account(login)
             print(f"Cleared account details {login}")
         
+        elif msg.topic() == "account.fail":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
+            broken_rules:List[ViolationDict] = data["broken_rules"]
+
+            monitor.lock_account.add(login)
+            monitor.persist_account_data(login)
+            monitor._handle_account_rules_violation(login, broken_rules)
+            print("Failing account")
+            challenge = monitor.account_challenge.get(login)
+            if not challenge:
+                monitor._challenge_failed(login, broken_rules, challenge)
+        
+        elif msg.topic() == "account.fund":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
+            acc = monitor.local_accounts.get(login)
+            if acc:
+                acc.step = 3
+                monitor.lock_account.discard(login)
+                monitor._reset_phase_tracking(login)
+
+        elif msg.topic() == "account.unlock":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
+            acc = monitor.local_accounts.get(login)
+            if acc:
+                monitor.lock_account.discard(login)
+
+        elif msg.topic() == "account.lock":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
+            acc = monitor.local_accounts.get(login)
+            if acc:
+                monitor.lock_account.add(login)
+
         elif msg.topic() == "persist_valid_data":
             today = date.today()
             yesterday = today - timedelta(days=1)

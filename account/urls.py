@@ -33,6 +33,7 @@ urlpatterns = [
     path('auth/logout', LogoutView.as_view()),
     path('auth/login/history', LoginHistoryView.as_view()),
     path('auth/close', CloseAccountView.as_view()),
+    path('auth/email/change', ChangeEmailView.as_view()),
 
     path('user', UserDataView.as_view()),
 

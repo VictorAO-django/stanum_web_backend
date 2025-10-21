@@ -66,5 +66,9 @@ kafka-topics --create --topic enable_trading --bootstrap-server localhost:9092 -
 kafka-topics --create --topic return_balance --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 kafka-topics --create --topic update_balance --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 kafka-topics --create --topic close_positions --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic account.fail --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic account.unlock --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic account.lock --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic account.fund --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 
 Rank, Trader name, return,

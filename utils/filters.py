@@ -97,3 +97,16 @@ class CompetitionFilter(django_filters.FilterSet):
         model = Competition
         fields = ["start_date", "end_date", "starting_balance"]
         
+
+class WithdrawalRequestFilter(django_filters.FilterSet):
+    # Date filters
+    date_after = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="gte")
+    date_before = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="lte")
+    # Amount filters
+    amount_min = django_filters.NumberFilter(field_name="requested_amount", lookup_expr="gte")
+    amount_max = django_filters.NumberFilter(field_name="requested_amount", lookup_expr="lte")
+    # Status filter
+    status = django_filters.CharFilter(field_name="status", lookup_expr="iexact")
+    class Meta:
+        model = WithdrawalRequest
+        fields = [ "date_after", "date_before", "amount_min", "amount_max", "status",]

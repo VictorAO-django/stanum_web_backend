@@ -212,7 +212,7 @@ while True:
             data = json.loads(msg.value().decode("utf-8"))
             login=data['login']
             bridge.close_all_positions(int(login))
-
+        
     except Exception as err:
         print(f"ERROR OCCURED: {str(err)}")
         traceback.print_exc()

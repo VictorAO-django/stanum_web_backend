@@ -1,11 +1,18 @@
-from typing import Dict, Set, List, Optional, TypedDict, Tuple
+from typing import Dict, Set, List, Optional, TypedDict, Tuple, Literal
 from dataclasses import dataclass, field
 import uuid as uuid_lib
 from datetime import datetime, time, date, timezone
 from decimal import Decimal
 import MT5Manager
+
 class ViolationDict(TypedDict):
-    type: str
+    type: Literal[
+        "HFT_HOUR_VIOLATION", "HFT_MINUTE_VIOLATION",
+        "GRID_DETECTED", "MARTINGALE_DETECTED",
+        "SYMBOL_LIMIT",
+        "DAILY_DRAWDOWN_EXCEEDED", "TOTAL_DRAWDOWN_EXCEEDED",
+        "MAX_DAYS_EXCEEDED", "WEEKLY_TRADING_DAYS_NOT_MET",
+    ]
     message: str
 
 
