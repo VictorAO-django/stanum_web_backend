@@ -58,7 +58,7 @@ class CompetitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Competition
         fields = [
-            "id", "name", "description", "start_date", "end_date", "starting_balance", "price_pool_cash",
+            "uuid", "id", "name", "description", "start_date", "end_date", "starting_balance", "price_pool_cash",
             "max_daily_loss", "max_total_drawdown", "entry_fee", "prize_structure", "is_active", "contestants", "ended", "ended_at"
         ]
 

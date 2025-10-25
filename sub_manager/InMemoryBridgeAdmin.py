@@ -173,7 +173,8 @@ c = Consumer({
 })
 
 c.subscribe([
-    "disable_trading", "enable_trading", "return_balance", "update_balance", "close_positions"
+    "disable_trading", "enable_trading", "return_balance", "update_balance", "close_positions",
+    "account.fund"
 ])
 
 while True:
@@ -194,6 +195,11 @@ while True:
         elif msg.topic() == "enable_trading":
             data = json.loads(msg.value().decode("utf-8"))
             login=data['login']
+            bridge.enable_account_trading(int(login))
+        
+        elif msg.topic() == "account.fund":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
             bridge.enable_account_trading(int(login))
 
         elif msg.topic() == "return_balance":

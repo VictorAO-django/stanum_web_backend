@@ -291,29 +291,78 @@ def fail_account(login, failure_type: Literal["expired", "failed"], reasons):
         print("Error failing account")
         traceback.print_exc()
 
+
 @shared_task
 def pass_account(login, challenge_id):
-    try:        
+    try:
         mt5_account = MT5Account.objects.get(login=login)
+        challenge = PropFirmChallenge.objects.get(id=challenge_id)
+        mt5_user = mt5_account.mt5_user
+
+        RuleViolationLog.objects.filter(login=login).delete()
+
+        if mt5_user.challenge.challenge_class == "challenge":
+            # Count distinct trading days for this challenge
+            distinct_trading_days = (
+                MT5Position.objects
+                .filter(
+                    login=login,
+                    time_create__date__range=(challenge.start_date, challenge.end_date)
+                )
+                .annotate(day=TruncDate("time_create"))
+                .values("day")
+                .distinct()
+                .count()
+            )
+            
+            # Validate minimum trading days
+            min_days_required = challenge.min_trading_days or 0
+            if distinct_trading_days < min_days_required:
+                #Fail the account if rule is broken
+                mt5_user.account_status = "failed"
+                mt5_user.save(update_fields=["account_status"])
+
+                violation = [{
+                    "type": "MIN_TRADING_DAYS_NOT_MET",
+                    "message": f"Traded {distinct_trading_days} < required {min_days_required}, even though profit target was met"
+                }]
+
+                mt5_account.challenge_failed = True
+                mt5_account.challenge_failure_date = now()
+                mt5_account.active = False
+                mt5_account.failure_reason = violation
+                mt5_account.save(update_fields=["challenge_failed", "challenge_failure_date", "active", "failure_reason"])
+
+                data = {"login": login, "broken_rules": violation}
+                # produce event for logging / notifications
+                p.produce("accounts.fail", json.dumps(data).encode("utf-8"))
+
+                print(f"Account {login} failed: Did not meet min trading days.")
+                return  # stop further "pass" execution
+
+        # Passed all conditions — mark as passed
         mt5_account.challenge_completed = True
         mt5_account.challenge_completion_date = now()
         mt5_account.is_funded_eligible = True
         mt5_account.save()
 
-        mt5_user = mt5_account.mt5_user
-        mt5_user.account_status = 'challenge_passed'
-        mt5_user.save()
+        mt5_user.account_status = "challenge_passed"
+        mt5_user.save(update_fields=["account_status"])
 
-        challenge = PropFirmChallenge.objects.get(id=challenge_id)
-
-        if challenge.challenge_type == 'one_step':
+        # Notify user
+        if challenge.challenge_type == "one_step":
             send_challenge_success_mail_task(login, challenge_id)
         else:
             send_phase_2_success_task(login, challenge_id)
 
+        print(f"Account {login} successfully passed challenge.")
+
     except Exception as err:
-        print(f"Error passing account: {login}")
+        print(f"Error passing account: {login} - {err}")
         traceback.print_exc()
+
+
+
 
 @shared_task
 def move_account_to_step_2(login):
@@ -322,6 +371,8 @@ def move_account_to_step_2(login):
         mt5_account.step = 2
         mt5_account.phase_2_start_date = now()
         mt5_account.save()
+
+        RuleViolationLog.objects.filter(login=login).delete()
 
         print(f"moved account to step 2: {login}")
     except Exception as err:
@@ -545,58 +596,77 @@ def change_password(login, password):
 
 
 @shared_task
-def persist_competition_results_task(competition_uuid: str, participants_data: list):
+def persist_competition_results_task(competition_uuid: str):
     """
-    Background task to persist competition results to database
-    Called by rule engine after receiving Kafka finalize signal
+    Background task to persist competition results to the database.
+    Called by the rule engine after receiving Kafka 'finalize' signal.
     """
-    try:
-        print(f"Persisting {len(participants_data)} results for competition {competition_uuid}")
-        try:
-            ctx = Competition.objects.get(uuid=competition_uuid)
-            ctx.ended = True
-            ctx.ended_at= datetime.now(timezone.utc)
-            ctx.save()
-        except:
-            traceback.print()
+    from superadmin.serializers import CompetitionStatSerializer  # keep imports local for Celery
 
+    try:
+        ctx = Competition.objects.filter(uuid=competition_uuid).first()
+        if not ctx:
+            print(f"Competition {competition_uuid} not found.")
+            return {"success": False, "error": "Competition not found."}
+
+        users = MT5User.objects.filter(competition=ctx).select_related("user", "competition")
+        if not users.exists():
+            print(f"No participants found for competition {competition_uuid}.")
+            return {"success": False, "error": "No participants found."}
+
+        print(f"Persisting {users.count()} results for competition {competition_uuid}")
+
+        # Mark competition as ended
+        ctx.ended = True
+        ctx.ended_at = datetime.now(timezone.utc)
+        ctx.save(update_fields=["ended", "ended_at"])
+
+        # Serialize participants and sort
+        participants_data = CompetitionStatSerializer(users, many=True).data
+        ranked_participants_data = sorted(
+            participants_data, key=lambda t: t.get("profit", 0), reverse=True
+        )
+
+        # Assign rank
+        for idx, trader in enumerate(ranked_participants_data, start=1):
+            trader["rank"] = idx
+
+        # Persist results
         results_created = 0
-        for result_data in participants_data:
+        for result_data in ranked_participants_data:
             CompetitionResult.objects.update_or_create(
                 competition_uuid=competition_uuid,
                 login=result_data["login"],
                 defaults={
                     "rank": result_data["rank"],
-                    "username": result_data["username"],
-                    "starting_balance": result_data["starting_balance"],
-                    "final_equity": result_data["final_equity"],
-                    "profit": result_data["profit"],
-                    "return_percent": result_data["return_percent"],
-                    "max_drawdown": result_data["max_drawdown"],
-                    "total_trades": result_data["total_trades"],
-                    "winning_trades": result_data["winning_trades"],
-                    "win_rate": result_data["win_rate"],
-                    "score": result_data["score"],
-                    "finalized_at": datetime.now(timezone.utc)
-                }
+                    "username": result_data.get("trader_name", "Unknown"),
+                    "starting_balance": result_data.get("starting_balance", 0),
+                    "final_equity": result_data.get("equity", 0),
+                    "profit": result_data.get("profit", 0),
+                    "return_percent": result_data.get("return_percent", 0),
+                    "max_drawdown": result_data.get("max_drawdown", 0),
+                    "total_trades": result_data.get("total_trades", 0),
+                    "winning_trades": result_data.get("winning_trades", 0),
+                    "losing_trades": result_data.get("losing_trades", 0),  # fixed typo here 
+                    "win_rate": result_data.get("win_rate", 0),
+                    "score": result_data.get("score", 0),
+                    "finalized_at": datetime.now(timezone.utc),
+                },
             )
             results_created += 1
-        
-        print(f"Successfully persisted {results_created} results for competition {competition_uuid}")
-        
+
+        print(f"✅ Successfully persisted {results_created} results for competition {competition_uuid}")
+
         return {
             "success": True,
             "competition_uuid": competition_uuid,
-            "results_saved": results_created
+            "results_saved": results_created,
         }
-        
+
     except Exception as e:
         traceback.print_exc()
-        print(f"Error persisting competition results: {e}", exc_info=True)
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        print(f"❌ Error persisting competition results: {e}")
+        return {"success": False, "error": str(e)}
     
 
 @shared_task
@@ -647,44 +717,45 @@ def check_min_and_max_trading_days():
                         json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
                     )
                 continue
-
-            # 🔸 WEEKLY MINIMUM TRADING DAYS CHECK (only run on Sundays)
-            if today.weekday() == 6:
-                weekly_days = (
-                    MT5Position.objects.filter(
-                        login=user.login,
-                        time_create__date__range=(start_of_week, end_of_week)
-                    )
-                    .annotate(day=TruncDate('time_create'))
-                    .values('day')
-                    .distinct()
-                    .count()
-                )
-
-                if weekly_days < (challenge.min_trading_days or 0):
-                    with transaction.atomic():
-                        user.account_status = 'failed'
-                        user.save(update_fields=['account_status'])
-                        
-                        violation = [
-                            {"type": "WEEKLY_TRADING_DAYS_NOT_MET", "message": f"Traded {weekly_days} < required {challenge.min_trading_days}"}
-                        ]
-                        mt5_account = MT5Account.objects.filter(login=user.login).first()
-                        if mt5_account:
-                            mt5_account.challenge_failed = True
-                            mt5_account.challenge_failure_date = now()
-                            mt5_account.active = False
-                            mt5_account.failure_reason = violation
-                            mt5_account.save()
-
-                        data = {
-                            "login": user.login,
-                            "broken_rules": violation
-                        }
-                        p.produce(
-                            "accounts.fail", 
-                            json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+            
+            if user.challenge.challenge_class == "skill_check":
+                # 🔸 WEEKLY MINIMUM TRADING DAYS CHECK (only run on Sundays)
+                if today.weekday() == 6:
+                    weekly_days = (
+                        MT5Position.objects.filter(
+                            login=user.login,
+                            time_create__date__range=(start_of_week, end_of_week)
                         )
+                        .annotate(day=TruncDate('time_create'))
+                        .values('day')
+                        .distinct()
+                        .count()
+                    )
+
+                    if weekly_days < (challenge.min_trading_days or 0):
+                        with transaction.atomic():
+                            user.account_status = 'failed'
+                            user.save(update_fields=['account_status'])
+                            
+                            violation = [
+                                {"type": "WEEKLY_TRADING_DAYS_NOT_MET", "message": f"Traded {weekly_days} < required {challenge.min_trading_days}"}
+                            ]
+                            mt5_account = MT5Account.objects.filter(login=user.login).first()
+                            if mt5_account:
+                                mt5_account.challenge_failed = True
+                                mt5_account.challenge_failure_date = now()
+                                mt5_account.active = False
+                                mt5_account.failure_reason = violation
+                                mt5_account.save()
+
+                            data = {
+                                "login": user.login,
+                                "broken_rules": violation
+                            }
+                            p.produce(
+                                "accounts.fail", 
+                                json.dumps(data, cls=EnhancedJSONEncoder).encode("utf-8")
+                            )
         except Exception:
             p.flush()
             traceback.print_exc()

@@ -229,7 +229,7 @@ class PropFirmChallengeData:
     challenge_fee: float
 
     status: str = "active"
-    challenge_class: str = "challenge"
+    challenge_class: Literal['challenge', 'skill_check'] = "challenge"
 
     # Financial Details
     refundable_fee: float = 0.0

@@ -17,6 +17,7 @@ CRM backend (Django/DRF) listens for violations and updates the user’s dashboa
 
 docker compose up -d
 docker ps
+docker ps -a
 docker exec -it 295bd97dfbb0 bash
 kafka-topics --list --bootstrap-server localhost:9092
 docker compose down -v
@@ -70,5 +71,8 @@ kafka-topics --create --topic account.fail --bootstrap-server localhost:9092 --p
 kafka-topics --create --topic account.unlock --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 kafka-topics --create --topic account.lock --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 kafka-topics --create --topic account.fund --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic account.lock.competition --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic account.account.unlock.competition --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic persist_login_data --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 
 Rank, Trader name, return,

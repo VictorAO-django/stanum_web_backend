@@ -36,6 +36,8 @@ urlpatterns = [
     path("mt5/accounts", TradingAccountListView.as_view()),
     path("mt5/account/<int:login>/positions", PositionsListView.as_view()),
 
+    path("mt5/<int:login>/fund", MoveAccountToFundingStageAPI.as_view()),
+
     path('challenges', ChallengeListView.as_view()),
     path('challenges/create/', ChallengeCreateView.as_view()),
     path('challenges/<str:id>/', ChallengeDetailView.as_view()),
@@ -54,4 +56,11 @@ urlpatterns = [
     path("competition/<int:id>/end", EndCompetitionView.as_view()),
     path("competition/create", CompetitionCreateView.as_view()),
     path("competition/<int:id>", CompetitionStatsAPIView.as_view()),
+
+    path('accounts/<str:login>/stats', AccountStatsView.as_view()),
+    path('positions/<str:login>', PositionView.as_view()),
+    path('daily-summary/<str:login>', DailySummaryView.as_view()),
+    path('accounts/<str:login>/performance', AccountPerformanceView.as_view()),
+    path('accounts/<str:login>/logs', AccountLogsApiView.as_view()),
+    
 ]

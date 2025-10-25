@@ -125,8 +125,13 @@ class CreateAccountView(APIView):
             })
             # mt5_user = MT5User.objects.get(login=4002)
             # master_password='X9p!wT2@jK7z'
-            account, created = MT5Account.objects.get_or_create(mt5_user=mt5_user, login=mt5_user.login)
-
+            account, created = MT5Account.objects.get_or_create(
+                mt5_user=mt5_user, 
+                login=mt5_user.login,
+                defaults={
+                    'balance': data["balance"]
+                }
+            )
             challenge_id = data.get("challenge_id", None)
             if challenge_id:
                 try:
@@ -186,18 +191,16 @@ class DispatchAccountChallenge(APIView):
     authentication_classes=[]
     permission_classes=[AllowAny]
     def post(self, request, *args, **kwargs):
-        # secret = request.headers.get("X-BRIDGE-SECRET")
-        # if settings.BRIDGE_SECRET != secret:
-        #     return custom_response(
-        #         status="error",
-        #         message="Invalid secret",
-        #         data={},
-        #         http_status=status.HTTP_403_FORBIDDEN,
-        #     )
-        p.produce("persist_valid_data")
-        p.flush()
-        # for account in MT5Account.objects.filter(active=True, mt5_user__competition__isnull=True):
-        #     broadcast_account(account)
+        secret = request.headers.get("X-BRIDGE-SECRET")
+        if settings.BRIDGE_SECRET != secret:
+            return custom_response(
+                status="error",
+                message="Invalid secret",
+                data={},
+                http_status=status.HTTP_403_FORBIDDEN,
+            )
+        for account in MT5Account.objects.filter(active=True, mt5_user__competition__isnull=True):
+            broadcast_account(account)
 
         return Response({"status": "processed"}, status=status.HTTP_200_OK)
 
@@ -303,3 +306,15 @@ class ReturnAccountbalance(APIView):
             p.flush()
 
         return Response({"status": "Processed"}, status=status.HTTP_200_OK)
+    
+
+class FundAccount(APIView):
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        login = data.get("login")
+        if login:
+            p.produce(
+                "account.fund", 
+                json.dumps({"login": login}, cls=EnhancedJSONEncoder).encode("utf-8")
+            )
+            p.flush()

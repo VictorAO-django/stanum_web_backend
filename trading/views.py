@@ -22,6 +22,7 @@ from .models import *
 from .serializers import *
 
 from utils.helper import *
+from utils.decorators import require_account_owner
 from utils.pagination import LargeResultsSetPagination
 
 class TradingAccountView(generics.ListAPIView):
@@ -36,13 +37,13 @@ class TradingAccountView(generics.ListAPIView):
 class SelectAccountView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @require_account_owner
     def post(self, request, login):
-        user = self.request.user
-        acc = get_object_or_404(MT5User, login=login, user=user)
+        acc = request.mt5_user
         acc.selected_date = timezone.now()
         acc.save()
 
-        q = MT5User.objects.filter(user=user).order_by('-selected_date')
+        q = MT5User.objects.filter(user=request.user).order_by('-selected_date')
         data = MT5UserSerializer(q, many=True).data
         return Response(data, status=status.HTTP_200_OK)
     
@@ -51,6 +52,10 @@ class PositionView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class= MT5PositionSerializer
 
+    @require_account_owner
+    def get(self, request, login, *args, **kwargs):
+        return super().get(request, login, *args, **kwargs)
+    
     def get_queryset(self):
         login = self.kwargs.get('login', None)
         user=self.request.user
@@ -64,6 +69,10 @@ class AccountStatsView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AccountStatSerializer
 
+    @require_account_owner
+    def get(self, request, login, *args, **kwargs):
+        return super().get(request, login, *args, **kwargs)
+    
     def get_object(self):
         login = self.kwargs.get('login', None)
         user=self.request.user
@@ -77,6 +86,10 @@ class DailySummaryView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = DailySummary
 
+    @require_account_owner
+    def get(self, request, login, *args, **kwargs):
+        return super().get(request, login, *args, **kwargs)
+    
     def get_queryset(self):
         login = self.kwargs.get('login', None)
         user=self.request.user
@@ -90,6 +103,10 @@ class AccountEarningsView(generics.RetrieveAPIView):
     permission_classes=[IsAuthenticated]
     serializer_class=AccountEarningsSerializer
 
+    @require_account_owner
+    def get(self, request, login, *args, **kwargs):
+        return super().get(request, login, *args, **kwargs)
+    
     def get_object(self):
         login = self.kwargs.get('login', None)
         user=self.request.user
@@ -100,6 +117,7 @@ class AccountEarningsView(generics.RetrieveAPIView):
     
 
 class AccountPerformanceView(APIView):
+    @require_account_owner
     def get(self, request, login):
         # 12-day fixed window
         end_date = timezone.now().date()
@@ -183,6 +201,7 @@ class TopTradersView(APIView):
 
 
 class AccountLogsApiView(APIView):
+    @require_account_owner
     def get(self, request, login, *args, **kwargs):
         rule_violations = RuleViolationLog.objects.filter(login=login)
         rule_violations_data = RuleViolationLogSerializer(rule_violations, many=True).data

@@ -177,13 +177,20 @@ class InMemoryRuleChecker:
     
     def _check_profit(self, account: AccountData, challenge: PropFirmChallengeData) -> bool:
         """Check if account has reached the profit target."""
-        # logger.info(f"CHECKING PROFIT {account.login}")
-        current_profit = Decimal(account.balance) - Decimal(challenge.account_size)
-        if account.step == 2:
-            target_profit_amount = (Decimal(challenge.phase_2_profit_target_percent) / Decimal(100)) * Decimal(challenge.account_size)
-        else:
-            target_profit_amount = (Decimal(challenge.profit_target_percent) / Decimal(100)) * Decimal(challenge.account_size)
+        if account.step != 3:
+            # logger.info(f"CHECKING PROFIT {account.login}")
+            if((challenge.challenge_class == 'skill_check') and account.step == 1):
+                starting_balance=Decimal(challenge.challenge_fee)
+            else:
+                starting_balance = Decimal(challenge.account_size)
 
-        logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
-        # Check if profit target is reached
-        return current_profit >= target_profit_amount
+            current_profit = Decimal(account.balance) - starting_balance
+            if account.step == 2:
+                target_profit_amount = (Decimal(challenge.phase_2_profit_target_percent) / Decimal(100)) * starting_balance
+            else:
+                target_profit_amount = (Decimal(challenge.profit_target_percent) / Decimal(100)) * starting_balance
+
+            logger.info(f"CURRENT PROFIT-{current_profit} TARGET PROFIT-{target_profit_amount}")
+            # Check if profit target is reached
+            return current_profit >= target_profit_amount
+        return False

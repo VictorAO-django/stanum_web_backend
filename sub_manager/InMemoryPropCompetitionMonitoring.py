@@ -10,6 +10,7 @@ from sub_manager.InMemoryData import *
 from sub_manager.InMemoryRuleChecker import *
 from sub_manager.logging_config import get_prop_logger
 from sub_manager.producer import redis_client
+from sub_manager.transformer import *
 
 from confluent_kafka import Consumer, Producer
 from .USDCurrencyConverter import USDCurrencyConverter
@@ -119,9 +120,6 @@ class InMemoryPropCompetitionMonitoring:
                     dd = self.update_drawdown(acc.login)
                     total_dd = self.update_total_drawdown(acc.login)
                     
-                    if self.should_update_leaderboard(acc.login):  # Throttle this
-                        self.update_competition_metrics(acc.login)
-
                 except Exception as err:
                     logger.error(f"Error processing account {acc.login}: {err}", exc_info=True)
                 
@@ -201,13 +199,13 @@ class InMemoryPropCompetitionMonitoring:
                 pos.profit = float(pnl)
                 # pos.time_update = int(time.time())
 
-            equity = Decimal(balance) + profit
-            free_margin = equity - margin
+            equity = Decimal(balance) + Decimal(profit)
+            free_margin = Decimal(equity) - Decimal(margin)
 
             # logger.info(f"Final calculation: Total Profit-{profit} Total Margin-{margin} Equity-{equity} Free Margin-{free_margin}")
 
             # Validate final equity calculation
-            if equity < 0:
+            if equity < Decimal(0):
                 logger.error(f"Negative equity calculated for {login}: {equity}")
 
             # update account state
@@ -347,242 +345,13 @@ class InMemoryPropCompetitionMonitoring:
         self.account_watermarks[login] = watermark
 
 
-
-    #===============================================================================================
-    # COMPETITION
-    #===============================================================================================
-    def should_update_leaderboard(self, login: int) -> bool:
-        """Check if enough time has passed since last update"""
-        now = time.time()
-        last_update = self.last_update_time.get(login, 0)
-        # Only update if 30 minutes (1800 seconds) have passed
-        if now - last_update >= 1800.0:
-            self.last_update_time[login] = now
-            return True
-        return False
-    
-    def update_competition_metrics(self, login: int):
-        """
-        Calculate all metrics, update Redis, and broadcast to frontend
-        NO database operations here (fast path)
-        """
-        try:
-            # logger.info(f"Broadcasting: {login} ")
-            competition = self.account_competition.get(login)
-            if not competition:
-                return  
-            
-            # Get competition UUID from Redis
-            competition_uuid = str(competition.uuid)
-            
-            # Check if competition is still active
-            if not self.is_competition_active(competition_uuid):
-                logger.info(f"Competition not active")
-                return  # Ended, don't update
-            
-            # Calculate all metrics
-            stats = self.calculate_user_metrics(login)
-            # logger.info(f"User metrics: {stats}")
-            if not stats:
-                return
-            
-            # Update Redis (fast - ~0.1ms)
-            redis_client.hset(f"user:{login}", mapping={
-                k: str(v) for k, v in stats.items()
-            })
-            
-            # Update leaderboard sorted set
-            redis_client.zadd(
-                f"competition:{competition_uuid}:leaderboard",
-                {login: stats["score"]}
-            )
-            
-            # logger.info("Rounding up broadcasting")
-            # Broadcast to frontend via Channels
-            self.broadcast_competition_leaderboard(competition_uuid)
-            # logger.info("Broadcasted")
-
-        except Exception as e:
-            traceback.print_exc()
-            logger.error(f"Error updating competition metrics for {login}: {e}")
-    
-
-    def calculate_user_metrics(self, login: int) -> Optional[dict]:
-        """Calculate all competition metrics"""
-        try:
-            account = self.local_accounts.get(login)
-            competition = self.account_competition.get(login)
-            
-            if not competition:
-                return None
-            
-            # Drawdown data
-            total_dd = self.total_drawdown.get(login)
-            
-            # Calculations
-            starting_balance = Decimal(competition.starting_balance)
-            current_equity = account.equity
-            profit = current_equity - starting_balance
-            return_percent = (profit / starting_balance * 100) if starting_balance > 0 else Decimal("0")
-            
-            max_drawdown = abs(total_dd.drawdown_percent) if total_dd else Decimal("0")
-            
-            # Trade stats from Redis
-            total_trades = int(redis_client.hget(f"user:{login}", "total_trades") or 0)
-            winning_trades = int(redis_client.hget(f"user:{login}", "winning_trades") or 0)
-            win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else Decimal("0")
-            
-            # Competition score (return / drawdown ratio)
-            score = float(return_percent) / (float(max_drawdown) + 0.01)
-            
-            return {
-                "login": login,
-                "username": f"Trader_{login}",
-                "competition_uuid": str(competition.uuid),
-                "starting_balance": float(starting_balance),
-                "current_equity": float(current_equity),
-                "profit": float(profit),
-                "return_percent": float(return_percent),
-                "max_drawdown": float(max_drawdown),
-                "total_trades": total_trades,
-                "winning_trades": winning_trades,
-                "win_rate": float(win_rate),
-                "score": score,
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }
-            
-        except Exception as e:
-            traceback.print_exc()
-            logger.error(f"Error calculating metrics for {login}: {e}")
-            return None
-
-    def is_competition_active(self, competition_uuid: str) -> bool:
-        """Check if competition is still active"""
-        status = redis_client.hget(f"competition:{competition_uuid}:meta", "status")
-        if status != "active":
-            return False
-        
-        return True
-
-
-    def broadcast_competition_leaderboard(self, competition_uuid: str):
-        """
-        Send updated leaderboard to all frontend viewers via WebSocket
-        NO database operations - only Redis reads
-        """
-        try:
-            # Get top 100 from Redis sorted set
-            top_logins = redis_client.zrevrange(
-                f"competition:{competition_uuid}:leaderboard",
-                0, 99,
-                withscores=True
-            )
-            
-            leaderboard = []
-            for rank, (login, score) in enumerate(top_logins, 1):
-                user_data = redis_client.hgetall(f"user:{login}")
-                
-                if user_data:
-                    leaderboard.append({
-                        "rank": rank,
-                        "login": int(login),
-                        "username": user_data.get("username", ""),
-                        "current_equity": float(user_data.get("current_equity", 0)),
-                        "return_percent": float(user_data.get("return_percent", 0)),
-                        "max_drawdown": float(user_data.get("max_drawdown", 0)),
-                        "winning_trades": float(user_data.get("winning_trades", 0)),
-                        "total_trades": int(user_data.get("total_trades", 0)),
-                        "win_rate": float(user_data.get("win_rate", 0)),
-                        "score": float(score)
-                    })
-            
-            async_to_sync(channel_layer.group_send)(
-                f"competition_{competition_uuid}",
-                {
-                    "type": "leaderboard_update",
-                    "data": {
-                        "leaderboard": leaderboard,
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
-                }
-            )
-            
-        except Exception as e:
-            traceback.print_exc()
-            logger.error(f"Error broadcasting leaderboard for {competition_uuid}: {e}")
-
-
-
-
-
-
-
-
-    #===============================================================================================
-    # ADMIN ACTIONS
-    #===============================================================================================
-    def finalize_competition(self, competition_uuid: str):
-        """
-        Finalize competition - save final results from Redis to database
-        Called when admin sends Kafka signal
-        """
-        try:
-            logger.info(f"Finalizing competition {competition_uuid}")
-            ended_at = datetime.now(timezone.utc).isoformat()
-            # 1. Mark as ended in Redis
-            redis_client.hset(f"competition:{competition_uuid}:meta", "status", "ended")
-            redis_client.hset(f"competition:{competition_uuid}:meta", "ended_at", ended_at)
-            
-            # 2. Get ALL participants from Redis leaderboard
-            all_participants = redis_client.zrevrange(
-                f"competition:{competition_uuid}:leaderboard",
-                0, -1,  # ALL participants
-                withscores=True
-            )
-            
-            if not all_participants:
-                logger.warning(f"No participants found for competition {competition_uuid}")
-                return
-            
-            # 3. Queue database persistence via Celery (async, doesn't block)
-            persist_competition_results_task.delay(
-                competition_uuid=competition_uuid,
-                participants_data=self._prepare_results_data(all_participants)
-            )
-            
-            # 4. Broadcast to frontend
-            self.broadcast_competition_ended(competition_uuid, len(all_participants))
-            
-            logger.info(f"Competition {competition_uuid} finalized with {len(all_participants)} participants")
-            
-        except Exception as e:
-            logger.error(f"Error finalizing competition {competition_uuid}: {e}", exc_info=True)
-
-
-    def _prepare_results_data(self, participants: list) -> list:
-        """Prepare results data for database persistence"""
-        results = []
-        
-        for rank, (login, score) in enumerate(participants, 1):
-            user_data = redis_client.hgetall(f"user:{login}")
-            
-            if user_data:
-                results.append({
-                    "rank": rank,
-                    "login": int(login),
-                    "username": user_data.get("username", ""),
-                    "starting_balance": float(user_data.get("starting_balance", 0)),
-                    "final_equity": float(user_data.get("current_equity", 0)),
-                    "profit": float(user_data.get("profit", 0)),
-                    "return_percent": float(user_data.get("return_percent", 0)),
-                    "max_drawdown": float(user_data.get("max_drawdown", 0)),
-                    "total_trades": int(user_data.get("total_trades", 0)),
-                    "winning_trades": int(user_data.get("winning_trades", 0)),
-                    "win_rate": float(user_data.get("win_rate", 0)),
-                    "score": float(score)
-                })
-        
-        return results
+    def persist_account_data(self, login: int):
+        # --- Total Drawdown ---
+        td = self.total_drawdown.get(login)
+        if td:
+            total_dd = {login: td}
+            serialized_total_dd = json.dumps(make_json_safe(total_dd), cls=EnhancedJSONEncoder)
+            process_total_drawdowns_task.delay(serialized_total_dd)
 
 
     def cleanup_competition_memory(self, competition_uuid: str):
@@ -606,39 +375,10 @@ class InMemoryPropCompetitionMonitoring:
                     del self.account_competition[login]
                     logger.debug(f"Removed competition reference for account {login}")
                 
-                # Clear competition_uuid from Redis user hash
-                redis_client.hdel(f"user:{login}", "competition_uuid")
-            
-            # 3. Optional: Keep Redis data for some time (7 days) then cleanup
-            # Or immediately delete if you want to free Redis memory
-            ttl_days = 7
-            ttl_seconds = ttl_days * 24 * 60 * 60
-            
-            # Set expiry on competition data
-            redis_client.expire(f"competition:{competition_uuid}:meta", ttl_seconds)
-            redis_client.expire(f"competition:{competition_uuid}:leaderboard", ttl_seconds)
-            
             logger.info(f"Cleaned up {len(accounts_to_cleanup)} accounts from competition {competition_uuid}")
-            logger.info(f"Redis data will expire in {ttl_days} days")
             
         except Exception as e:
             logger.error(f"Error cleaning up competition memory: {e}", exc_info=True)
-
-    
-    def broadcast_competition_ended(self, competition_uuid: str, total_participants: int):
-        """Notify all viewers that competition has ended"""
-        async_to_sync(channel_layer.group_send)(
-            f"competition_{competition_uuid}",
-            {
-                "type": "competition_ended",
-                "data": {
-                    "message": "Competition has ended. Final results have been saved.",
-                    "total_participants": total_participants,
-                    "ended_at": datetime.now(timezone.utc).isoformat()
-                }
-            }
-        )
-
 
 
 
@@ -658,6 +398,8 @@ c.subscribe([
     "account_competition_initiate", "competition.control",
     "market.ticks", "accounts.state", "accounts.load", 
     "accounts.position", "accounts.position.remove", "accounts.position.update",
+    "persist_valid_data", "persist_login_data", 
+    "account.lock.competition", "account.unlock.competition",
 ])
 
 monitor = InMemoryPropCompetitionMonitoring()
@@ -686,27 +428,6 @@ while True:
             competition = CompetitionData.from_dict(data['competition'])
             # print(competition)
             monitor.account_competition[login] = competition
-
-            competition_uuid = str(competition.uuid)
-            # Store competition UUID for this account in Redis
-            redis_client.hset(f"user:{login}", "competition_uuid", competition_uuid)
-            # Initialize trade counters
-            redis_client.hset(f"user:{login}", mapping={
-                "total_trades": "0",
-                "winning_trades": "0",
-                "username": f"Trader_{login}"
-            })  
-            # Initialize competition metadata (if first participant)
-            if not redis_client.exists(f"competition:{competition_uuid}:meta"):
-                redis_client.hset(f"competition:{competition_uuid}:meta", mapping={
-                    "uuid": competition_uuid,
-                    "name": competition.name,
-                    "status": "active",
-                    "start_date": competition.start_date.isoformat(),
-                    "end_date": competition.end_date.isoformat(),
-                    "starting_balance": str(competition.starting_balance)
-                })
-
             print(f"Account {login} registered to competition {competition_uuid}")
 
         elif msg.topic() == "accounts.position":
@@ -724,26 +445,51 @@ while True:
             # 2. Remove from local positions
             monitor.remove_position(pos)
 
-            # 1. Update trade counters in Redis (FAST)
-            redis_client.hincrby(f"user:{pos.login}", "total_trades", 1)
-            if float(pos.profit) > 0:
-                redis_client.hincrby(f"user:{pos.login}", "winning_trades", 1)
-
             print(f"Position Removed {pos.position_id}, , Profit: {pos.profit}")
 
+        elif msg.topic() == "account.unlock.competition":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
+            acc = monitor.local_accounts.get(login)
+            if acc:
+                monitor.lock_account.discard(login)
+
+        elif msg.topic() == "account.lock.competition":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
+            acc = monitor.local_accounts.get(login)
+            if acc:
+                monitor.lock_account.add(login)
+
+        elif msg.topic() == "persist_login_data":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
+
+            monitor.persist_account_data(login)
+
+        elif msg.topic() == "persist_valid_data":
+            unlocked_total_dd = {
+                login: dd for login, dd in monitor.total_drawdown.items()
+                if login not in monitor.lock_account
+            }
+            serialized_total_dd = json.dumps(make_json_safe(unlocked_total_dd), cls=EnhancedJSONEncoder)
+            process_total_drawdowns_task.delay(serialized_total_dd)
+
         elif msg.topic() == "competition.control":
-            control_msg = json.loads(msg.value().decode("utf-8"))
-            
-            if control_msg.get("action") == "finalize_competition":
-                competition_uuid = control_msg.get("competition_uuid")
-                
-                logger.info(f"Received finalize signal for competition {competition_uuid}")
-                
+            data = json.loads(msg.value().decode("utf-8"))
+            action = data['action']
+
+            if action == "finalize_competition":
+                competition_uuid = data['competition_uuid']
                 # Finalize competition immediately
-                monitor.finalize_competition(competition_uuid)
-                
+                persist_competition_results_task.delay(
+                    competition_uuid=competition_uuid
+                )
                 # Clean up in-memory state
                 monitor.cleanup_competition_memory(competition_uuid)
+                logger.info(f"Received finalize signal for competition {competition_uuid}")
+                
+                
 
     except Exception as err:
         print(f"ERROR OCCURED: {str(err)}")

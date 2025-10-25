@@ -73,3 +73,14 @@ class BridgeApi:
 
         except (ValueError, TypeError) as e:
             raise ValueError(f"Invalid initial value: {initial_balance!r}. Error: {e}")
+
+    def fund_account(self, login):
+        try:
+            payload = {
+                "login": login
+            }
+            response = self.post("fund_account", payload)
+            return response
+
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Error while funding: {login!r}. Error: {e}")

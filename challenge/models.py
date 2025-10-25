@@ -56,6 +56,7 @@ class CompetitionResult(models.Model):
     
     total_trades = models.IntegerField()
     winning_trades = models.IntegerField()
+    losing_trades = models.IntegerField()
     win_rate = models.DecimalField(max_digits=5, decimal_places=2)
     score = models.FloatField()
     
@@ -94,9 +95,7 @@ class PropFirmChallenge(models.Model):
     
     CHALLENGE_CLASS = [
         ('challenge', 'Challenge'),
-        ('challenge_funding', 'Challenge Funding'),
         ('skill_check', 'Skill check'),
-        ('skill_check_funding', 'Skill Check Funding'),
         ('competition', 'Competition'),
     ]
 

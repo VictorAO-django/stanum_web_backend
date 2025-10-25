@@ -7,7 +7,9 @@ urlpatterns = [
     path('balance', BalanceListView.as_view()),
 
     path('certificates', ChallengeCertificateView.as_view()),
+    path("contests", CompetitionListView.as_view()),
     path('contest/<uuid:uuid>/is-a-participant', IsAParticipantView.as_view()),
     path('contest/<uuid:uuid>', CompetitionView.as_view()),
+    path('contest/<uuid:uuid>/leaderboard', CompetitionLeaderboardAPIView.as_view()),
     path('contest/<uuid:uuid>/result', CompetitionResultView.as_view()),
 ]

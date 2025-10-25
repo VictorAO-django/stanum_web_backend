@@ -38,7 +38,7 @@ from service.now_payment import NOWPaymentsService
 from utils.bridge_api import BridgeApi
 
 from challenge.models import *
-from trading.serializers import MT5UserSerializer
+from trading.serializers import *
 from account.serializers import MessageSerializer, TicketSerializer
 
 User = get_user_model()
@@ -172,14 +172,18 @@ class TradingAccountListView(generics.ListAPIView):
 
     def get(self, request, *args, **kwargs):
         accounts = MT5Account.objects.all()
-        positions = MT5Position.objects.filter(closed=False)
+        positions = MT5Position.objects.all()
+        active_pos = positions.filter(closed=False)
+        closed_position = positions.filter(closed=True)
         funded = accounts.filter(funded=True)
         total_equity = accounts.aggregate(total=Sum("equity"))['total'] or 0
 
         res = super().get(request, *args, **kwargs)
         return Response({
             "total_accounts": accounts.count(),
-            "active_positions": positions.count(),
+            "total_positions": positions.count(),
+            "active_positions": active_pos.count(),
+            "closed_positions": closed_position.count(),
             "total_equity": total_equity,
             "funded_account": funded.count(),
             "result": res.data
@@ -194,7 +198,7 @@ class PositionsListView(generics.ListAPIView):
 
     def get_queryset(self):
         login = self.kwargs.get("login")
-        querysets = MT5Position.objects.filter(login=login, closed=False)
+        querysets = MT5Position.objects.filter(login=login)
         self.query_count = querysets.count()
         return querysets
     
@@ -341,6 +345,7 @@ class ApprovePayoutView(APIView):
     def post(self, request, id, *args, **kwargs):
         data = request.data
         amount = data.get("amount", None)
+        plus_refundable_fee = data.get("plus_refundable_fee", False)
         try:
             with transaction.atomic():
                 req = WithdrawalRequest.objects.get(id=id)
@@ -349,25 +354,43 @@ class ApprovePayoutView(APIView):
 
                 try:
                     amount = float(amount)
+                    assert amount > 0, "Amount must be greater than 0"
                 except (TypeError, ValueError):
                     raise AssertionError("Amount provided is not a valid number.")
                 
-                req.status = 'approved'
-                req.disbursed_amount = amount
-                req.approved_at = timezone.now()
-                req.save()
+                mt5_user=MT5User.objects.get(login=req.login)
+                user = mt5_user.user
+                wallet = PropFirmWallet.objects.get(user=user)
+                if (wallet.pay_address != "") and (wallet.pay_currency != ""):
+                    req.status = 'approved'
+                    req.pay_address = wallet.pay_address
+                    req.pay_currency = wallet.pay_currency
+                    req.pay_network = wallet.pay_network
+                    req.disbursed_amount = amount
+                    req.approved_at = timezone.now()
+                    req.save()
 
-                mt5_user = MT5User.objects.get(login=req.login)
-                starting_balance = mt5_user.challenge.account_size
+                    if plus_refundable_fee:
+                        mt5_user.refundable_fee_paid = True
+                        mt5_user.save()
+
+                    starting_balance = mt5_user.challenge.account_size
+                    
+                    # bridge = BridgeApi() 
+                    # bridge.return_balance(req.login, starting_balance)
                 
-                bridge = BridgeApi() 
-                bridge.return_balance(req.login, starting_balance)
+                    return custom_response(
+                        status="success",
+                        message="Transaction Processed.",
+                        data={}
+                    )
                 
-            return custom_response(
-                status="success",
-                message="Transaction Processed.",
-                data={}
-            )
+                return custom_response(
+                    status="error",
+                    message="User has not uploaded his wallet details.",
+                    data={},
+                    http_status=status.HTTP_403_FORBIDDEN
+                )
 
         except WithdrawalRequest.DoesNotExist:
             return custom_response(
@@ -571,7 +594,7 @@ class AdminDashboardView(APIView):
     def get(self, request, *args, **kwargs):
         users = User.objects.filter(is_deleted=False)
         competitions = Competition.objects.filter(ended=False)
-        pending_withdrawal = PropFirmWalletTransaction.objects.filter(type='debit', status='pending')
+        pending_withdrawal = WithdrawalRequest.objects.filter(status='pending')
         volume = 0
         recent_activity = ChallengeLog.objects.all().order_by("-id")[:10]
 
@@ -615,11 +638,23 @@ class CompetitionListAPIView(generics.ListAPIView):
 class EndCompetitionView(APIView):
     permission_classes = [permissions.IsAdminUser]
     def post(self, request, id, *args, **kwargs):
-        competition = get_object_or_404(Competition, id=id, ended=False)
+        competition = get_object_or_404(Competition, id=id)
+        if competition.ended:
+            return custom_response(
+                status="error",
+                message="End operation has be trigerred before.",
+                data={},
+                http_status=status.HTTP_400_BAD_REQUEST
+            )
+        competition.ended=True
+        competition.save()
         # bridge = BridgeApi() 
         # bridge.end_competition(competition.uuid)
-
-        return Response({"message": "processed"}, status=status.HTTP_200_OK)
+        return custom_response(
+            status="success",
+            message="End operation has be processed.",
+            data={},
+        )
 
 
 class CompetitionCreateView(generics.CreateAPIView):
@@ -629,9 +664,7 @@ class CompetitionCreateView(generics.CreateAPIView):
 
 
 class CompetitionStatsAPIView(generics.ListAPIView):
-    authentication_classes=[]
-    permission_classes=[permissions.AllowAny]
-    # permission_classes=[permissions.IsAdminUser]
+    permission_classes=[permissions.IsAdminUser]
     serializer_class=CompetitionStatSerializer
 
     def get(self, request, *args, **kwargs):
@@ -653,3 +686,121 @@ class CompetitionStatsAPIView(generics.ListAPIView):
         self.competition = Competition.objects.get(id=id)
         return MT5User.objects.filter(competition=self.competition)
     
+
+
+class AccountStatsView(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = AccountStatSerializer
+
+    def get_object(self):
+        login = self.kwargs.get('login', None)
+        get_object_or_404(MT5User, login=login)
+        if login and login.isdigit():
+            return MT5Account.objects.get(login=login)
+        return None
+    
+class DailySummaryView(generics.ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = DailySummary
+
+    def get_queryset(self):
+        login = self.kwargs.get('login', None)
+        get_object_or_404(MT5User, login=login)
+        if login and login.isdigit():
+            return MT5Daily.objects.filter(login=login)
+        return MT5Daily.objects.none()
+    
+class PositionView(generics.ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class= MT5PositionSerializer
+
+    def get_queryset(self):
+        login = self.kwargs.get('login', None)
+        get_object_or_404(MT5User, login=login)
+        if login and login.isdigit():
+            return MT5Position.objects.filter(login=login)
+        return MT5Position.objects.none()
+    
+
+class AccountPerformanceView(APIView):
+    permission_classes=[permissions.IsAdminUser]
+
+    def get(self, request, login):
+        # 12-day fixed window
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=5)
+
+        qs = MT5Daily.objects.filter(
+            login=login,
+            deleted=False,
+            datetime__date__gte=start_date,
+            datetime__date__lte=end_date
+        ).order_by("datetime")
+
+        records = {r.datetime.date(): r for r in qs}
+
+        data = []
+        for i in range(6):
+            day = start_date + timedelta(days=i)
+            if day in records:
+                r = records[day]
+                data.append({
+                    "date": day.isoformat(),
+                    "balance": float(r.balance),
+                    "profit": float(r.profit),
+                })
+            else:
+                data.append({
+                    "date": day.isoformat(),
+                    "balance": 0.0,
+                    "profit": 0.0,
+                })
+
+        return Response(data, status=status.HTTP_200_OK)
+    
+
+class AccountLogsApiView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    def get(self, request, login, *args, **kwargs):
+        rule_violations = RuleViolationLog.objects.filter(login=login)
+        rule_violations_data = RuleViolationLogSerializer(rule_violations, many=True).data
+
+        challenge_logs = ChallengeLog.objects.filter(user__login=login)
+        challenge_logs_data = ChallengeLogSerializer(challenge_logs, many=True).data
+
+        return Response({
+            'violations': rule_violations_data,
+            'logs': challenge_logs_data
+        })
+    
+
+
+class MoveAccountToFundingStageAPI(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    def post(self, request, login, *args, **kwargs):
+        try:    
+            acc = get_object_or_404(MT5Account, login=login)
+            mt5_user = acc.mt5_user
+            with transaction.atomic():
+                if acc.is_funded_eligible and not mt5_user.funded:
+                    acc.step = 3
+                    acc.save()
+                    mt5_user.funded = True
+                    mt5_user.save()
+
+                    bridge = BridgeApi() 
+                    bridge.fund_account(login)
+
+                    return custom_response(
+                        status="success",
+                        message="Funding operation processed",
+                        data={}
+                    )
+                return custom_response(
+                    status="error",
+                    message="Funding operation processed",
+                    data={},
+                    http_status=status.HTTP_400_BAD_REQUEST
+                    )
+        except Exception as err:
+            return

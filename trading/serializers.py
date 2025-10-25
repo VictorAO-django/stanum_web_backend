@@ -1,4 +1,4 @@
-# serializers.py
+from datetime import date
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import *
@@ -94,12 +94,11 @@ class AccountStatSerializer(serializers.ModelSerializer):
     violation_summary = serializers.SerializerMethodField()
     daily_drawdown = serializers.SerializerMethodField()
     total_drawdown = serializers.SerializerMethodField()
-
     class Meta:
         model = MT5Account
         fields = [
             'balance', 'equity', 'profit', 'created_at', 'avg_winning', 'avg_losing', 'profit_factor', 'win_ratio',
-            'challenge', 'failure_reason', "watermarks", "violation_summary", "daily_drawdown", "total_drawdown"
+            'challenge', "step", 'failure_reason', "watermarks", "violation_summary", "daily_drawdown", "total_drawdown"
         ]
 
     def get_challenge(self, obj):
@@ -160,7 +159,7 @@ class AccountStatSerializer(serializers.ModelSerializer):
         try:
             dd = AccountDrawdown.objects.filter(login=instance.login).latest()
         except AccountDrawdown.DoesNotExist:
-            dd = AccountDrawdown.objects.create(login=instance.login)
+            dd = AccountDrawdown.objects.create(login=instance.login, date=date.today())
         representation["daily_drawdown"] = DailyDrawdownSerializer(dd).data
 
         td, _ = AccountTotalDrawdown.objects.get_or_create(login=instance.login)

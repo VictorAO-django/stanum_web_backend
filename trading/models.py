@@ -41,13 +41,15 @@ class MT5User(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     challenge = models.ForeignKey(PropFirmChallenge, null=True, on_delete=models.CASCADE)
-    competition = models.ForeignKey(Competition, null=True, on_delete=models.CASCADE)
+    competition = models.ForeignKey(Competition, null=True, blank=True, on_delete=models.CASCADE)
     account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES, default='challenge')
     account_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    password = models.CharField(max_length=255, null=True)
+    password = models.CharField(max_length=255, null=True, blank=True)
     fail_reason = models.TextField(blank=True)
     
     funded = models.BooleanField(default=False)
+    refundable_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    refundable_fee_paid = models.BooleanField(default=False)
 
     # Core identifiers
     login = models.BigIntegerField(primary_key=True)  # MT5 account login

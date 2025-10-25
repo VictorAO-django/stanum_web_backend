@@ -11,7 +11,10 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db import transaction
 from asgiref.sync import async_to_sync
+from rest_framework import permissions
+from datetime import timedelta
 
+from superadmin.serializers import CompetitionStatSerializer
 from .serializers import *
 from utils.filters import *
 
@@ -76,8 +79,6 @@ class IsAParticipantView(APIView):
 
 
 class CompetitionView(generics.RetrieveAPIView):
-    authentication_classes=[]
-    permission_classes=[AllowAny]
     serializer_class=CompetitionSerializer
     
     def get_object(self):
@@ -85,10 +86,44 @@ class CompetitionView(generics.RetrieveAPIView):
         return get_object_or_404(Competition, uuid=id)
 
 
+class CompetitionListView(generics.ListAPIView):
+    serializer_class=CompetitionSerializer
+    
+    def get_queryset(self):
+        # Calculate one month ago (30 days)
+        one_month_ago = timezone.now() - timedelta(days=30)
+        # Exclude competitions that ended *before* that date
+        queryset = Competition.objects.exclude(ended_at__lt=one_month_ago)
+        return queryset
+
 class CompetitionResultView(generics.ListAPIView):
     permission_classes=[IsAuthenticated]
     serializer_class=CompetitionResultSerializer
     
     def get_queryset(self):
         uuid = self.kwargs.get("uuid")
-        return CompetitionResult.objects.filter(competition_uuid=uuid).order_by('rank')
+        return CompetitionResult.objects.filter(competition_uuid=uuid).order_by('rank')[0:10]
+    
+
+class CompetitionLeaderboardAPIView(generics.ListAPIView):
+    serializer_class=CompetitionStatSerializer
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs).data
+        # Sort by profit descending
+        ranked_res = sorted(response, key=lambda t: t["profit"], reverse=True)
+        # Assign rank
+        for idx, trader in enumerate(ranked_res, start=1):
+            trader["rank"] = idx
+
+        ctx_data = CompetitionSerializer(self.competition).data
+        return Response({
+            "details": ctx_data,
+            "leaderboard": ranked_res
+        })
+
+    def get_queryset(self):
+        uuid=self.kwargs.get("uuid")
+        self.competition = Competition.objects.get(uuid=uuid)
+        return MT5User.objects.filter(competition=self.competition)[0:10]
+    

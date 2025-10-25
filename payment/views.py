@@ -356,6 +356,7 @@ class PaymentIPNAPIView(APIView):
                 mt5_user_login, password = result
                 mt5_user = MT5User.objects.filter(login=mt5_user_login).first()
                 if mt5_user:
+                    mt5_user.refundable_fee = challenge.challenge_fee
                     mt5_user.user = user
                     mt5_user.challenge = challenge
                     mt5_user.password = encrypt_password(password)
@@ -832,36 +833,79 @@ class WithdrawalRequestHistory(generics.ListAPIView):
 
 
 class WithdrawAPIView(APIView):
-    permission_classes = [ permissions.IsAuthenticated, Is2FAEnabled]
+    permission_classes = [permissions.IsAuthenticated, Is2FAEnabled]
 
     @require_account_owner
-    def post(self, request, login, *args, **kwargs):   
-        mt5_user = request.mt5_user
-        if not mt5_user.funded:
+    def post(self, request, login, *args, **kwargs):
+        mt5_user: MT5User = request.mt5_user
+        acc = get_object_or_404(MT5Account, mt5_user=mt5_user)
+
+        starting_balance = mt5_user.challenge.account_size
+        current_balance = acc.balance
+
+        # --- Challenge type logic ---
+        if mt5_user.challenge.challenge_class == "challenge":
+            if not mt5_user.funded:
+                return custom_response(
+                    status="error",
+                    message="You can only withdraw on a funded stage.",
+                    data={},
+                    http_status=status.HTTP_403_FORBIDDEN,
+                )
+
+            # 20% above starting balance required
+            threshold = starting_balance * 1.2
+            if current_balance < threshold:
+                return custom_response(
+                    status="error",
+                    message="You can only withdraw when your balance is at least 20% above the starting balance.",
+                    data={},
+                    http_status=status.HTTP_403_FORBIDDEN,
+                )
+
+        elif mt5_user.challenge.challenge_class == "skill_check":
+            if acc.step == 1:
+                # 2% above starting balance required
+                threshold = starting_balance * 1.02
+                if current_balance < threshold:
+                    return custom_response(
+                        status="error",
+                        message="You can only withdraw when your balance is at least 2% above the starting balance.",
+                        data={},
+                        http_status=status.HTTP_403_FORBIDDEN,
+                    )
+            elif not mt5_user.funded:
+                return custom_response(
+                    status="error",
+                    message="You can only withdraw on a funded stage.",
+                    data={},
+                    http_status=status.HTTP_403_FORBIDDEN,
+                )
+        else:
             return custom_response(
                 status="error",
-                message="You can only withdraw on a funded account",
+                message="An error occurred while determining account type.",
                 data={},
-                http_status=status.HTTP_403_FORBIDDEN
+                http_status=status.HTTP_403_FORBIDDEN,
             )
-        
-        req, created = WithdrawalRequest.objects.get_or_create(
-            login=login, status="pending"
-        )
+
+        # --- Handle withdrawal request creation ---
+        req, created = WithdrawalRequest.objects.get_or_create(login=login, status="pending")
+        data = WithdrawalRequestSerializer(req).data
+
         if created:
-            data = WithdrawalRequestSerializer(req).data
             return custom_response(
                 status="success",
-                message="Request sent to the admin, the admin will check.",
+                message="Withdrawal request submitted successfully. The admin will review it shortly.",
                 data=data,
-                http_status=status.HTTP_200_OK
+                http_status=status.HTTP_200_OK,
             )
         else:
             return custom_response(
                 status="error",
-                message="You have a pending request which the admin is reviewing.",
+                message="You already have a pending withdrawal request under review.",
                 data=data,
-                http_status=status.HTTP_403_FORBIDDEN
+                http_status=status.HTTP_403_FORBIDDEN,
             )
 
 

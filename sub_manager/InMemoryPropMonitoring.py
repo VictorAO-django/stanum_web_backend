@@ -33,7 +33,6 @@ class InMemoryPropMonitoring:
         self.positions: Dict[int, List[PositionData]] = {}
         self.deals: Dict[int, List[DealData]] = {}
         self.account_challenge: Dict[int, PropFirmChallengeData] = {}
-        self.account_competition: Dict[int, CompetitionData] = {}
 
         self.symbol:Dict[str, TickData] = {}
 
@@ -334,6 +333,7 @@ class InMemoryPropMonitoring:
     def _challenge_passed(self,acc:AccountData,challenge:PropFirmChallengeData):
         """Handle complete challenge success - eligible for funded account"""
         try:
+            acc = self.local_accounts.get(login)
             #LOCK ACCOUNT
             self.lock_account.add(acc.login)
             #PERSIST ACCOUNT DATA
@@ -587,11 +587,8 @@ class InMemoryPropMonitoring:
             
             equity_peak = 0
             challenge = self.account_challenge.get(login, None)
-            competition = self.account_competition.get(login, None)
             if challenge:
                 equity_peak = Decimal(challenge.account_size)
-            elif competition:
-                equity_peak = Decimal(competition.starting_balance)
             else:
                 return None
 
@@ -732,6 +729,18 @@ class InMemoryPropMonitoring:
             logger.info("Start disabling account")
             p.produce(
                 "disable_trading", 
+                json.dumps({"login":login}, cls=EnhancedJSONEncoder).encode("utf-8")
+            )
+            p.flush()
+        except Exception as disable_error:
+            logger.error(f"Failed to disable trading for {login}: {disable_error}")
+
+    def enable_trading_account(self, login):
+        try:
+            #ENABLE TRADING ACCESS
+            logger.info("Start disabling account")
+            p.produce(
+                "enable_trading", 
                 json.dumps({"login":login}, cls=EnhancedJSONEncoder).encode("utf-8")
             )
             p.flush()
@@ -914,7 +923,8 @@ c.subscribe([
     "account_challenge_initiate", "market.ticks", "accounts.state", "accounts.load", 
     "accounts.position", "accounts.position.remove", "accounts.position.update", "accounts.deal", 
     "accounts.deal.remove", "accounts.deal.update", "account.to.phase2", "account.clear", 
-    "persist_valid_data", "account.fail", "account.lock", "account.unlock", "account.fund"
+    "persist_valid_data", "persist_login_data",
+    "account.fail", "account.lock", "account.unlock", "account.fund",
 ])
 
 monitor = InMemoryPropMonitoring()
@@ -1030,6 +1040,11 @@ while True:
             if acc:
                 monitor.lock_account.add(login)
 
+        elif msg.topic() == "persist_login_data":
+            data = json.loads(msg.value().decode("utf-8"))
+            login=int(data['login'])
+            monitor.persist_account_data(login)
+
         elif msg.topic() == "persist_valid_data":
             today = date.today()
             yesterday = today - timedelta(days=1)
@@ -1037,6 +1052,9 @@ while True:
             # Prepare only today and yesterday's drawdowns for each account
             filtered_dds = {}
             for login, dd_data in monitor.daily_drawdowns.items():
+                if login in monitor.lock_account:  # Skip locked accounts entirely
+                    continue
+
                 if not dd_data:
                     continue
 
@@ -1049,13 +1067,22 @@ while True:
                 if not filtered_dds[login]:
                     del filtered_dds[login]
 
+            unlocked_total_dd = {
+                login: dd for login, dd in monitor.total_drawdown.items()
+                if login not in monitor.lock_account
+            }
+            unlocked_watermarks = {
+                login: wm for login, wm in monitor.account_watermarks.items()
+                if login not in monitor.lock_account
+            }
+
             # Persist filtered data
             serialized_dd = json.dumps(make_json_safe(filtered_dds), cls=EnhancedJSONEncoder)
             process_drawdowns_task.delay(serialized_dd)
             # Still persist total drawdown and watermarks for all accounts
-            serialized_total_dd = json.dumps(make_json_safe(monitor.total_drawdown), cls=EnhancedJSONEncoder)
+            serialized_total_dd = json.dumps(make_json_safe(unlocked_total_dd), cls=EnhancedJSONEncoder)
             process_total_drawdowns_task.delay(serialized_total_dd)
-            serialized_watermarks = json.dumps(make_json_safe(monitor.account_watermarks), cls=EnhancedJSONEncoder)
+            serialized_watermarks = json.dumps(make_json_safe(unlocked_watermarks), cls=EnhancedJSONEncoder)
             process_account_watermarks_task.delay(serialized_watermarks)
     
     except Exception as err:
